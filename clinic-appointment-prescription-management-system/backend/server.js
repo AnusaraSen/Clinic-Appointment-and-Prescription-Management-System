@@ -1,28 +1,44 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+require('dotenv').config();
+
+const connectToDatabase = require('./config/db');
 
 const app = express();
-dotenv.config();
+
+// Middleware
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
+app.use(morgan('dev'));
+
+// Routes
+const employeeRoutes = require('./modules/workforce-facility/routes/employeeRoutes');
+app.use('/api/employees', employeeRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  const dbStateMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  const dbStatus = dbStateMap[mongoose.connection.readyState] || 'unknown';
+  res.json({ status: 'ok', db: dbStatus });
+});
 
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(bodyParser.json());
+(async () => {
+  await connectToDatabase();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+})();
 
 
-const URL = process.env.MONGODB_URL;
-
-mongoose.connect(URL)
-.then(() => {
-    console.log('Connected to MongoDB');
-})
-.catch((error) => {
-    console.error('Error connecting to MongoDB:', error);
-});
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
