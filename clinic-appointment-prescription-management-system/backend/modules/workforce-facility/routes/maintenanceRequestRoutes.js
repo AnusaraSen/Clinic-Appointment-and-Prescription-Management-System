@@ -4,7 +4,7 @@ const { getAllRequests, createRequest, assignRequest, updateRequest, deleteReque
 
 const router = express.Router();
 
-// Placeholder routes for maintenance requests
+
 router.get('/', getAllRequests);
 router.post('/', createRequest);
 router.put('/:id/assign', assignRequest);

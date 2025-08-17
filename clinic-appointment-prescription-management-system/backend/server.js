@@ -19,8 +19,11 @@ app.use(morgan('dev'));
 // Routes
 const employeeRoutes = require('./modules/workforce-facility/routes/employeeRoutes');
 const maintenanceRequestRoutes = require('./modules/workforce-facility/routes/maintenanceRequestRoutes');
+const externalCompanyRoutes = require('./modules/workforce-facility/routes/externalCompanies');
+
 app.use('/api/employees', employeeRoutes);
 app.use('/api/maintenance-requests', maintenanceRequestRoutes);
+app.use('/api/external-companies', externalCompanyRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
