@@ -17,11 +17,10 @@ const MaintenanceRequestSchema = new mongoose.Schema({
   appointment_date: { type: Date },
   completion_notes: { type: String },
   cost: { type: Number, min: 0 },
-  utilities_payment: { type: UtilitiesPaymentSchema, required: false },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  timestamps: { createdAt: 'created_at', updatedAt:  'updated_at' }
 });
 
 module.exports = mongoose.model('MaintenanceRequest', MaintenanceRequestSchema);

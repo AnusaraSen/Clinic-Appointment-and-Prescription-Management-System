@@ -1,34 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import './index.css'
+import DashboardLayout from './components/layout/DashboardLayout.jsx'
+import MaintenancePage from './pages/workforce-facility/MaintenancePage.jsx'
+import AppointmentsPage from './pages/patient-interaction/AppointmentsPage.jsx'
+import PrescriptionsPage from './pages/pharmacy-inventory/PrescriptionsPage.jsx'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<DashboardLayout />}> 
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<div className="p-6">Welcome to Admin Dashboard</div>} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/prescriptions" element={<PrescriptionsPage />} />
+          <Route path="/users" element={<div className="p-6">Users</div>} />
+          <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/reports" element={<div className="p-6">Reports</div>} />
+          <Route path="/settings" element={<div className="p-6">Settings</div>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 
