@@ -1,11 +1,22 @@
 const mongoose = require('mongoose');
 const MaintenanceRequest = require('../models/MaintenanceRequest');
 
-// GET /api/maintenance-requests
+/**
+ * NOTE: The underlying schema currently (see facilityDetails.js) exposes a single `assigned_to` field.
+ * This controller appears to anticipate more granular fields (`assigned_to_employee`, `assigned_to_company`).
+ * If you intend to support both, update the schema accordingly OR simplify this controller to use
+ * the existing single reference. For now documentation is retained to highlight the mismatch.
+ */
+
+/**
+ * GET /api/maintenance-requests
+ * Fetch all maintenance requests sorted by newest first.
+ */
 exports.getAllRequests = async (req, res) => {
   try {
     const requests = await MaintenanceRequest.find()
       .populate('requested_by')
+      // The following populate calls require corresponding schema refs to exist; safe if added later.
       .populate('assigned_to_employee')
       .populate('assigned_to_company')
       .sort({ created_at: -1 });
@@ -15,7 +26,10 @@ exports.getAllRequests = async (req, res) => {
   }
 };
 
-// POST /api/maintenance-requests
+/**
+ * POST /api/maintenance-requests
+ * Create a new maintenance request. Required fields: description, location, requested_by.
+ */
 exports.createRequest = async (req, res) => {
   try {
     const { description, location, priority, requested_by, appointment_date } = req.body;
@@ -38,7 +52,10 @@ exports.createRequest = async (req, res) => {
   }
 };
 
-// PUT /api/maintenance-requests/:id/assign
+/**
+ * PUT /api/maintenance-requests/:id/assign
+ * Assign a request to either an employee OR a company (exclusively). Validates ObjectIds.
+ */
 exports.assignRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -82,7 +99,10 @@ exports.assignRequest = async (req, res) => {
   }
 };
 
-// PUT /api/maintenance-requests/:id
+/**
+ * PUT /api/maintenance-requests/:id
+ * Update mutable fields of a maintenance request. Ignores unknown fields.
+ */
 exports.updateRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -104,7 +124,10 @@ exports.updateRequest = async (req, res) => {
   }
 };
 
-// DELETE /api/maintenance-requests/:id
+/**
+ * DELETE /api/maintenance-requests/:id
+ * Permanently remove a maintenance request.
+ */
 exports.deleteRequest = async (req, res) => {
   try {
     const { id } = req.params;

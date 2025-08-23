@@ -7,21 +7,22 @@ const {
   deleteCompany
 } = require('../controllers/ExternalCompanyController');
 
+/**
+ * External Companies Routes
+ * Base path: /api/external-companies
+ *
+ * POST   /       -> create a company
+ * GET    /       -> list companies
+ * GET    /:id    -> get single company
+ * PUT    /:id    -> update company
+ * DELETE /:id    -> remove company
+ */
 const router = express.Router();
 
-// POST /api/external-companies
 router.post('/', createCompany);
-
-// GET /api/external-companies
 router.get('/', getAllCompanies);
-
-// GET /api/external-companies/:id
 router.get('/:id', getCompanyById);
-
-// PUT /api/external-companies/:id
 router.put('/:id', updateCompany);
-
-// DELETE /api/external-companies/:id
 router.delete('/:id', deleteCompany);
 
 module.exports = router;

@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import './index.css'
 import DashboardLayout from './components/layout/DashboardLayout.jsx'
 import MaintenancePage from './pages/workforce-facility/MaintenancePage.jsx'
 import AppointmentsPage from './pages/patient-interaction/AppointmentsPage.jsx'

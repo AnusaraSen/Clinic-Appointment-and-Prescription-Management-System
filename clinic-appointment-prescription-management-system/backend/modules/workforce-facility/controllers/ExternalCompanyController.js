@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 const ExternalCompany = require('../models/ExternalCompany');
 
+/**
+ * Controller functions for External Company CRUD.
+ * Each function returns JSON responses with appropriate HTTP status codes.
+ * Validation is handled using Joi schemas (create & update).
+ */
+
 const createCompanySchema = Joi.object({
   company_name: Joi.string().trim().required(),
   contact_person: Joi.string().trim().required(),
@@ -22,6 +28,10 @@ const updateCompanySchema = Joi.object({
   notes: Joi.string().trim().allow('', null)
 }).min(1);
 
+/**
+ * POST /api/external-companies
+ * Create a new external company entry.
+ */
 async function createCompany(req, res) {
   try {
     const { value, error } = createCompanySchema.validate(req.body, {
@@ -44,6 +54,10 @@ async function createCompany(req, res) {
   }
 }
 
+/**
+ * GET /api/external-companies
+ * List all external companies (newest first).
+ */
 async function getAllCompanies(req, res) {
   try {
     const companies = await ExternalCompany.find({}).sort({ created_at: -1 }).lean();
@@ -54,6 +68,10 @@ async function getAllCompanies(req, res) {
   }
 }
 
+/**
+ * GET /api/external-companies/:id
+ * Retrieve a single company by its MongoDB ObjectId.
+ */
 async function getCompanyById(req, res) {
   try {
     const { id } = req.params;
@@ -73,6 +91,10 @@ async function getCompanyById(req, res) {
   }
 }
 
+/**
+ * PUT /api/external-companies/:id
+ * Update existing external company with validated fields.
+ */
 async function updateCompany(req, res) {
   try {
     const { id } = req.params;
@@ -108,6 +130,10 @@ async function updateCompany(req, res) {
   }
 }
 
+/**
+ * DELETE /api/external-companies/:id
+ * Remove a company. Returns 204 No Content if successful.
+ */
 async function deleteCompany(req, res) {
   try {
     const { id } = req.params;

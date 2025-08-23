@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 const Employee = require('../models/employeeDetails');
 
+/**
+ * GET /api/employees
+ * Fetch all employees. Optional query param `populate` (default 'true') controls whether the linked
+ * User document (user_id) is populated. We guard population with a runtime check so the service
+ * does not crash if the User model hasn't been registered yet.
+ */
 async function getAllEmployees(req, res) {
   try {
     const shouldPopulate = (req.query.populate || 'true').toString().toLowerCase() === 'true';
@@ -11,7 +17,7 @@ async function getAllEmployees(req, res) {
       query = query.populate('user_id');
     }
 
-    const employees = await query.lean();
+    const employees = await query.lean(); // lean() returns plain JS objects (faster, read-only use case)
     return res.status(200).json(employees);
   } catch (error) {
     console.error('Failed to fetch employees:', error);
@@ -19,6 +25,8 @@ async function getAllEmployees(req, res) {
   }
 }
 
+// Validation schema for creating a new employee.
+// NOTE: If you add new fields to the Mongoose schema, remember to update validation here.
 const createEmployeeSchema = Joi.object({
   user_id: Joi.string().required(),
   role: Joi.string()
@@ -40,6 +48,10 @@ const createEmployeeSchema = Joi.object({
   status: Joi.string().valid('active', 'terminated', 'inactive').optional()
 });
 
+/**
+ * POST /api/employees
+ * Create a new employee record. Validates request body against Joi schema.
+ */
 async function createEmployee(req, res) {
   try {
     const { value, error } = createEmployeeSchema.validate(req.body, {
@@ -66,6 +78,7 @@ async function createEmployee(req, res) {
   }
 }
 
+// Validation schema for partial updates. At least one field must be present (min(1)).
 const updateEmployeeSchema = Joi.object({
   user_id: Joi.string().optional(),
   role: Joi.string().valid('doctor', 'pharmacist', 'lab_assistant', 'admin', 'nurse', 'other').optional(),
@@ -85,6 +98,10 @@ const updateEmployeeSchema = Joi.object({
   status: Joi.string().valid('active', 'terminated', 'inactive').optional()
 }).min(1);
 
+/**
+ * PUT/PATCH /api/employees/:id
+ * Update an existing employee. Accepts partial payload.
+ */
 async function updateEmployee(req, res) {
   try {
     const { id } = req.params;
@@ -127,6 +144,10 @@ async function updateEmployee(req, res) {
   }
 }
 
+/**
+ * GET /api/employees/:id
+ * Fetch a single employee by MongoDB ObjectId. Supports optional population.
+ */
 async function getEmployeeById(req, res) {
   try {
     const { id } = req.params;
@@ -153,6 +174,10 @@ async function getEmployeeById(req, res) {
   }
 }
 
+/**
+ * DELETE /api/employees/:id
+ * Permanently remove an employee document. Returns 204 (no content) on success.
+ */
 async function deleteEmployee(req, res) {
   try {
     const { id } = req.params;
