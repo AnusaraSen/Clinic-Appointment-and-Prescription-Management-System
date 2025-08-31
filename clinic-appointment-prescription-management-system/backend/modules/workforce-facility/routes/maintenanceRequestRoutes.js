@@ -1,25 +1,112 @@
 const express = require('express');
-const { getAllRequests, createRequest, assignRequest, updateRequest, deleteRequest } = require('../controllers/MaintenanceRequestController');
+const { 
+  getAllRequests, 
+  getRequestById,
+  createRequest, 
+  assignRequest, 
+  updateRequest, 
+  completeRequest,
+  deleteRequest,
+  getStats
+} = require('../controllers/MaintenanceRequestController');
+
+// Import middleware
+const { 
+  validation, 
+  queryProcessing, 
+  responseFormatting, 
+  resourceValidation 
+} = require('../../../middleware');
 
 /**
  * Maintenance Request Routes
  * Base path: /api/maintenance-requests
  *
- * GET    /             -> list maintenance requests
+ * GET    /             -> list maintenance requests (with optional filters)
+ * GET    /stats        -> get maintenance request statistics
+ * GET    /:id          -> get single maintenance request by ID
  * POST   /             -> create new request
- * PUT    /:id/assign   -> assign to employee OR company (exclusive)
- * PUT    /:id          -> update fields
+ * PUT    /:id/assign   -> assign to technician
+ * PUT    /:id/complete -> mark request as completed
+ * PUT    /:id          -> update request fields
  * DELETE /:id          -> delete request
  *
- * NOTE: The controller anticipates fields (assigned_to_employee / assigned_to_company) that are not
- * yet present in the current schema (which only has `assigned_to`). Align schema & controller soon.
+ * Updated to use middleware for validation, formatting, and resource checking
  */
 const router = express.Router();
 
-router.get('/', getAllRequests);
-router.post('/', createRequest);
-router.put('/:id/assign', assignRequest);
-router.put('/:id', updateRequest);
-router.delete('/:id', deleteRequest);
+// Apply response formatting middleware to all routes
+router.use(responseFormatting.formatSuccessResponse());
+router.use(responseFormatting.formatErrorResponse());
+router.use(responseFormatting.addPaginationMeta());
+
+// Statistics route (must come before /:id to avoid conflict)
+router.get('/stats', 
+  responseFormatting.asyncHandler(getStats)
+);
+
+// List all maintenance requests with filtering, pagination, and sorting
+router.get('/', 
+  queryProcessing.parseFilters(['status', 'priority', 'assignedTo', 'reportedBy']),
+  queryProcessing.parsePagination(20, 100),
+  queryProcessing.parseSort({
+    'created': 'createdAt',
+    'updated': 'updatedAt', 
+    'priority': 'priority',
+    'status': 'status'
+  }, '-createdAt'),
+  queryProcessing.populateMaintenanceRequest,
+  responseFormatting.asyncHandler(getAllRequests)
+);
+
+// Get single maintenance request
+router.get('/:id', 
+  validation.validateObjectId('id'),
+  queryProcessing.populateMaintenanceRequest,
+  responseFormatting.asyncHandler(getRequestById)
+);
+
+// Create new maintenance request
+router.post('/', 
+  validation.validateWithJoi(validation.maintenanceRequestSchemas.create),
+  validation.validateObjectIdArray('equipment'),
+  resourceValidation.checkUserExists('reportedBy', 'body'),
+  resourceValidation.checkEquipmentExists('equipment', 'body'),
+  responseFormatting.asyncHandler(createRequest)
+);
+
+// Assign maintenance request to technician
+router.put('/:id/assign',
+  validation.validateObjectId('id'),
+  validation.validateWithJoi(validation.maintenanceRequestSchemas.assign),
+  resourceValidation.checkMaintenanceRequestExists('id', 'params'),
+  resourceValidation.checkTechnicianExists('technicianId', 'body', true),
+  responseFormatting.asyncHandler(assignRequest)
+);
+
+// Complete maintenance request
+router.put('/:id/complete',
+  validation.validateObjectId('id'),
+  validation.validateWithJoi(validation.maintenanceRequestSchemas.complete),
+  resourceValidation.checkMaintenanceRequestExists('id', 'params'),
+  responseFormatting.asyncHandler(completeRequest)
+);
+
+// Update maintenance request
+router.put('/:id',
+  validation.validateObjectId('id'),
+  validation.validateWithJoi(validation.maintenanceRequestSchemas.update),
+  validation.validateObjectIdArray('equipment'),
+  resourceValidation.checkMaintenanceRequestExists('id', 'params'),
+  resourceValidation.checkEquipmentExists('equipment', 'body'),
+  responseFormatting.asyncHandler(updateRequest)
+);
+
+// Delete maintenance request
+router.delete('/:id',
+  validation.validateObjectId('id'),
+  resourceValidation.checkMaintenanceRequestExists('id', 'params'),
+  responseFormatting.asyncHandler(deleteRequest)
+);
 
 module.exports = router;

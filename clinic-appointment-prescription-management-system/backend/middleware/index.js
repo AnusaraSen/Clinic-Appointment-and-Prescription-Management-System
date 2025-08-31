@@ -4,5 +4,9 @@ module.exports = {
   parsers: require('./parsers'),
   logger: require('./logger'),
   notFound: require('./notFound'),
-  errorHandler: require('./errorHandler')
+  errorHandler: require('./errorHandler'),
+  validation: require('./validation'),
+  queryProcessing: require('./queryProcessing'),
+  responseFormatting: require('./responseFormatting'),
+  resourceValidation: require('./resourceValidation')
 };
