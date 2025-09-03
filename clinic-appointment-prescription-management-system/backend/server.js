@@ -23,6 +23,13 @@ mongoose.connect(URL)
     console.error('Error connecting to MongoDB:', error);
 });
 
+
+const prescriptionRouter = require('./modules/clinical-workflow/routes/prescriptions.js');
+app.use('/prescription', prescriptionRouter);
+
+const patientRouter = require('./modules/clinical-workflow/routes/patients.js');
+app.use('/patient', patientRouter);
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
