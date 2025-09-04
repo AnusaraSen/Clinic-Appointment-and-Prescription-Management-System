@@ -70,5 +70,5 @@ patientSchema.pre('save', function(next) {
   next();
 });
 
-const patient = mongoose.model('Patient', patientSchema);
+const patient = mongoose.model('Medical_Records', patientSchema);
 module.exports = patient;

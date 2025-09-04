@@ -26,13 +26,13 @@
 }
 
 .ap-form-wrapper label { 
-    font-size:.8rem; 
+    font-size:14px; 
     font-weight:600; 
     color:var(--ap-text-dark); 
 }
 
 .ap-form-wrapper .form-control, .ap-form-wrapper .form-select, .ap-form-wrapper textarea { 
-    font-size:.82rem; }
+    font-size:14px; }
 
 .ap-medicine-block {
      background:#fff; 
@@ -44,7 +44,7 @@
 }
 
 .ap-medicine-block label { 
-    font-size:.7rem; 
+    font-size:14px; 
     text-transform:uppercase; 
     letter-spacing:.06em; 
     color:var(--ap-accent); 
@@ -52,12 +52,12 @@
 }
 
 .ap-medicine-block .form-control, .ap-medicine-block .form-select { 
-    font-size:.76rem; 
+    font-size:14px; 
     padding:.35rem .55rem; 
 }
 
 .ap-section-title { 
-    font-size:.88rem; 
+    font-size:14px; 
     font-weight:700; 
     text-transform:uppercase; 
     letter-spacing:.08em; 
@@ -65,7 +65,7 @@
     margin:1.2rem 0 .65rem; 
 }
 
-.btn-ap { font-size:.78rem; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; transition:.25s background,.25s color,.25s box-shadow; }
+.btn-ap { font-size:14px; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; transition:.25s background,.25s color,.25s box-shadow; }
 .btn-ap-primary { background:linear-gradient(135deg,var(--ap-accent),var(--ap-accent-alt)); color:#fff; border:1px solid var(--ap-accent-alt); }
 .btn-ap-primary:hover { background:linear-gradient(135deg,var(--ap-accent-alt),var(--ap-accent)); color:#fff; }
 .btn-ap-outline { background:#fff; color:var(--ap-accent); border:1px solid var(--ap-accent); }

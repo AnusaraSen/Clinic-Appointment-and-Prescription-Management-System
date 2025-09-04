@@ -1,0 +1,25 @@
+/* DeletePatient Theme */
+:root { --pt-accent:#0d8c90; --pt-accent-alt:#12b9bf; --pt-soft:#e1f7f9; --pt-text:#034447; --pt-border:#b5e4e7; }
+
+.patient-delete-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(5px); border:1px solid var(--pt-border); border-radius:30px; padding:1.9rem 1.7rem 2.2rem; margin:2.2rem auto 2.8rem; max-width:830px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.15); overflow:hidden; font-size:1.15rem; }
+.patient-delete-wrapper::before, .patient-delete-wrapper::after { content:""; position:absolute; border:2px solid var(--pt-accent-alt); border-radius:50%; opacity:.18; pointer-events:none; animation: ptDelFloat 24s linear infinite; }
+.patient-delete-wrapper::before { width:720px; height:720px; top:-480px; right:-400px; }
+.patient-delete-wrapper::after { width:520px; height:520px; bottom:-340px; left:-360px; animation-direction:reverse; }
+@keyframes ptDelFloat { 0%{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.03);} 100%{transform:rotate(360deg) scale(1);} }
+
+.patient-delete-wrapper h2 { font-weight:700; color:var(--pt-text); letter-spacing:.4px; }
+.patient-delete-wrapper ul { list-style: none; padding:0; margin:0 0 1.1rem; font-size:1rem; }
+.patient-delete-wrapper ul li { padding:.25rem 0; border-bottom:1px dashed var(--pt-border); }
+.patient-delete-wrapper ul li strong { color:var(--pt-accent); font-weight:600; }
+
+.pt-delete-warning { background:linear-gradient(135deg,#fff4f4,#ffecec); border:1px solid #ffc5c5; border-radius:18px; padding:.95rem 1.05rem; font-size:.95rem; color:#8a1c1c; margin:0 0 1.2rem; }
+.pt-delete-warning strong { color:#c11212; }
+
+.pt-btn { font-size:1rem; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; transition:.25s background,.25s color,.25s box-shadow; border:1px solid transparent; }
+.pt-btn-danger { background:linear-gradient(135deg,#ff5a5f,#dc3545); color:#fff; border-color:#dc3545; }
+.pt-btn-danger:hover { background:linear-gradient(135deg,#dc3545,#ff5a5f); }
+.pt-btn-outline { background:#fff; color:var(--pt-accent); border:1px solid var(--pt-accent); }
+.pt-btn-outline:hover { background:var(--pt-soft); }
+
+.pt-actions { display:flex; gap:.75rem; justify-content:flex-end; }
+@media (max-width:640px){ .pt-actions { flex-direction:column; align-items:stretch; } .patient-delete-wrapper { padding:1.4rem 1.05rem 1.7rem; } }

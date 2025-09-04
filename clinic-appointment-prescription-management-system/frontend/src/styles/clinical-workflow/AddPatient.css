@@ -1,0 +1,30 @@
+/* AddPatient Page Theme */
+:root { --pt-accent:#0d8c90; --pt-accent-alt:#12b9bf; --pt-soft:#e1f7f9; --pt-text:#034447; --pt-border:#b5e4e7; }
+
+.patient-form-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(6px); border:1px solid var(--pt-border); border-radius:30px; padding:1.9rem 1.7rem 2.3rem; margin:2.2rem auto 2.8rem; max-width:830px; position:relative; box-shadow:0 6px 24px -6px rgba(0,0,0,.15); overflow:hidden; }
+.patient-form-wrapper::before, .patient-form-wrapper::after { content:""; position:absolute; border:2px solid var(--pt-accent-alt); border-radius:50%; opacity:.18; pointer-events:none; animation: ptFloat 22s linear infinite; }
+.patient-form-wrapper::before { width:720px; height:720px; top:-480px; right:-400px; }
+.patient-form-wrapper::after { width:520px; height:520px; bottom:-340px; left:-360px; animation-direction:reverse; }
+@keyframes ptFloat { 0%{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.03);} 100%{transform:rotate(360deg) scale(1);} }
+
+.patient-form-wrapper h2 { font-weight:700; color:var(--pt-text); letter-spacing:.4px; text-shadow:0 2px 6px rgba(0,0,0,.08); }
+.patient-form-wrapper label { font-size:14px; font-weight:600; color:var(--pt-text); }
+.patient-form-wrapper .form-control, .patient-form-wrapper .form-select, .patient-form-wrapper textarea { font-size:14px; }
+
+.pt-section-title { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--pt-accent); margin:1.4rem 0 .7rem; }
+
+/* Range sliders */
+.pt-range-group { background:#fff; border:1px solid var(--pt-border); border-radius:16px; padding:.9rem 1rem 1rem; margin-bottom:1.1rem; box-shadow:0 2px 6px -3px rgba(0,0,0,.08); }
+.pt-range-group label { display:block; margin-bottom:.35rem; text-transform:uppercase; font-size:14px; letter-spacing:.08em; color:var(--pt-accent); }
+.pt-range-group .form-range { accent-color: var(--pt-accent); }
+
+/* Buttons */
+.pt-btn { font-size:14px; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; transition:.25s background,.25s color,.25s box-shadow; border:1px solid transparent; }
+.pt-btn-primary { background:linear-gradient(135deg,var(--pt-accent),var(--pt-accent-alt)); color:#fff; border-color:var(--pt-accent-alt); }
+.pt-btn-primary:hover { background:linear-gradient(135deg,var(--pt-accent-alt),var(--pt-accent)); }
+.pt-btn-outline { background:#fff; color:var(--pt-accent); border-color:var(--pt-accent); }
+.pt-btn-outline:hover { background:var(--pt-soft); }
+
+.d-grid .pt-btn + .pt-btn { margin-top:.4rem; }
+
+@media (max-width:640px){ .patient-form-wrapper { padding:1.4rem 1.05rem 1.7rem; } }

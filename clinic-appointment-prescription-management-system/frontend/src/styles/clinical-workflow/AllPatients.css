@@ -1,0 +1,84 @@
+/* AllPatients Theme */
+:root { --pt-accent:#0d8c90; --pt-accent-alt:#12b9bf; --pt-soft:#e1f7f9; --pt-text:#034447; --pt-border:#b5e4e7; }
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Large modal overlay */
+.patient-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0,0,0,0.5) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* Large modal container */
+.patient-modal-container {
+  width: 90vw !important;
+  min-width: 600px !important;
+  max-width: 1200px !important;
+  max-height: 90vh !important;
+  height: auto !important;
+  min-height: 70vh !important;
+  background: #fff !important;
+  border-radius: 18px !important;
+  box-shadow: 0 10px 40px 0 rgba(13,140,144,0.2) !important;
+  padding: 0 !important;
+  position: relative !important;
+  border: 2px solid var(--pt-border) !important;
+  margin: auto !important;
+  animation: fadeIn 0.18s !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+}
+
+.all-patients-wrapper { background:rgba(255,255,255,0.85); backdrop-filter:blur(6px); border:1px solid var(--pt-border); border-radius:30px; padding:1.6rem 1.3rem 2rem; margin:2rem auto 2.5rem; width:96%; max-width:1600px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.14); overflow:hidden; }
+.all-patients-wrapper::before, .all-patients-wrapper::after { content:""; position:absolute; border:2px solid var(--pt-accent-alt); border-radius:50%; opacity:.18; pointer-events:none; animation: apPtsFloat 24s linear infinite; }
+.all-patients-wrapper::before { width:1100px; height:1100px; top:-700px; right:-600px; }
+.all-patients-wrapper::after { width:760px; height:760px; bottom:-520px; left:-520px; animation-direction:reverse; }
+@keyframes apPtsFloat { 0%{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.025);} 100%{transform:rotate(360deg) scale(1);} }
+
+.all-patients-wrapper h1 { text-align:center; font-weight:700; color:var(--pt-text); letter-spacing:.5px; margin-bottom:1.4rem; }
+
+.patients-table { width:100%; border-collapse:separate; border-spacing:0; background:#fff; border:1px solid var(--pt-border); box-shadow:0 4px 14px -6px rgba(0,0,0,.1); table-layout: fixed; }
+.patients-table th { background:linear-gradient(135deg,var(--pt-accent),var(--pt-accent-alt)); color:#fff; font-weight:600; font-size:14px; letter-spacing:.05em; border:none; position:sticky; top:0; z-index:2; word-wrap: break-word; white-space: normal; }
+.patients-table th, .patients-table td { padding:.6rem .7rem; border:1px solid var(--pt-border); font-size:14px; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top; hyphens: auto; }
+.patients-table tbody tr:nth-child(even) { background:var(--pt-soft); }
+.patients-table tbody tr:hover { background:#d5f2f5; }
+
+/* Specific styling for long content cells */
+.patients-table td {
+  max-width: 0; /* Force fixed layout to work properly */
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.patient-actions { display:flex; flex-direction:column; gap:.4rem; }
+.patient-actions .pt-btn { font-size:.6rem; padding:.4rem .6rem; border-radius:14px; }
+.pt-btn-update { background:#fff; color:var(--pt-accent); border:1px solid var(--pt-accent); }
+.pt-btn-update:hover { background:var(--pt-soft); }
+.pt-btn-delete { background:linear-gradient(135deg,var(--pt-accent),var(--pt-accent-alt)); color:#fff; border:1px solid var(--pt-accent-alt); }
+.pt-btn-delete:hover { background:linear-gradient(135deg,var(--pt-accent-alt),var(--pt-accent)); }
+
+/* Print button (matches theme) */
+.pt-btn-print { background:linear-gradient(135deg,var(--pt-accent),var(--pt-accent-alt)); color:#fff; border:1px solid var(--pt-accent-alt); padding:.6rem 1.1rem; font-size:.72rem; font-weight:600; border-radius:18px; box-shadow:0 3px 10px -4px rgba(0,0,0,.25); transition:all .25s ease; cursor:pointer; }
+.pt-btn-print:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+.pt-btn-print:not(:disabled):hover { background:linear-gradient(135deg,var(--pt-accent-alt),var(--pt-accent)); transform:translateY(-2px); }
+
+@media (max-width:1100px){ .patients-table { font-size:.58rem; } .patients-table th, .patients-table td { padding:.45rem .5rem; } }
+@media (max-width:640px){ .patients-table { display:block; overflow-x:auto; } .patient-actions { flex-direction:row; } }

@@ -229,7 +229,10 @@ function UpdatePrescription() {
                     />
                 </div>
 
-                <button type="submit" className="btn-ap btn-ap-primary">Update Prescription</button>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                    <button type="submit" className="btn-ap btn-ap-primary">Update Prescription</button>
+                    <button type="button" className="btn-ap btn-ap-outline" onClick={() => navigate('/getPatient')}>Cancel</button>
+                </div>
             </form>
         </div>
     );

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const Patient = require('../models/Patient.js');
+const Patient = require('../models/Medical_Records.js');
 
 // For file upload (photo)
 const multer = require('multer');

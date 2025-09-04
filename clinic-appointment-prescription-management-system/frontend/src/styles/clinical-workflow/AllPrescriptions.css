@@ -107,11 +107,11 @@
 }
 .ap-table-container table table thead th {
   background: var(--ap-accent-alt);
-  font-size: 0.7rem;
+  font-size: 14px;
   padding: 4px 6px;
 }
 .ap-table-container table table tbody td {
-  font-size: 0.65rem;
+  font-size: 14px;
   padding: 3px 6px;
 }
 
@@ -147,21 +147,21 @@
 .ap-tab-body { margin-top:.5rem; animation: fadeIn .3s ease; }
 @keyframes fadeIn { from { opacity:0; transform: translateY(-4px);} to { opacity:1; transform: translateY(0);} }
 
-.ap-fields { display:grid; grid-template-columns: 95px 1fr; gap:.3rem .85rem; font-size:.8rem; margin:0 0 .85rem; }
+.ap-fields { display:grid; grid-template-columns: 95px 1fr; gap:.3rem .85rem; font-size:14px; margin:0 0 .85rem; }
 .ap-fields dt { font-weight:600; color:var(--ap-accent); }
 .ap-fields dd { margin:0; }
 
 .ap-meds-wrapper { background: var(--ap-accent-soft); border-radius:12px; padding:.5rem .6rem; }
-.ap-section-title { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ap-text-dark); margin:0 0 .45rem; font-weight:600; }
+.ap-section-title { font-size:14px; text-transform:uppercase; letter-spacing:.05em; color:var(--ap-text-dark); margin:0 0 .45rem; font-weight:600; }
 .ap-meds-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.4rem; }
-.ap-med-item { background:#fff; border:1px solid var(--ap-border); border-radius:10px; padding:.45rem .6rem; font-size:.75rem; }
-.ap-med-item strong { display:block; font-size:.78rem; color:var(--ap-accent); }
-.ap-med-sub { font-size:.68rem; color:#333; }
+.ap-med-item { background:#fff; border:1px solid var(--ap-border); border-radius:10px; padding:.45rem .6rem; font-size:14px; }
+.ap-med-item strong { display:block; font-size:14px; color:var(--ap-accent); }
+.ap-med-sub { font-size:14px; color:#333; }
 .ap-med-inline { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:.15rem; }
 .ap-med-inline span { white-space:nowrap; }
 
 .ap-actions { text-align:right; }
-.ap-actions .btn { font-size:.65rem; }
+.ap-actions .btn { font-size:14px; }
 
 .ap-empty { background:#fff; border:2px dashed var(--ap-border); border-radius:16px; }
 

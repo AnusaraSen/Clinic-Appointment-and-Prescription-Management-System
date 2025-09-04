@@ -95,7 +95,14 @@ function AllPrescriptions({ search = '' }) {
     <div className="all-prescriptions-wrapper">
       <div className="d-flex justify-content-between align-items-center mb-3 no-print">
         <h2 className="ap-title mb-0">All Prescriptions</h2>
-        <div className="ap-header-actions">
+        <div className="ap-header-actions" style={{ display: 'flex', gap: '0.8rem' }}>
+          <Link 
+            to="/add" 
+            className="btn btn-ap-primary" 
+            style={{ textDecoration: 'none' }}
+          >
+            Add Prescription
+          </Link>
           <button className="btn btn-ap-primary" onClick={handlePrint} disabled={!filtered.length}>Print / Export</button>
         </div>
       </div>
