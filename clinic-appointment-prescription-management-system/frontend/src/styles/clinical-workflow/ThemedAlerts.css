@@ -1,0 +1,35 @@
+/* Themed alert system matching prescription (ap) & patient (pt) palettes */
+:root {
+  --alert-info-bg: linear-gradient(135deg,var(--ap-accent,#007f83), var(--ap-accent-alt,#00b5bb));
+  --alert-success-bg: linear-gradient(135deg,#2e9d5f,#44c27a);
+  --alert-error-bg: linear-gradient(135deg,#ff5a5f,#dc3545);
+  --alert-warning-bg: linear-gradient(135deg,#ffb347,#ff9900);
+  --alert-surface: rgba(255,255,255,0.85);
+  --alert-border: rgba(255,255,255,0.4);
+  --alert-text-light: #fff;
+  --alert-shadow: 0 8px 28px -6px rgba(0,0,0,.25);
+}
+
+.themed-alert-viewport { position:fixed; top:1rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:.75rem; z-index:2000; width:min(92vw,480px); max-width:480px; align-items:stretch; }
+
+.themed-alert { position:relative; padding:.85rem 1rem .85rem 1.05rem; border-radius:18px; color:var(--alert-text-light); font-size:.85rem; font-weight:500; line-height:1.25; cursor:pointer; box-shadow:var(--alert-shadow); backdrop-filter:blur(4px); overflow:hidden; border:1px solid var(--alert-border); animation: alertIn .45s cubic-bezier(.4,.8,.4,1); }
+.themed-alert::before { content:""; position:absolute; inset:0; opacity:.15; background:radial-gradient(circle at 70% 30%,#fff,transparent 70%); pointer-events:none; }
+.themed-alert:hover { transform:translateY(-2px); box-shadow:0 10px 30px -6px rgba(0,0,0,.35); }
+
+.themed-alert-info { background: linear-gradient(135deg,#1d6fd8,#2491ff); }
+.themed-alert-success { background: var(--alert-success-bg); }
+.themed-alert-error { background: var(--alert-error-bg); }
+.themed-alert-warning { background: var(--alert-warning-bg); }
+
+.themed-alert-msg { display:block; padding-right:1.75rem; }
+.themed-alert-close { position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.4); color:#fff; width:26px; height:26px; border-radius:50%; font-size:1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.themed-alert-close:hover { background:rgba(255,255,255,0.35); }
+.themed-alert-close:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+
+@keyframes alertIn { from { opacity:0; transform:translateY(-8px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+/* Exit animation placeholder (could be implemented with state & class toggle) */
+.themed-alert-leaving { animation: alertOut .35s ease forwards; }
+@keyframes alertOut { to { opacity:0; transform:translateY(-6px) scale(.95); } }
+
+@media (max-width:600px) { .themed-alert-viewport { top:.75rem; left:50%; transform:translateX(-50%); width:94vw; } }
