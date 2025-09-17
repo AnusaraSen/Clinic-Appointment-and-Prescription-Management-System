@@ -14,6 +14,9 @@ import AddPatient from './pages/clinical-workflow/medical_records/AddPatient'
 import AllPatients from './pages/clinical-workflow/medical_records/AllPatients'
 import UpdatePatient from './pages/clinical-workflow/medical_records/UpdatePatient'
 import DeletePatient from './pages/clinical-workflow/medical_records/DeletePatient'
+import Dashboard from './pages/clinical-workflow/Dashboard_availability/Dashboard'
+import DoctorProfile from './pages/clinical-workflow/Dashboard_availability/DoctorProfile'
+import DoctorAvailability from './pages/clinical-workflow/Dashboard_availability/DoctorAvailability'
 
 
 function App() {
@@ -28,17 +31,24 @@ const [globalSearch, setGlobalSearch] = useState('');
 
          <Routes>
           {/* Pass searchTerm as prop to AllStudents */}
+
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/doctor-profile" element={<DoctorProfile />} />
           
           <Route path="/add" element={<AddPrescription />} />
+          <Route path="/addPrescription" element={<AddPrescription />} />
           <Route path="/get" element={<AllPrescriptions search={globalSearch} />} />
+          <Route path="/allPrescriptions" element={<AllPrescriptions search={globalSearch} />} />
           <Route path="/update/:id" element={<UpdatePrescription />} />
           <Route path="/delete/:id" element={<DeletePrescription />} />
-
 
           <Route path="/addPatient" element={<AddPatient />} />
           <Route path="/getPatient" element={<AllPatients search={globalSearch} />} />
           <Route path="/updatePatient/:id" element={<UpdatePatient />} />
-          <Route path="/deletePatient/:id" element={<DeletePatient />} /> 
+          <Route path="/deletePatient/:id" element={<DeletePatient />} />
+
+          <Route path="/doctor-availability" element={<DoctorAvailability />} />
 
           
           {/* Add more routes as needed */}
