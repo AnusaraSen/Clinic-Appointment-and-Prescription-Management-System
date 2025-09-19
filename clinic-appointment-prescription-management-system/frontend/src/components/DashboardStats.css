@@ -1,0 +1,652 @@
+/* Dashboard Main Layout */
+.dashboard-main {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+
+
+/* Dashboard Content Layout */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+}
+
+/* Left Content */
+.left-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Statistics Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-card.pending {
+  border-left: 4px solid #f39c12;
+}
+
+.stat-card.dispensed {
+  border-left: 4px solid #27ae60;
+}
+
+.stat-card.low-stock {
+  border-left: 4px solid #e74c3c;
+}
+
+.stat-card.patients {
+  border-left: 4px solid #3498db;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.pending .stat-icon {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.dispensed .stat-icon {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+}
+
+.low-stock .stat-icon {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.patients .stat-icon {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 2px;
+}
+
+.stat-detail {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+/* Recent Prescriptions */
+.recent-prescriptions {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.view-all-btn:hover {
+  text-decoration: underline;
+}
+
+.prescriptions-table {
+  padding: 0;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ecf0f1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7f8c8d;
+  text-transform: uppercase;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ecf0f1;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f8f9fa;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.patient-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.prescription-id {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.time {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.status.status-pending {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.status.status-dispensed {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+}
+
+.action-button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button.pending {
+  background: #3498db;
+  color: white;
+}
+
+.action-button.dispensed {
+  background: #ecf0f1;
+  color: #7f8c8d;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Right Content - Low Stock Medications */
+.right-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.low-stock-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: fit-content;
+}
+
+.alert-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alert-btn:hover {
+  background: #c0392b;
+}
+
+.low-stock-list {
+  padding: 16px;
+}
+
+.medication-item {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.medication-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.medication-info {
+  margin-bottom: 8px;
+}
+
+.medication-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.medication-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.medication-details span:first-child {
+  color: #7f8c8d;
+}
+
+.current-stock.critical {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.current-stock.low {
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.stock-indicator {
+  height: 4px;
+  background: #ecf0f1;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stock-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.stock-bar.critical {
+  background: #e74c3c;
+}
+
+.stock-bar.low {
+  background: #f39c12;
+}
+
+.view-all-stock-btn {
+  width: 100%;
+  padding: 8px;
+  background: #f8f9fa;
+  border: 1px solid #ecf0f1;
+  border-radius: 4px;
+  color: #7f8c8d;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.view-all-stock-btn:hover {
+  background: #ecf0f1;
+}
+
+/* Loading States */
+.dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #7f8c8d;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .table-header span,
+  .table-row span,
+  .table-row button {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .table-header span::after,
+  .table-row span::after {
+    content: attr(data-label);
+    font-weight: 600;
+  }
+}
+
+/* Enhanced Low Stock Medications Styling */
+.medication-item.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.medication-item.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: #f8f9fa;
+}
+
+.medication-item.critical {
+  border-left: 4px solid #dc3545;
+  background-color: #fff5f5;
+}
+
+.medication-item.low {
+  border-left: 4px solid #ffc107;
+  background-color: #fffbf0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-row .label {
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.detail-row .category,
+.detail-row .expiry-date,
+.detail-row .batch-number {
+  font-size: 12px;
+  color: #495057;
+}
+
+.current-stock.critical {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.current-stock.low {
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.critical {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status-badge.low {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.quantity-display {
+  font-size: 18px;
+  font-weight: 700;
+  color: #495057;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* No Low Stock Message */
+.no-low-stock {
+  text-align: center;
+  padding: 32px 16px;
+  color: #28a745;
+}
+
+.no-stock-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.no-stock-message {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Medicine Details Modal */
+.medicine-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.medicine-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.medicine-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.medicine-modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-modal:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.medicine-modal-body {
+  padding: 24px;
+}
+
+.modal-detail-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.modal-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.modal-detail-item:last-child {
+  border-bottom: none;
+}
+
+.modal-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.modal-value {
+  color: #2c3e50;
+  font-weight: 500;
+  text-align: right;
+}
+
+.modal-value.stock-critical {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.modal-value.stock-low {
+  color: #f39c12;
+  font-weight: 700;
+}
+
+.modal-value.action-recommendation {
+  color: #007bff;
+  font-style: italic;
+}
+
+.medicine-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  text-align: right;
+}
+
+.reorder-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reorder-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+  .medicine-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .medicine-modal-header,
+  .medicine-modal-body,
+  .medicine-modal-footer {
+    padding: 16px;
+  }
+  
+  .modal-detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .modal-value {
+    text-align: left;
+  }
+}

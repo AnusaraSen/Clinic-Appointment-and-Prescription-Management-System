@@ -1,0 +1,108 @@
+/* InsertMedicine.css & DeleteMedicine.css - Professional Theme for Medicine Inventory Management */
+
+.medicine-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe, #ffffff, #dbeafe);
+  padding: 2rem;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.medicine-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.medicine-title {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  margin: 0;
+  padding: 2rem 2.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Medicine details display for delete page */
+.medicine-details {
+  padding: 2.5rem;
+  background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 12px;
+  margin: 2rem 2.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row:hover {
+  background-color: #f8fafc;
+  border-radius: 6px;
+  margin: 0 -0.5rem;
+  padding: 1rem 0.5rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  min-width: 150px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #374151;
+  font-size: 1rem;
+  text-align: right;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #e0f2fe;
+  min-width: 200px;
+}
+
+/* Professional button styling */
+.medicine-btn {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  min-width: 120px;
+  box-shadow: 0 4px 15px rgba(7, 89, 133, 0.3);
+}
+
+.medicine-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(7, 89, 133, 0.4);
+  background: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+}
+
+.medicine-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(7, 89, 133, 0.3);
+}
