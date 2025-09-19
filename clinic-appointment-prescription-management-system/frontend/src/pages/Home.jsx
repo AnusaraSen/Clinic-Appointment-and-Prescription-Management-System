@@ -5,12 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import { FaHeartbeat, FaUserMd, FaClock, FaPhoneAlt, FaClinicMedical, FaHome, FaPlus, FaLongArrowAltRight, FaWhatsapp, FaStethoscope, FaSyringe, FaFlask, FaBrain, FaCheck } from 'react-icons/fa';
 // Assets
 import familyCare1 from '../assets/familyCare1.jpg';
-import doc3 from '../assets/doctors/doctor3.svg';
-import doc4 from '../assets/doctors/doctor4.svg';
+import doc3 from '../assets/doctor3.jpg';
+import doc4 from '../assets/doctor4.jpg';
 import doc1 from '../assets/doctor1.jpg';
 import doc2 from '../assets/doctor2.jpg';
 import home1 from '../assets/home1.jpg';
 import home2 from '../assets/home2.jpg';
+import service1 from '../assets/service1.jpg'
+import service2 from '../assets/service2.jpg'
+import service3 from '../assets/service3.jpg'
+import service4 from '../assets/service4.jpg'
 
 const Stat = ({ value, label, circle }) => (
   <div className={`home-stat${circle ? ' home-stat-circle' : ''}`}>

@@ -261,7 +261,7 @@
 .home-actions-row { display: flex; gap: 10px; margin-top: 18px; align-items: center; }
 
 /* Doctors */
-.home-doctors { padding: 24px 20px; max-width: 1100px; margin: 0 auto; }
+.home-doctors { padding: 24px 20px; max-width: 1100px; margin: 0 auto; --doctor-face-focus: 22%; }
 .home-doctors-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .home-doctor-card { background: var(--home-card); border: 1px solid var(--home-outline); border-radius: 14px; padding: 14px; text-align: center; }
 .home-doctor-img { height: 120px; background: linear-gradient(135deg, rgba(30,169,255,0.18), rgba(0,212,255,0.18)); border-radius: 10px; margin-bottom: 10px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative; }
