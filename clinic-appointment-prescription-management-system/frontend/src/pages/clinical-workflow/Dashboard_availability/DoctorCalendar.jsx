@@ -67,13 +67,15 @@ function DoctorCalendar({ doctorId }) {
   .fc-event-actions .btn-update:hover {background:#0b5ed7;}
   .fc-event-actions .btn-delete {background:#dc3545;}
   .fc-event-actions .btn-delete:hover {background:#bb2d3b;}
-  .fc-event-actions .btn-availability {background:#ffe08a; color:#5c4700; font-weight:600;}
+  .fc-event-actions .btn-availability {background:#ffe08a; color:#5c4700; font-weight:600; padding:4px 10px; font-size:12px;}
   .fc-event-actions .btn-availability:hover {background:#ffd567;}
   /* Deviation tags */
   .fc-dev-tag {display:inline-block; padding:2px 6px; border-radius:10px; font-size:10px; font-weight:600; margin-top:2px;}
   .fc-dev-tag.delay {background:#f8d7da; color:#842029;}
   .fc-dev-tag.early {background:#d1e7dd; color:#0f5132;}
   .fc-dev-tag.ontime {background:#d1f7c4; color:#0f5132;}
+  /* Month view: keep tag on same line with 15px spacing from time */
+  .fc-daygrid .fc-daygrid-event .fc-dev-tag { margin-left:15px; margin-top:0; }
       `;
       document.head.appendChild(style);
     }
@@ -404,7 +406,7 @@ function DoctorCalendar({ doctorId }) {
             const range12 = end ? `${fmt12(start)}-${fmt12(end)}` : fmt12(start);
             if (viewType === 'dayGridMonth') {
               const dev = arg.event.extendedProps?.deviationMinutes || 0;
-              return { html: `<div class="fc-slot-time">${range12}</div>${deviationTagHTML(dev,false)}` };
+              return { html: `<span class=\"fc-slot-time\">${range12}</span>${deviationTagHTML(dev,false)}` };
             }
             if (viewType === 'timeGridDay') {
               // Day view: show time (24h for precision) + description

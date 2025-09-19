@@ -1,0 +1,12 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'>
+  <defs>
+    <linearGradient id='g3' x1='0' x2='1' y1='0' y2='1'>
+      <stop offset='0%' stop-color='#d4f5ff'/>
+      <stop offset='100%' stop-color='#afe5f5'/>
+    </linearGradient>
+  </defs>
+  <rect width='400' height='320' rx='28' fill='url(#g3)'/>
+  <circle cx='200' cy='118' r='70' fill='#ffffffb3'/>
+  <rect x='122' y='208' width='156' height='74' rx='20' fill='#ffffffe0'/>
+  <text x='200' y='303' font-size='22' text-anchor='middle' font-family='Arial' fill='#0e6074' font-weight='bold'>Doctor 3</text>
+</svg>

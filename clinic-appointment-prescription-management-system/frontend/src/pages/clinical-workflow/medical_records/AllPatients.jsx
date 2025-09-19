@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '../../../styles/clinical-workflow/AllPatients.css';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAlert } from '../prescriptions/AlertProvider.jsx';
 
 function AllPatients({ search = '' }) {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
   const [openTabs, setOpenTabs] = useState([]); // [{_id, patient}]
   const [activeTab, setActiveTab] = useState(null);
@@ -132,6 +133,20 @@ function AllPatients({ search = '' }) {
       <div className="no-print" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
         <h1 style={{margin:0}}>All Patients</h1>
         <div style={{display:'flex', gap:'0.8rem', alignItems:'center'}}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="pt-btn pt-btn-print"
+            style={{
+              background: 'linear-gradient(135deg, #0b5ed7, #3b82f6)',
+              color: '#fff',
+              border: '1px solid #0b5ed7',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            Go to Dashboard
+          </button>
           <Link 
             to="/addPatient" 
             className="pt-btn pt-btn-print" 

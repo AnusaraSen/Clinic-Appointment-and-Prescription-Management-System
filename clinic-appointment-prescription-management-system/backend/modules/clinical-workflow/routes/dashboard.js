@@ -23,12 +23,12 @@ router.get('/stats', async (req, res) => {
       }
     });
 
-    // Patients seen today
-    const patientsSeen = await Appointment.countDocuments({
-      appointment_date: {
-        $gte: today,
-        $lt: tomorrow
-      },
+    // Patients Seen = total number of medical records in the system
+    const patientsSeen = await Patient.countDocuments({});
+
+    // Completed appointments today (for target percentage)
+    const completedToday = await Appointment.countDocuments({
+      appointment_date: { $gte: today, $lt: tomorrow },
       status: 'completed'
     });
 
@@ -45,9 +45,11 @@ router.get('/stats', async (req, res) => {
       Date: { $gte: weekAgo }
     });
 
-    // Calculate daily target percentage for patients seen
-    const dailyTarget = 5; // Assuming target of 5 patients per day
-    const targetPercentage = Math.round((patientsSeen / dailyTarget) * 100);
+    // Calculate % of daily target: completed visits vs fixed target (10 for testing)
+    const dailyTarget = 10;
+    const targetPercentage = dailyTarget > 0
+      ? Math.max(0, Math.min(100, Math.round((completedToday / dailyTarget) * 100)))
+      : 0;
 
     res.json({
       todayAppointments,

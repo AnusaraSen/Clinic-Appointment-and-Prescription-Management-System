@@ -17,6 +17,7 @@ import DeletePatient from './pages/clinical-workflow/medical_records/DeletePatie
 import Dashboard from './pages/clinical-workflow/Dashboard_availability/Dashboard'
 import DoctorProfile from './pages/clinical-workflow/Dashboard_availability/DoctorProfile'
 import DoctorAvailability from './pages/clinical-workflow/Dashboard_availability/DoctorAvailability'
+import Home from './pages/Home'
 
 
 function App() {
@@ -32,7 +33,7 @@ const [globalSearch, setGlobalSearch] = useState('');
          <Routes>
           {/* Pass searchTerm as prop to AllStudents */}
 
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/doctor-profile" element={<DoctorProfile />} />
           

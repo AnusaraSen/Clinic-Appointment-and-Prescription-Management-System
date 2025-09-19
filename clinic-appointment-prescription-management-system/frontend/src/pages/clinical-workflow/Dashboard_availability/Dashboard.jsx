@@ -24,11 +24,12 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      const base = 'http://localhost:5000';
       const [statsRes, appointmentsRes, tasksRes, activitiesRes] = await Promise.all([
-        axios.get('http://localhost:4000/dashboard/stats'),
-        axios.get('http://localhost:4000/dashboard/appointments/today'),
-        axios.get('http://localhost:4000/dashboard/tasks/urgent'),
-        axios.get('http://localhost:4000/dashboard/activities/recent')
+        axios.get(`${base}/dashboard/stats`),
+        axios.get(`${base}/dashboard/appointments/today`),
+        axios.get(`${base}/dashboard/tasks/urgent`),
+        axios.get(`${base}/dashboard/activities/recent`)
       ]);
 
       setStats(statsRes.data);
@@ -44,7 +45,8 @@ const Dashboard = () => {
 
   const updateAppointmentStatus = async (appointmentId, status) => {
     try {
-      await axios.patch(`http://localhost:4000/dashboard/appointments/${appointmentId}/status`, { status });
+  const base = 'http://localhost:5000';
+  await axios.patch(`${base}/dashboard/appointments/${appointmentId}/status`, { status });
       fetchDashboardData(); // Refresh data
     } catch (error) {
       console.error('Error updating appointment status:', error);
@@ -53,7 +55,8 @@ const Dashboard = () => {
 
   const completeTask = async (taskId) => {
     try {
-      await axios.patch(`http://localhost:4000/dashboard/tasks/${taskId}/complete`);
+  const base = 'http://localhost:5000';
+  await axios.patch(`${base}/dashboard/tasks/${taskId}/complete`);
       fetchDashboardData(); // Refresh data
     } catch (error) {
       console.error('Error completing task:', error);
