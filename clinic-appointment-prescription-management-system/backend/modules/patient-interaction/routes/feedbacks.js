@@ -1,6 +1,6 @@
-import express from "express";
-import Feedback from "../models/Feedbacks.js";
-import Appointment from "../models/Appointments.js";
+const express = require("express");
+const Feedback = require("../models/Feedbacks.js");
+const Appointment = require("../models/Appointments.js");
 
 const router = express.Router();
 
@@ -91,4 +91,4 @@ router.delete("/delete/:id", async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;

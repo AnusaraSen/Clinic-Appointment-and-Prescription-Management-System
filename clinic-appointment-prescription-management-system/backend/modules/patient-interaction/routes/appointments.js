@@ -1,8 +1,8 @@
-import express from "express";
-import mongoose from "mongoose";
-import Appointment from "../models/Appointments.js";
-import Patient from "../models/Patient.js"; // ensures model registered
-import Doctor from "../models/Doctor.js";
+const express = require("express");
+const mongoose = require("mongoose");
+const Appointment = require("../models/Appointments.js");
+const Patient = require("../models/Patient.js"); // ensures model registered
+const Doctor = require("../models/Doctor.js");
 
 const router = express.Router();
 
@@ -190,4 +190,4 @@ router.delete("/delete/:id", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

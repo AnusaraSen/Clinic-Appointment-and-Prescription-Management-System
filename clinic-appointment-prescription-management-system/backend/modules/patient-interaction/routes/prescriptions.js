@@ -1,5 +1,5 @@
-import express from "express";
-import mongoose from "mongoose";
+const express = require("express");
+const mongoose = require("mongoose");
 
 // Dynamic model to match existing 'prescriptions' collection with denormalized fields
 const prescriptionSchema = new mongoose.Schema({}, { strict: false, collection: "prescriptions" });
@@ -63,4 +63,4 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

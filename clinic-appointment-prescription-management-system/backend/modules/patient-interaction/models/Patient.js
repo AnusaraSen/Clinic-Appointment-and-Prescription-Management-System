@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const patientSchema = new mongoose.Schema(
   {
@@ -43,4 +43,4 @@ patientSchema.set("toJSON", {
 patientSchema.index({ patient_id: 1 }, { unique: true });
 
 const Patient = mongoose.models.Patient || mongoose.model("Patient", patientSchema);
-export default Patient;
+module.exports = Patient;

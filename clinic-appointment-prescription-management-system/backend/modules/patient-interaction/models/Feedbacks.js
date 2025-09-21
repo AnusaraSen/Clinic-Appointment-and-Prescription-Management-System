@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const feedbackSchema = new mongoose.Schema({
 
@@ -29,4 +29,4 @@ const feedbackSchema = new mongoose.Schema({
     
 });
 
-export default mongoose.model("Feedback", feedbackSchema);
+module.exports = mongoose.models.Feedback || mongoose.model("Feedback", feedbackSchema);

@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../css/UpdateAppointments.css";
+import "../../styles/Patient-Interaction/UpdateAppointments.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 
 function UpdateAppointments() {
   const [id, setId] = useState("");

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../css/DeleteFeedback.css";
+import "../../styles/Patient-Interaction/DeleteFeedback.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 
 function DeleteFeedback() {
   const [id, setId] = useState("");

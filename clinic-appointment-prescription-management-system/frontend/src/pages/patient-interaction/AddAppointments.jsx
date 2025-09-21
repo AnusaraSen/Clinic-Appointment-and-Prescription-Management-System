@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
-import "../css/AddAppointments.css";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
+import "../../styles/Patient-Interaction/AddAppointments.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function AddAppointments() {

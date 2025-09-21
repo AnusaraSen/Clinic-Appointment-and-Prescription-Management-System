@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { CalendarClock, ArrowLeft, Download } from "lucide-react";
 import { jsPDF } from "jspdf";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 
 function formatDateOnly(value) {
   if (!value) return "-";

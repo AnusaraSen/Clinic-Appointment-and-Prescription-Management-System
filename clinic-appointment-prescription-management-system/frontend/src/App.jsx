@@ -130,7 +130,7 @@ const [globalSearch, setGlobalSearch] = useState('');
           <Route path="/appointment/:id" element={<AppointmentDetails />} />
           
           {/* Dashboard Sub-routes */}
-          <Route path="/dashboard/:code" element={<PatientDashboard />} />
+          <Route path="/dashboard/patient" element={<PatientDashboard />} />
           <Route path="/dashboard/prescriptions" element={<Prescriptions />} />
           <Route path="/dashboard/medical-records" element={<MedicalRecords />} />
           <Route path="/dashboard/lab-reports" element={<LabReports />} />

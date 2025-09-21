@@ -3,15 +3,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-import appointmentRouter from "./routes/appointments.js";
-import feedbackRouter from "./routes/feedbacks.js";
-import prescriptionsRouter from "./routes/prescriptions.js";
-import patientsRouter from "./routes/patients.js";
 
 const app = express();
 // Load .env from this directory explicitly to avoid cwd issues when starting server
 dotenv.config({ path: path.resolve(__dirname, '.env') });
-
 
 const PORT = process.env.PORT || 5000;
 
@@ -25,7 +20,6 @@ app.use((req, res, next) => {
     next();
 });
 
-
 const URL = process.env.MONGODB_URL;
 
 mongoose.connect(URL)
@@ -36,7 +30,7 @@ mongoose.connect(URL)
     console.error('Error connecting to MongoDB:', error);
 });
 
-
+// Route imports - clinical workflow
 const prescriptionRouter = require('./modules/clinical-workflow/routes/prescriptions.js');
 app.use('/prescription', prescriptionRouter);
 
@@ -49,18 +43,23 @@ app.use('/dashboard', dashboardRouter);
 const availabilityRoutes = require('./modules/clinical-workflow/routes/AvailabilityRoutes');
 app.use('/api/availability', availabilityRoutes);
 
-// Route imports - pharmacist
+// Route imports - pharmacy inventory
 const medicineRoutes = require('./modules/pharmacy-inventory/routes/medicineRoutes');
 const labInventoryRoutes = require('./modules/pharmacy-inventory/routes/labInventoryRoutes');
 const authRoutes = require('./modules/user/routes/authRoutes');
 const pharmacistRoutes = require('./modules/workforce-facility/routes/pharmacistRoutes');
 
-
-// Routes - pharmacist
+// Routes - pharmacy
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/lab-inventory", labInventoryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/pharmacist", pharmacistRoutes);
+
+// Route imports - patient interaction (converted to CommonJS temporarily)
+const appointmentRouter = require("./modules/patient-interaction/routes/appointments.js");
+const feedbackRouter = require("./modules/patient-interaction/routes/feedbacks.js");
+const prescriptionsRouter = require("./modules/patient-interaction/routes/prescriptions.js");
+const patientsRouter = require("./modules/patient-interaction/routes/patients.js");
 
 app.use("/appointment", appointmentRouter);
 app.use("/appointments", appointmentRouter);
@@ -78,7 +77,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler (Express 5: remove '*' pattern to avoid path-to-regexp error)
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,

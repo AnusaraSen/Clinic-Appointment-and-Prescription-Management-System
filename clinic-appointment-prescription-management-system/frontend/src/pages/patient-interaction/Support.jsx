@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import Sidebar from '../../components/SidebarPatient';
+import Topbar from '../../components/Topbar';
 
 const Support = () => (
   <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f7fa' }}>

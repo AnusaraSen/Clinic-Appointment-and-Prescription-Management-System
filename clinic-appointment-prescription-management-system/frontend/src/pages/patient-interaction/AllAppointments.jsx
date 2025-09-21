@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../css/AllAppointments.css";
+import "../../styles/Patient-Interaction/AllAppointments.css";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 
 function formatDateOnly(value) {
   if (!value) return "-";

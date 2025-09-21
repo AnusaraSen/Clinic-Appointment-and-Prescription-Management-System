@@ -1,9 +1,9 @@
-import express from "express";
-import mongoose from "mongoose";
-import Patient from "../models/Patient.js";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+const express = require("express");
+const mongoose = require("mongoose");
+const Patient = require("../models/Patient.js");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const router = express.Router();
 
@@ -170,8 +170,6 @@ router.delete("/code/:code", async (req, res) => {
   }
 });
 
-export default router;
-
 // Upload medical files
 router.post("/id/:id/medical-files", upload.array("files", 10), async (req, res) => {
   try {
@@ -238,3 +236,5 @@ router.delete("/id/:id/medical-files/:fileId", async (req, res) => {
     return res.status(500).json({ message: err.message || "Failed to delete file" });
   }
 });
+
+module.exports = router;

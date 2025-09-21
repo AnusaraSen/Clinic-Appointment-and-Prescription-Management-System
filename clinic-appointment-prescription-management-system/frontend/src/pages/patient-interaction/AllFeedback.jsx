@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../css/AllFeedback.css";
+import "../../styles/Patient-Interaction/AllFeedback.css";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 import { Star, Pencil, Trash2 } from "lucide-react";
 
 function formatDateTime(value) {

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -9,5 +9,5 @@ const doctorSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-const Doctor = mongoose.model("Doctor", doctorSchema, "doctors");
-export default Doctor;
+const Doctor = mongoose.models.Doctor || mongoose.model("Doctor", doctorSchema, "doctors");
+module.exports = Doctor;

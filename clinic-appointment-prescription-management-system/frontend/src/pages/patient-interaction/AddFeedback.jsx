@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "../css/AddFeedback.css";
+import "../../styles/Patient-Interaction/AddFeedback.css";
 import { useNavigate } from "react-router-dom";
-import Topbar from "../components/Topbar";
-import Sidebar from "../components/Sidebar";
+import Topbar from "../../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
 
 function AddFeedback() {
   const navigate = useNavigate();

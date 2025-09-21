@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, FileText, FolderOpen, Activity, ClipboardList, HelpCircle, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import '../css/Sidebar.css';
+import '../styles/Patient-Interaction/Sidebar.css';
 
 const navItems = [
   { label: 'My Account', icon: <User size={20} />, to: '/dashboard' },

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
 import { CheckCircle2, UploadCloud, Trash2, Download } from "lucide-react";
-import "../css/PatientProfile.css";
+import "../../styles/Patient-Interaction/PatientProfile.css";
 
 export default function PatientProfile() {
   const { id } = useParams();

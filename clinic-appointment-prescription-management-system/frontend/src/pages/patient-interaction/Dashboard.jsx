@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarClock, FileText, Activity, CheckCircle, Eye, Pencil, Trash2 } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import Sidebar from '../../components/SidebarPatient';
+import Topbar from '../../components/Topbar';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
-import '../css/Dashboard.css';
+import '../../styles/Patient-Interaction/Dashboard.css';
 
 const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);

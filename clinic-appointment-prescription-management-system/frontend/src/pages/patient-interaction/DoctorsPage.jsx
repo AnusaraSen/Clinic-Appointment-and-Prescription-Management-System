@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
-import "../css/DoctorsPage.css";
+import Sidebar from "../../components/SidebarPatient";
+import Topbar from "../../components/Topbar";
+import "../../styles/Patient-Interaction/DoctorsPage.css";
 
 function DoctorsPage() {
 	const doctors = [
