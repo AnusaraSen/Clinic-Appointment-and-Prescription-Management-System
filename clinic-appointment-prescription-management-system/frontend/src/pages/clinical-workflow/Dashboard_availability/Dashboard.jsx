@@ -147,9 +147,9 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="stat-icon orange">💊</div>
             <div className="stat-content">
-              <h3>Prescriptions Issued</h3>
+              <h3>Total Prescriptions</h3>
               <div className="stat-number">{stats.prescriptionsIssued}</div>
-              <div className="stat-change positive">+5 from yesterday</div>
+              <div className="stat-change">All prescriptions issued</div>
             </div>
           </div>
         </div>

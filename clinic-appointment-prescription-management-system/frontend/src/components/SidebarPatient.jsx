@@ -18,9 +18,9 @@ const Sidebar = () => {
   const location = useLocation();
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
+      {/* <div className="sidebar-header">
         <span className="logo">HealthConnect</span>
-      </div>
+      </div> */}
       <nav>
         <ul>
           {navItems.map(item => {

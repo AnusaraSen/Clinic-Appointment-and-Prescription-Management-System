@@ -44,6 +44,7 @@ import UpdateFeedback from "./pages/patient-interaction/UpdateFeedback";
 import DeleteFeedback from "./pages/patient-interaction/DeleteFeedback";
 import PatientDashboard from "./pages/patient-interaction/Dashboard";
 import DoctorsPage from "./pages/patient-interaction/DoctorsPage";
+import CompletedVisits from "./pages/patient-interaction/CompletedVisits";
 import Prescriptions from "./pages/patient-interaction/Prescriptions";
 import MedicalRecords from "./pages/patient-interaction/MedicalRecords";
 import LabReports from "./pages/patient-interaction/LabReports";
@@ -114,14 +115,20 @@ const [globalSearch, setGlobalSearch] = useState('');
 
           {/* Patient Interaction Routes */}
           <Route path="/patient-dashboard" element={<PatientDashboard />} />
+          <Route path="/completed-visits" element={<CompletedVisits />} />
           <Route path="/appointments" element={<AllAppointments />} />
           <Route path="/appointments/add" element={<AddAppointments />} />
           <Route path="/appointments/update/:id" element={<UpdateAppointments />} />
           <Route path="/appointments/delete/:id" element={<DeleteAppointments />} />
           
+          {/* Additional appointment routes for query parameter navigation */}
+          <Route path="/update" element={<UpdateAppointments />} />
+          <Route path="/delete" element={<DeleteAppointments />} />
+          
           {/* Feedback Routes */}
           <Route path="/feedback" element={<AllFeedback />} />
           <Route path="/feedback/add" element={<AddFeedback />} />
+          <Route path="/add-feedback" element={<AddFeedback />} />
           <Route path="/feedback/update/:id" element={<UpdateFeedback />} />
           <Route path="/feedback/delete/:id" element={<DeleteFeedback />} />
           

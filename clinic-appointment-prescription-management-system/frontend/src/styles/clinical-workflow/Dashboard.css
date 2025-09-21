@@ -1,3 +1,22 @@
+/* Clinical Layout Structure */
+.clinical-main-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.clinical-main-content {
+  flex: 1;
+  margin-left: 280px; /* Match ClinicalSidebar width */
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+}
+
+/* When sidebar is collapsed */
+body.clinical-sidebar-collapsed .clinical-main-content {
+  margin-left: 70px; /* Match collapsed sidebar width */
+}
+
 /* Dashboard Layout */
 .dashboard-layout {
   display: flex;
@@ -5,84 +24,11 @@
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  background: linear-gradient(135deg, #0d8c90 0%, #0a7075 100%);
-  color: white;
-  position: fixed;
-  height: 100vh;
-  left: -250px;
-  transition: left 0.3s ease;
-  z-index: 1000;
-  overflow-y: auto;
-  box-shadow: 2px 0 10px rgba(13, 140, 144, 0.3);
-}
-
-.sidebar-open {
-  left: 0;
-}
-
-.sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  display: none;
-}
-
-.sidebar-nav {
-  padding: 1rem 0;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border-left: 4px solid transparent;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border-left-color: white;
-}
-
-.nav-icon {
-  margin-right: 0.75rem;
-  font-size: 1.1rem;
-}
-
 /* Main Content */
 .dashboard-main {
   flex: 1;
-  margin-left: 0;
-  transition: margin-left 0.3s ease;
+  width: 100%;
+  background: #f8fafc;
 }
 
 .dashboard-header {
@@ -113,72 +59,6 @@
   margin: 0;
   font-size: 1.5rem;
   color: #1f2937;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  background: linear-gradient(180deg, #0d8c90 0%, #0a7075 100%);
-  color: white;
-  position: fixed;
-  top: 64px; /* <-- Adjust this height to match your NavBar height */
-  height: calc(100vh - 64px); /* Sidebar height adjusted */
-  left: 0;
-  transition: all 0.3s ease;
-  z-index: 999;
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.sidebar-header {
-  padding: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  text-align: center;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 0.9rem 1.5rem;
-  color: rgba(255, 255, 255, 0.85);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-left: 4px solid transparent;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border-left: 4px solid #ffffff;
-}
-
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-left: 4px solid #fff;
-}
-
-.nav-icon {
-  margin-right: 0.8rem;
-  font-size: 1.2rem;
-}
-
-.dashboard-main {
-  flex: 1;
-  margin-left: 250px; /* space for sidebar */
-  transition: margin-left 0.3s ease;
-  padding-top: 64px; /* same as navbar height */
 }
 
 .header-right {
@@ -237,7 +117,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  padding: 2rem;
+  padding: 1rem 1.5rem 2rem 0;
 }
 
 .stat-card {
@@ -319,7 +199,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-  padding: 0 2rem;
+  padding: 0 1.5rem 2rem 0;
   margin-bottom: 2rem;
 }
 
@@ -574,7 +454,7 @@
 
 /* Activity Section */
 .activity-section {
-  margin: 0 2rem 2rem 2rem;
+  margin: 0 1.5rem 2rem 0;
 }
 
 .activity-list {
@@ -667,6 +547,10 @@
 }
 
 @media (max-width: 768px) {
+  .clinical-main-content {
+    margin-left: 0;
+  }
+  
   .sidebar {
     width: 100%;
     left: -100%;
@@ -678,6 +562,16 @@
   
   .stats-grid {
     grid-template-columns: 1fr;
+    padding: 1rem 0;
+  }
+  
+  .content-grid {
+    grid-template-columns: 1fr;
+    padding: 0 0 2rem 0;
+  }
+  
+  .activity-section {
+    margin: 0 0 2rem 0;
   }
   
   .appointment-item {

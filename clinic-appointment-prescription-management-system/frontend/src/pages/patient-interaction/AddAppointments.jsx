@@ -27,13 +27,38 @@ function AddAppointments() {
   console.log('Doctor used for card:', doctor);
   const [form, setForm] = useState({
     patient_id: "",
+    patient_name: "",
     doctor_id: "",
-    date: "",
-    time: "",
+    doctor_name: "",
+    appointment_date: "",
+    appointment_time: "",
+    appointment_type: "Consultation",
     reason: "",
     follow_up_date: "",
     follow_up_time: ""
   });
+
+  // Update form when doctor is selected
+  React.useEffect(() => {
+    if (doctor) {
+      setForm(prevForm => ({
+        ...prevForm,
+        doctor_id: doctor.id || "", // Use doctor's ID if available
+        doctor_name: doctor.name || ""
+      }));
+    }
+  }, [doctor]);
+
+  // Update form when doctor is selected
+  React.useEffect(() => {
+    if (doctor) {
+      setForm(prevForm => ({
+        ...prevForm,
+        doctor_id: doctor.id || doctor._id || "", // Use doctor's ID
+        doctor_name: doctor.name || ""
+      }));
+    }
+  }, [doctor]);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,20 +68,24 @@ function AddAppointments() {
     e.preventDefault();
 
     // Basic client-side validation
-    if (!form.patient_id || !form.doctor_id) {
-      alert("Patient ID and Doctor ID are required and must be valid IDs.");
+    if (!form.patient_id) {
+      alert("Patient ID is required.");
+      return;
+    }
+    
+    if (!form.patient_name) {
+      alert("Patient name is required.");
+      return;
+    }
+    
+    if (!form.doctor_name || !doctor) {
+      alert("Please select a doctor from the Doctors page first.");
       return;
     }
 
-    // Validate ObjectId-ish strings (24 hex chars) to avoid backend CastError
-    const isLikelyObjectId = (s) => /^[a-fA-F0-9]{24}$/.test(s);
-    if (!isLikelyObjectId(form.patient_id) || !isLikelyObjectId(form.doctor_id)) {
-      if (!window.confirm("Patient ID or Doctor ID does not look like a 24-character ObjectId. Continue anyway?")) return;
-    }
-
     // Ensure date is not in the past (simple check)
-    if (form.date) {
-      const d = new Date(form.date);
+    if (form.appointment_date) {
+      const d = new Date(form.appointment_date);
       const now = new Date();
       // normalize to date-only for comparison
       d.setHours(0, 0, 0, 0);
@@ -69,18 +98,22 @@ function AddAppointments() {
 
     const appointment = {
       patient_id: form.patient_id,
-      doctor_id: form.doctor_id,
-      date: form.date,
-      time: form.time,
+      patient_name: form.patient_name,
+      appointment_date: form.appointment_date,
+      appointment_time: form.appointment_time,
+      appointment_type: form.appointment_type,
+      doctor_name: form.doctor_name,
       reason: form.reason,
+      notes: form.reason,
+      status: "upcoming",
       follow_up: form.follow_up_date || form.follow_up_time ? { date: form.follow_up_date || undefined, time: form.follow_up_time || undefined } : undefined
     };
     try {
       // prefer proxy so dev server forwards to backend
       await axios.post("http://localhost:5000/appointment/add", appointment, { timeout: 5000 });
-      window.alert("Appointment added!");
-      // redirect to dashboard after adding
-      navigate("/dashboard");
+      window.alert("Appointment added successfully!");
+      // redirect to patient dashboard after adding
+      navigate("/patient-dashboard");
     } catch (err) {
       // show detailed server error when available
       const serverMsg = err?.response?.data || err?.message || JSON.stringify(err);
@@ -155,20 +188,42 @@ function AddAppointments() {
                   <input id="patient_id" name="patient_id" value={form.patient_id} onChange={handleChange} placeholder="Patient ID" required />
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <label htmlFor="doctor_id">Doctor ID</label>
-                  <input id="doctor_id" name="doctor_id" value={form.doctor_id} onChange={handleChange} placeholder="Doctor ID" required />
+                  <label htmlFor="patient_name">Patient Name</label>
+                  <input id="patient_name" name="patient_name" value={form.patient_name} onChange={handleChange} placeholder="Patient Name" required />
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <label htmlFor="date">Date</label>
-                  <input id="date" name="date" type="date" value={form.date} onChange={handleChange} required />
+                  <label htmlFor="doctor_name">Selected Doctor</label>
+                  <input 
+                    id="doctor_name" 
+                    name="doctor_name" 
+                    value={form.doctor_name} 
+                    placeholder="Doctor Name" 
+                    readOnly 
+                    style={{ backgroundColor: '#f0f8ff', color: '#008080', fontWeight: 600 }}
+                  />
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <label htmlFor="time">Time</label>
-                  <input id="time" name="time" type="time" value={form.time} onChange={handleChange} required />
+                  <label htmlFor="appointment_date">Appointment Date</label>
+                  <input id="appointment_date" name="appointment_date" type="date" value={form.appointment_date} onChange={handleChange} required />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label htmlFor="appointment_time">Appointment Time</label>
+                  <input id="appointment_time" name="appointment_time" type="time" value={form.appointment_time} onChange={handleChange} required />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label htmlFor="appointment_type">Appointment Type</label>
+                  <select id="appointment_type" name="appointment_type" value={form.appointment_type} onChange={handleChange} required>
+                    <option value="Consultation">Consultation</option>
+                    <option value="Annual Checkup">Annual Checkup</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Blood Test Results">Blood Test Results</option>
+                    <option value="Prescription Renewal">Prescription Renewal</option>
+                    <option value="Emergency">Emergency</option>
+                  </select>
                 </div>
 
                 <div style={{ marginBottom: 8 }}>
-                  <label htmlFor="reason">Reason</label>
+                  <label htmlFor="reason">Reason/Notes</label>
                   <input id="reason" name="reason" value={form.reason} onChange={handleChange} placeholder="Reason" required />
                 </div>
                 <div style={{ marginBottom: 8 }}>

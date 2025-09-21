@@ -8,36 +8,42 @@ import "../../styles/Patient-Interaction/DoctorsPage.css";
 function DoctorsPage() {
 	const doctors = [
 		{
+			id: "507f1f77bcf86cd799439011", // Mock ObjectId for Dr. Emily Rodriguez
 			name: "Dr. Emily Rodriguez",
 			specialty: "Pediatrics",
 			rating: 4.7,
 			avatar: "https://randomuser.me/api/portraits/women/44.jpg"
 		},
 		{
+			id: "507f1f77bcf86cd799439012", // Mock ObjectId for Dr. James Wilson
 			name: "Dr. James Wilson",
 			specialty: "Orthopedics",
 			rating: 4.6,
 			avatar: "https://randomuser.me/api/portraits/men/45.jpg"
 		},
 		{
+			id: "507f1f77bcf86cd799439013", // Mock ObjectId for Dr. Lisa Patel
 			name: "Dr. Lisa Patel",
 			specialty: "Dermatology",
 			rating: 4.8,
 			avatar: "https://randomuser.me/api/portraits/women/46.jpg"
 		},
 		{
+			id: "507f1f77bcf86cd799439014", // Mock ObjectId for Dr. Michael Chen
 			name: "Dr. Michael Chen",
 			specialty: "Neurology",
 			rating: 4.8,
 			avatar: "https://randomuser.me/api/portraits/men/47.jpg"
 		},
 		{
+			id: "507f1f77bcf86cd799439015", // Mock ObjectId for Dr. Robert Kim
 			name: "Dr. Robert Kim",
 			specialty: "Ophthalmology",
 			rating: 4.7,
 			avatar: "https://randomuser.me/api/portraits/men/48.jpg"
 		},
 		{
+			id: "507f1f77bcf86cd799439016", // Mock ObjectId for Dr. Sarah Johnson
 			name: "Dr. Sarah Johnson",
 			specialty: "Cardiology",
 			rating: 4.9,
@@ -102,7 +108,7 @@ function DoctorsPage() {
 									<div className="doctor-rating">
 										<Star size={18} fill="#fbbf24" color="#fbbf24" /> {doc.rating}
 									</div>
-									<button className="doctor-request-btn" onClick={() => navigate('/add', { state: { doctor: doc } })}>Request Appointment</button>
+									<button className="doctor-request-btn" onClick={() => navigate('/appointments/add', { state: { doctor: doc } })}>Request Appointment</button>
 								</div>
 							))}
 						</div>

@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Appointment = require("../models/Appointments.js");
+const Appointment = require("../models/Appointments.js"); // This will be PatientAppointment model
 const Patient = require("../models/Patient.js"); // ensures model registered
 const Doctor = require("../models/Doctor.js");
 
@@ -22,15 +22,20 @@ router.get("/ping", (_req, res) => {
 // ✅ Add appointment
 //http://localhost:5000/appointments/add
 router.post("/add", async (req, res) => {
-  const { patient_id, doctor_id, date, time, status, reason, follow_up } = req.body;
+  const { patient_id, patient_name, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
 
   const appointmentData = {
     patient_id,
+    patient_name,
     doctor_id,
-    date: date ? new Date(date) : undefined,
-    time,
+    doctor_name,
+    doctor_specialty,
+    appointment_date: appointment_date ? new Date(appointment_date) : undefined,
+    appointment_time,
+    appointment_type,
     status,
     reason,
+    notes,
     follow_up: follow_up
       ? {
           date: follow_up.date ? new Date(follow_up.date) : undefined,
@@ -155,15 +160,20 @@ router.get("/by-patient/:id", async (req, res) => {
 
 // ✅ Update appointment
 router.put("/update/:id", async (req, res) => {
-  const { patient_id, doctor_id, date, time, status, reason, follow_up } = req.body;
+  const { patient_id, patient_name, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
 
   const updateData = {
     patient_id,
+    patient_name,
     doctor_id,
-    date: date ? new Date(date) : undefined,
-    time,
+    doctor_name,
+    doctor_specialty,
+    appointment_date: appointment_date ? new Date(appointment_date) : undefined,
+    appointment_time,
+    appointment_type,
     status,
     reason,
+    notes,
     follow_up: follow_up
       ? {
           date: follow_up.date ? new Date(follow_up.date) : undefined,

@@ -136,11 +136,13 @@ function AppointmentDetails() {
 
     // Prepare display text for patient and doctor
     // Prefer populated objects from backend (appointment.patient, appointment.doctor)
-    const patientText = appointment.patient?.name
+    const patientText = appointment.patient_name
+      || appointment.patient?.name
       || (appointment.patient_id && typeof appointment.patient_id === 'object' ? (appointment.patient_id.name || appointment.patient_id._id) : null)
       || (typeof appointment.patient_id === 'string' ? appointment.patient_id : '-')
       ;
-    const doctorText = appointment.doctor?.name
+    const doctorText = appointment.doctor_name
+      || appointment.doctor?.name
       || (appointment.doctor_id && typeof appointment.doctor_id === 'object' ? (appointment.doctor_id.name || appointment.doctor_id._id) : null)
       || (typeof appointment.doctor_id === 'string' ? appointment.doctor_id : '-')
       ;
@@ -152,13 +154,13 @@ function AppointmentDetails() {
 
     // Right column
     let y2 = cardY + 22;
-    label("Date & Time", col2, y2); value(`${formatDateOnly(appointment.date)} ${appointment.time || "-"}`, col2, y2 + 14); y2 += lineGap + 14;
+    label("Date & Time", col2, y2); value(`${formatDateOnly(appointment.appointment_date || appointment.date)} ${appointment.appointment_time || appointment.time || "-"}`, col2, y2 + 14); y2 += lineGap + 14;
     label("Status", col2, y2); value(appointment.status || "-", col2, y2 + 14); y2 += lineGap + 14;
     label("Created", col2, y2); value(appointment.created_at ? new Date(appointment.created_at).toLocaleString() : "-", col2, y2 + 14); y2 += lineGap + 14;
 
     // Full-width section for reason and follow-up
     let y3 = Math.max(y, y2) + 12;
-    label("Reason", col1, y3); value(appointment.reason || "-", col1, y3 + 14); y3 += lineGap + 14;
+    label("Reason", col1, y3); value(appointment.reason || appointment.notes || "-", col1, y3 + 14); y3 += lineGap + 14;
     label("Follow-up", col1, y3);
     const followStr = `${appointment?.follow_up?.date ? formatDateOnly(appointment.follow_up.date) : "-"} ${appointment?.follow_up?.time || ""}`.trim();
     value(followStr, col1, y3 + 14);
@@ -225,7 +227,8 @@ function AppointmentDetails() {
                       <div style={{ color: '#111827', fontSize: 14, marginBottom: 12 }}>
                         {(() => {
                           const pid = (typeof appointment.patient_id === 'object') ? appointment.patient_id?._id : appointment.patient_id;
-                          const pname = appointment.patient?.name
+                          const pname = appointment.patient_name
+                            || appointment.patient?.name
                             || (appointment.patient_id && typeof appointment.patient_id === 'object' ? (appointment.patient_id.name || appointment.patient_id._id) : null)
                             || (typeof appointment.patient_id === 'string' ? appointment.patient_id : '-');
                           return pid ? (
@@ -238,7 +241,8 @@ function AppointmentDetails() {
 
                       <div style={{ color: '#6b7280', fontSize: 12 }}>Doctor</div>
                       <div style={{ color: '#111827', fontSize: 14 }}>
-                        {appointment.doctor?.name
+                        {appointment.doctor_name 
+                          || appointment.doctor?.name
                           || (appointment.doctor_id && typeof appointment.doctor_id === 'object' ? (appointment.doctor_id.name || appointment.doctor_id._id) : null)
                           || (typeof appointment.doctor_id === 'string' ? appointment.doctor_id : '-')}
                       </div>
@@ -248,7 +252,8 @@ function AppointmentDetails() {
                     <div>
                       <div style={{ color: '#6b7280', fontSize: 12 }}>Date & Time</div>
                       <div style={{ color: '#111827', fontSize: 14, marginBottom: 12 }}>
-                        <CalendarClock size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} /> {formatDateOnly(appointment.date)} {appointment.time || '-'}
+                        <CalendarClock size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} /> 
+                        {formatDateOnly(appointment.appointment_date || appointment.date)} {appointment.appointment_time || appointment.time || '-'}
                       </div>
 
                       <div style={{ color: '#6b7280', fontSize: 12 }}>Status</div>
@@ -266,7 +271,7 @@ function AppointmentDetails() {
                   {/* Full width fields */}
                   <div style={{ marginTop: 14 }}>
                     <div style={{ color: '#6b7280', fontSize: 12 }}>Reason</div>
-                    <div style={{ color: '#111827', fontSize: 14, marginBottom: 12 }}>{appointment.reason || '-'}</div>
+                    <div style={{ color: '#111827', fontSize: 14, marginBottom: 12 }}>{appointment.reason || appointment.notes || '-'}</div>
 
                     <div style={{ color: '#6b7280', fontSize: 12 }}>Follow-up</div>
                     <div style={{ color: '#111827', fontSize: 14 }}>

@@ -38,12 +38,8 @@ router.get('/stats', async (req, res) => {
       status: 'pending'
     });
 
-    // Prescriptions issued (last 7 days)
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const prescriptionsIssued = await Prescription.countDocuments({
-      Date: { $gte: weekAgo }
-    });
+    // Prescriptions issued (ALL prescriptions in the system)
+    const prescriptionsIssued = await Prescription.countDocuments({});
 
     // Calculate % of daily target: completed visits vs fixed target (10 for testing)
     const dailyTarget = 10;
