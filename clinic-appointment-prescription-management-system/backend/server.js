@@ -3,10 +3,15 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+import appointmentRouter from "./routes/appointments.js";
+import feedbackRouter from "./routes/feedbacks.js";
+import prescriptionsRouter from "./routes/prescriptions.js";
+import patientsRouter from "./routes/patients.js";
 
 const app = express();
 // Load .env from this directory explicitly to avoid cwd issues when starting server
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+
 
 const PORT = process.env.PORT || 5000;
 
@@ -43,6 +48,43 @@ app.use('/dashboard', dashboardRouter);
 
 const availabilityRoutes = require('./modules/clinical-workflow/routes/AvailabilityRoutes');
 app.use('/api/availability', availabilityRoutes);
+
+// Route imports - pharmacist
+const medicineRoutes = require('./modules/pharmacy-inventory/routes/medicineRoutes');
+const labInventoryRoutes = require('./modules/pharmacy-inventory/routes/labInventoryRoutes');
+const authRoutes = require('./modules/user/routes/authRoutes');
+const pharmacistRoutes = require('./modules/workforce-facility/routes/pharmacistRoutes');
+
+
+// Routes - pharmacist
+app.use("/api/medicines", medicineRoutes);
+app.use("/api/lab-inventory", labInventoryRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/pharmacist", pharmacistRoutes);
+
+app.use("/appointment", appointmentRouter);
+app.use("/appointments", appointmentRouter);
+app.use("/feedback", feedbackRouter);
+app.use("/prescriptions", prescriptionsRouter);
+app.use("/patients", patientsRouter);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err.stack);
+  res.status(500).json({ 
+    success: false, 
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+  });
+});
+
+// 404 handler (Express 5: remove '*' pattern to avoid path-to-regexp error)
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
+});
 
 // Test route
 app.get('/test', (req, res) => {

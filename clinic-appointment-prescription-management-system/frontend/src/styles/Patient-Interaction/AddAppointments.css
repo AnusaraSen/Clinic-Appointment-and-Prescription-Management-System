@@ -1,0 +1,100 @@
+/* Container */
+.add-appointments {
+  max-width: 700px;
+  width: 100%;
+  margin: 4px auto 40px auto;
+  padding: 48px 40px;
+  background: #f0f4f8;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  box-sizing: border-box;
+}
+
+/* Header */
+.add-appointments h2 {
+  color:#008080;
+  font-size: 2rem;
+  margin-top: 2px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Form container */
+.add-appointments form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+/* Form group */
+.add-appointments .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+/* Labels */
+.add-appointments label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #008080;
+  display: block;
+  /* Add space below label */
+  margin-bottom: 10px;
+}
+
+/* Inputs & Selects */
+.add-appointments input,
+.add-appointments select {
+  width: 100%;
+  min-width: 320px;
+  box-sizing: border-box;
+  padding: 0.55rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #cfd8dc;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  outline: none;
+  background-color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.add-appointments input:focus,
+.add-appointments select:focus {
+  border-color: #1976d2;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25);
+}
+
+/* Button - matches UpdateAppointments */
+.add-appointments button {
+  padding: 18px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #008080 60%, #00bfae 100%);
+  color: white;
+  font-size: 1.18rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(0,128,128,0.10);
+  margin-top: 18px;
+}
+
+.add-appointments button:hover {
+  background: linear-gradient(90deg, #006666 60%, #009e8e 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(0,128,128,0.18);
+}
+
+@media (max-width: 640px) {
+  .add-appointments {
+    padding: 2rem 1.5rem;
+  }
+  .add-appointments button {
+    width: 100%;
+  }
+}

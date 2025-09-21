@@ -115,6 +115,72 @@
   color: #1f2937;
 }
 
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background: linear-gradient(180deg, #0d8c90 0%, #0a7075 100%);
+  color: white;
+  position: fixed;
+  top: 64px; /* <-- Adjust this height to match your NavBar height */
+  height: calc(100vh - 64px); /* Sidebar height adjusted */
+  left: 0;
+  transition: all 0.3s ease;
+  z-index: 999;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1.5rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-left: 4px solid #ffffff;
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-left: 4px solid #fff;
+}
+
+.nav-icon {
+  margin-right: 0.8rem;
+  font-size: 1.2rem;
+}
+
+.dashboard-main {
+  flex: 1;
+  margin-left: 250px; /* space for sidebar */
+  transition: margin-left 0.3s ease;
+  padding-top: 64px; /* same as navbar height */
+}
+
 .header-right {
   display: flex;
   align-items: center;

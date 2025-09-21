@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../../../styles/clinical-workflow/Dashboard.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ClinicalSidebar from '../../../components/ClinicalSidebar';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,7 +17,6 @@ const Dashboard = () => {
   const [urgentTasks, setUrgentTasks] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -94,63 +94,26 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-layout">
-      {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-header">
-          <h2>MediDash</h2>
-          <button className="sidebar-close" onClick={() => setSidebarOpen(false)}>×</button>
-        </div>
-        <nav className="sidebar-nav">
-          <a href="#" className="nav-item active">
-            <span className="nav-icon">📊</span>
-            Dashboard
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/doctor-availability'); }} className="nav-item">
-            <span className="nav-icon">📅</span>
-            Calendar
-          </a>
-          <a href="/getPatient" className="nav-item">
-            <span className="nav-icon">👥</span>
-            Patients
-          </a>
-          <a href="/allPrescriptions" className="nav-item">
-            <span className="nav-icon">💊</span>
-            Prescriptions
-          </a>
-          <a href="#" className="nav-item">
-            <span className="nav-icon">💬</span>
-            Feedback
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/doctor-profile'); }} className="nav-item">
-            <span className="nav-icon">👨‍⚕️</span>
-            Doctor Profile
-          </a>
-          <a href="#" className="nav-item">
-            <span className="nav-icon">⚙️</span>
-            Settings
-          </a>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="dashboard-main">
-        {/* Header */}
-        <header className="dashboard-header">
-          <div className="header-left">
-            <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>
-              ☰
-            </button>
-            <h1>Dashboard</h1>
-          </div>
-          <div className="header-right">
-            <button className="notification-btn">🔔</button>
-            <div className="user-profile" onClick={() => navigate('/doctor-profile')}>
-              <span className="user-avatar">👨‍⚕️</span>
-              <span className="user-name">Dr. Alex Mitchell</span>
-            </div>
-          </div>
-        </header>
+    <div className="clinical-main-layout">
+      <ClinicalSidebar />
+      
+      <div className="clinical-main-content">
+        <div className="dashboard-layout">
+          {/* Main Content */}
+          <div className="dashboard-main">
+            {/* Header */}
+            <header className="dashboard-header">
+              <div className="header-left">
+                <h1>Dashboard</h1>
+              </div>
+              <div className="header-right">
+                <button className="notification-btn">🔔</button>
+                <div className="user-profile" onClick={() => navigate('/doctor-profile')}>
+                  <span className="user-avatar">👨‍⚕️</span>
+                  <span className="user-name">Dr. Alex Mitchell</span>
+                </div>
+              </div>
+            </header>
 
         {/* Stats Cards */}
         <div className="stats-grid">
@@ -304,6 +267,8 @@ const Dashboard = () => {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
           </div>
         </div>
       </div>

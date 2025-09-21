@@ -3,6 +3,7 @@ import '../../../styles/clinical-workflow/UpdatePatient.css';
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAlert } from '../prescriptions/AlertProvider.jsx';
+import { validatePatientForm } from '../../../utils/validation';
 
 function UpdatePatient() {
   const { id } = useParams();
@@ -26,6 +27,7 @@ function UpdatePatient() {
   });
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [errors, setErrors] = useState({});
   const [showWebcam, setShowWebcam] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(null);
   const videoRef = useRef(null);
@@ -137,6 +139,12 @@ function UpdatePatient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const vErrors = validatePatientForm(formData);
+    setErrors(vErrors);
+    if(Object.keys(vErrors).length){
+      pushAlert('Please fix validation errors','error');
+      return;
+    }
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
@@ -208,6 +216,7 @@ function UpdatePatient() {
             required
             maxLength={12}
           />
+          {errors.patient_ID && <div className="text-danger small mt-1">{errors.patient_ID}</div>}
         </div>
 
         <div className="mb-3">
@@ -220,6 +229,7 @@ function UpdatePatient() {
             onChange={handleChange}
             required
           />
+          {errors.patient_name && <div className="text-danger small mt-1">{errors.patient_name}</div>}
         </div>
 
         <div className="mb-3">
@@ -232,6 +242,7 @@ function UpdatePatient() {
             onChange={handleChange}
             required
           />
+          {errors.patient_age && <div className="text-danger small mt-1">{errors.patient_age}</div>}
         </div>
 
         <div className="mb-3">
@@ -276,6 +287,7 @@ function UpdatePatient() {
             onChange={handleChange}
             required
           />
+          {errors.Email && <div className="text-danger small mt-1">{errors.Email}</div>}
         </div>
 
         <div className="mb-3">
@@ -288,6 +300,7 @@ function UpdatePatient() {
             onChange={handleChange}
             required
           />
+          {errors.Emergency_Contact && <div className="text-danger small mt-1">{errors.Emergency_Contact}</div>}
         </div>
 
         <div className="mb-3">
@@ -299,6 +312,7 @@ function UpdatePatient() {
             value={formData.Allergies}
             onChange={handleChange}
           />
+          {errors.Allergies && <div className="text-danger small mt-1">{errors.Allergies}</div>}
         </div>
         <div className="mb-3">
           <label className="form-label">Current Medical Conditions</label>
@@ -309,6 +323,7 @@ function UpdatePatient() {
             value={formData.Current_medical_conditions}
             onChange={handleChange}
           />
+          {errors.Current_medical_conditions && <div className="text-danger small mt-1">{errors.Current_medical_conditions}</div>}
         </div>
 
         <div className="mb-3">
@@ -320,6 +335,7 @@ function UpdatePatient() {
             value={formData.Past_surgeries}
             onChange={handleChange}
           />
+          {errors.Past_surgeries && <div className="text-danger small mt-1">{errors.Past_surgeries}</div>}
         </div>
 
         <div className="mb-3">

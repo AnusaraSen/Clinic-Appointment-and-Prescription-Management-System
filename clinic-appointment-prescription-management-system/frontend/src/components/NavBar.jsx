@@ -34,6 +34,14 @@ function BrandLogo() {
 }
 
 function NavBar({ search, onSearchChange }) {
+  // Add class to body to ensure content appears below fixed navbar
+  useEffect(() => {
+    document.body.classList.add('has-fixed-navbar');
+    return () => {
+      document.body.classList.remove('has-fixed-navbar');
+    };
+  }, []);
+
   return (
     <nav className="navbar navbar-expand-lg ap-navbar">
       <div className="container-fluid">

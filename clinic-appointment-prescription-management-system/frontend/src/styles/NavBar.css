@@ -1,16 +1,25 @@
 /* Themed Navigation Bar */
 :root { --ap-accent:#007f83; --ap-accent-alt:#00b5bb; --ap-accent-soft:#e0f7fa; --ap-text-dark:#013f41; --ap-border:#b6e2e5; }
 
+/* Ensure all content appears below the fixed navigation bar */
+body.has-fixed-navbar {
+  padding-top: 85px !important;
+  margin: 0;
+}
+
 .navbar.ap-navbar {
   background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,255,255,0.88) 60%, rgba(255,255,255,0.92) 100%);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--ap-border);
   box-shadow: 0 4px 14px -6px rgba(0,0,0,.18);
-  position: sticky;
-  top:0;
-  z-index:100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
   padding-top:.35rem;
   padding-bottom:.35rem;
+  width: 100%;
 }
 .ap-navbar .navbar-brand { font-weight:700; letter-spacing:.5px; color:var(--ap-accent); display:flex; align-items:center; gap:.4rem; }
 .ap-navbar .navbar-brand:hover { color:var(--ap-accent-alt); }

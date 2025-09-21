@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const Prescription = require('../models/Prescription');
+const { validatePrescription } = require('../../../middleware/validation');
 
 // Create a new prescription
 
-router.route('/add').post((req,res) => {
+router.route('/add').post(validatePrescription, (req,res) => {
 
     const {
     patient_ID,
@@ -71,7 +72,7 @@ router.route('/get/:id').get(async (req, res) => {
 
 //update a prescription by ID
 
-router.route('/update/:id').put(async (req, res) => {
+router.route('/update/:id').put(validatePrescription, async (req, res) => {
   const prescriptionId = req.params.id;
   
   const {

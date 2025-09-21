@@ -3,6 +3,7 @@ import '../../../styles/clinical-workflow/UpdatePrescription.css';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAlert } from './AlertProvider.jsx';
+import { validatePrescriptionForm } from '../../../utils/validation';
 
 function UpdatePrescription() {
     const { id } = useParams();
@@ -22,6 +23,7 @@ function UpdatePrescription() {
         Medicines: [{ Medicine_Name: "", Dosage: "", Frequency: "", Duration: "" }],
         Instructions: ""
     });
+    const [errors, setErrors] = useState({});
 
     //Fetch prescription data by ID
     useEffect(() => {
@@ -85,6 +87,12 @@ function UpdatePrescription() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const vErrors = validatePrescriptionForm(formData);
+        setErrors(vErrors);
+        if(Object.keys(vErrors).length){
+          pushAlert('Please fix validation errors','error');
+          return;
+        }
         axios.put(`http://localhost:5000/prescription/update/${id}`, formData)
             .then(() => {
                 pushAlert("Prescription updated","success");
@@ -92,7 +100,7 @@ function UpdatePrescription() {
             })
             .catch((err) => {
                 console.error("Update error:", err);
-                pushAlert("Error updating prescription","error");
+                pushAlert(err?.response?.data?.errors?.[0]?.message || "Error updating prescription","error");
             });
     };
 
@@ -107,14 +115,17 @@ function UpdatePrescription() {
                 <div className="mb-3">
                     <label>Patient ID</label>
                     <input type="text" name="patient_ID" className="form-control" value={formData.patient_ID} onChange={handleChange} required />
+                    {errors.patient_ID && <div className="text-danger small mt-1">{errors.patient_ID}</div>}
                 </div>
                 <div className="mb-3">
                     <label>Patient Name</label>
                     <input type="text" name="patient_name" className="form-control" value={formData.patient_name} onChange={handleChange} required />
+                    {errors.patient_name && <div className="text-danger small mt-1">{errors.patient_name}</div>}
                 </div>
                 <div className="mb-3">
                     <label>Doctor Name</label>
                     <input type="text" name="doctor_Name" className="form-control" value={formData.doctor_Name} onChange={handleChange} required />
+                    {errors.doctor_Name && <div className="text-danger small mt-1">{errors.doctor_Name}</div>}
                 </div>
                 <div className="mb-3">
                     <label>Date</label>
@@ -123,6 +134,7 @@ function UpdatePrescription() {
                 <div className="mb-3">
                     <label>Diagnosis</label>
                     <input type="text" name="Diagnosis" className="form-control" value={formData.Diagnosis} onChange={handleChange} required />
+                    {errors.Diagnosis && <div className="text-danger small mt-1">{errors.Diagnosis}</div>}
                 </div>
                 <div className="mb-3">
                     <label>Symptoms</label>
@@ -141,6 +153,7 @@ function UpdatePrescription() {
                                 onChange={(e) => handleMedicineChange(index, "Medicine_Name", e.target.value)}
                                 required
                             />
+                            {errors[`Medicines[${index}].Medicine_Name`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Medicine_Name`]}</div>}
                         </div>
 
                         <div className="mb-2">
@@ -156,6 +169,7 @@ function UpdatePrescription() {
                                 <option value="3">Three (3)</option>
                                 <option value="4">Four (4)</option>
                             </select>
+                            {errors[`Medicines[${index}].Dosage`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Dosage`]}</div>}
                         </div>
 
                         <div className="mb-2">
@@ -173,6 +187,7 @@ function UpdatePrescription() {
                                 <option value="10 hours">10 Hours</option>
                                 <option value="12 hours">12 Hours</option>
                             </select>
+                            {errors[`Medicines[${index}].Frequency`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Frequency`]}</div>}
                         </div>
 
                         <div className="mb-2">
@@ -197,6 +212,7 @@ function UpdatePrescription() {
                                 <option value="3 months">3 Months</option>
                                 <option value="6 months">6 Months</option>
                             </select>
+                            {errors[`Medicines[${index}].Duration`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Duration`]}</div>}
                         </div>
 
                         {formData.Medicines.length > 1 && (

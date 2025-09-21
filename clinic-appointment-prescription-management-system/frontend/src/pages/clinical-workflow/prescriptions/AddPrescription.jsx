@@ -3,6 +3,7 @@ import '../../../styles/clinical-workflow/AddPrescription.css';
 import axios from "axios";
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAlert } from './AlertProvider.jsx';
+import { validatePrescriptionForm } from '../../../utils/validation';
 
 function AddPrescription() {
   const today = new Date().toISOString().split("T")[0];
@@ -18,6 +19,7 @@ function AddPrescription() {
   const [medicines, setMedicines] = useState([
     { Medicine_Name: "", Dosage: "", Frequency: "", Duration: "" }
   ]);
+  const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
   const { pushAlert } = useAlert();
@@ -40,6 +42,21 @@ function AddPrescription() {
 
   function sendData(e) {
     e.preventDefault();
+    const vErrors = validatePrescriptionForm({
+      patient_ID: pId,
+      patient_name: pName,
+      doctor_Name: dName,
+      Medicines: medicines,
+      Date: date,
+      Diagnosis: diagnosis,
+      Symptoms: symptoms,
+      Instructions: instructions
+    });
+    setErrors(vErrors);
+    if(Object.keys(vErrors).length){
+      pushAlert('Please fix validation errors','error');
+      return;
+    }
 
     const newPrescription = {
       patient_ID: pId,
@@ -77,16 +94,19 @@ function AddPrescription() {
         <div className="mb-2">
           <label>Patient ID</label>
           <input type="text" value={pId} maxLength={12} required onChange={(e) => setPId(e.target.value)} className="form-control" />
+          {errors.patient_ID && <div className="text-danger small mt-1">{errors.patient_ID}</div>}
         </div>
 
         <div className="mb-2">
           <label>Patient Name</label>
           <input type="text" value={pName} required onChange={(e) => setPName(e.target.value)} className="form-control" />
+          {errors.patient_name && <div className="text-danger small mt-1">{errors.patient_name}</div>}
         </div>
 
         <div className="mb-2">
           <label>Doctor Name</label>
           <input type="text" value={dName} required onChange={(e) => setDName(e.target.value)} className="form-control" />
+          {errors.doctor_Name && <div className="text-danger small mt-1">{errors.doctor_Name}</div>}
         </div>
 
         <div className="mb-2">
@@ -97,6 +117,7 @@ function AddPrescription() {
         <div className="mb-2">
           <label>Diagnosis</label>
           <input type="text" value={diagnosis} required onChange={(e) => setDiagnosis(e.target.value)} className="form-control" />
+          {errors.Diagnosis && <div className="text-danger small mt-1">{errors.Diagnosis}</div>}
         </div>
 
         <div className="mb-2">
@@ -111,6 +132,7 @@ function AddPrescription() {
               <label>Medicine Name</label>
               <input type="text" className="form-control" value={med.Medicine_Name}
                 onChange={(e) => handleMedicineChange(index, "Medicine_Name", e.target.value)} required />
+              {errors[`Medicines[${index}].Medicine_Name`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Medicine_Name`]}</div>}
             </div>
 
             <div className="mb-2">
@@ -126,6 +148,7 @@ function AddPrescription() {
                 <option value="3">Three (3)</option>
                 <option value="4">Four (4)</option>
               </select>
+              {errors[`Medicines[${index}].Dosage`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Dosage`]}</div>}
             </div>
 
             <div className="mb-2">
@@ -143,6 +166,7 @@ function AddPrescription() {
                 <option value="10 hours">10 Hours</option>
                 <option value="12 hours">12 Hours</option>
               </select>
+              {errors[`Medicines[${index}].Frequency`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Frequency`]}</div>}
             </div>
 
             <div className="mb-2">
@@ -167,6 +191,7 @@ function AddPrescription() {
                 <option value="3 months">3 Months</option>
                 <option value="6 months">6 Months</option>
               </select>
+              {errors[`Medicines[${index}].Duration`] && <div className="text-danger small mt-1">{errors[`Medicines[${index}].Duration`]}</div>}
             </div>
 
             {medicines.length > 1 && (

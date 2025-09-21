@@ -1,0 +1,102 @@
+/* Container */
+.update-appointments {
+  max-width: 1300px;
+  width: 100%;
+  margin: 4px auto 40px auto;
+  padding: 48px 80px;
+  background: #f0f4f8;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+/* Header */
+.update-appointments h2 {
+  color:#008080;
+  font-size: 2rem;
+  margin-bottom: 13px;
+  margin-top: -14px;
+  text-align: center;
+}
+
+/* Form container */
+.update-appointments form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Form group */
+.update-appointments div {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+/* Labels */
+.update-appointments label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #008080;
+}
+
+/* Inputs & Selects */
+.update-appointments input,
+.update-appointments select {
+  padding: 0.55rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #cfd8dc;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.update-appointments input:focus,
+.update-appointments select:focus {
+  border-color: #1976d2;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25);
+}
+
+/* Submit button */
+.update-appointments button {
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #0d47a1, #43a047);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transition: all 0.3s ease;
+}
+
+/* Button - matches AddAppointments */
+.update-appointments button {
+  padding: 18px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #008080 60%, #00bfae 100%);
+  color: white;
+  font-size: 1.18rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(0,128,128,0.10);
+  margin-top: 18px;
+}
+
+.update-appointments button:hover {
+  background: linear-gradient(90deg, #006666 60%, #009e8e 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(0,128,128,0.18);
+}
+.update-appointment-doctor-card {
+  margin-left: 0;
+}
+  .update-appointments button {
+    width: 100%;
+  }
+

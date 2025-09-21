@@ -3,6 +3,7 @@ import '../../../styles/clinical-workflow/AllPrescriptions.css';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAlert } from './AlertProvider.jsx';
+import ClinicalSidebar from '../../../components/ClinicalSidebar';
 
 // For printing
 import { useRef } from 'react';
@@ -92,10 +93,14 @@ function AllPrescriptions({ search = '' }) {
   }, [search, prescriptions]);
 
   return (
-    <div className="all-prescriptions-wrapper">
-      <div className="d-flex justify-content-between align-items-center mb-3 no-print">
-        <h2 className="ap-title mb-0">All Prescriptions</h2>
-        <div className="ap-header-actions" style={{ display: 'flex', gap: '0.8rem' }}>
+    <div className="clinical-main-layout">
+      <ClinicalSidebar />
+      
+      <div className="clinical-main-content">
+        <div className="all-prescriptions-wrapper">
+          <div className="d-flex justify-content-between align-items-center mb-3 no-print">
+            <h2 className="ap-title mb-0">All Prescriptions</h2>
+            <div className="ap-header-actions" style={{ display: 'flex', gap: '0.8rem' }}>
           <Link 
             to="/add" 
             className="btn btn-ap-primary" 
@@ -154,6 +159,8 @@ function AllPrescriptions({ search = '' }) {
       </div>
       <div className="no-print d-flex justify-content-end small text-muted mt-2">
         Showing {filtered.length} of {prescriptions.length} prescriptions
+      </div>
+        </div>
       </div>
     </div>
   );

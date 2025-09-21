@@ -1,6 +1,7 @@
 import React from 'react';
 import '../../../styles/clinical-workflow/DoctorProfile.css';
 import { useNavigate } from 'react-router-dom';
+import ClinicalSidebar from '../../../components/ClinicalSidebar';
 
 const DoctorProfile = () => {
   const navigate = useNavigate();
@@ -37,13 +38,14 @@ const DoctorProfile = () => {
   };
 
   return (
-    <div className="doctor-profile-wrapper">
-      <div className="profile-header">
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>
-          ← Back to Dashboard
-        </button>
-        <h1>Doctor Profile</h1>
-      </div>
+    <div className="clinical-main-layout">
+      <ClinicalSidebar />
+      
+      <div className="clinical-main-content">
+        <div className="doctor-profile-wrapper">
+          <div className="profile-header">
+            <h1>Doctor Profile</h1>
+          </div>
 
       <div className="profile-content">
         <div className="profile-card">
@@ -134,6 +136,8 @@ const DoctorProfile = () => {
             <button className="btn-edit-profile">Edit Profile</button>
             <button className="btn-download-cv">Download CV</button>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>

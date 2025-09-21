@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from "react";
 import { useAlert } from '../prescriptions/AlertProvider.jsx';
+import { validatePatientForm } from '../../../utils/validation';
 
 
 function AddPatient() {
@@ -24,6 +25,7 @@ function AddPatient() {
   
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [errors, setErrors] = useState({});
   const [showWebcam, setShowWebcam] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -105,6 +107,12 @@ function AddPatient() {
 
   const sendData = async (e) => {
     e.preventDefault();
+    const vErrors = validatePatientForm(formData);
+    setErrors(vErrors);
+    if(Object.keys(vErrors).length){
+      pushAlert('Please fix validation errors','error');
+      return;
+    }
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
@@ -145,6 +153,7 @@ function AddPatient() {
             required
             maxLength={12}
           />
+          {errors.patient_ID && <div className="text-danger small mt-1">{errors.patient_ID}</div>}
         </div>
 
         <div className="mb-3">
@@ -157,6 +166,7 @@ function AddPatient() {
             onChange={handleChange}
             required
           />
+          {errors.patient_name && <div className="text-danger small mt-1">{errors.patient_name}</div>}
         </div>
 
         <div className="mb-3">
@@ -171,6 +181,7 @@ function AddPatient() {
             min="0"
             max="120"
           />
+          {errors.patient_age && <div className="text-danger small mt-1">{errors.patient_age}</div>}
         </div>
 
         <div className="mb-3">
@@ -216,6 +227,7 @@ function AddPatient() {
             required
             placeholder="example@domain.com"
           />
+          {errors.Email && <div className="text-danger small mt-1">{errors.Email}</div>}
         </div>
 
         
@@ -230,6 +242,7 @@ function AddPatient() {
             required
             placeholder="0701234567"
           />
+          {errors.Emergency_Contact && <div className="text-danger small mt-1">{errors.Emergency_Contact}</div>}
         </div>
 
        
@@ -242,6 +255,7 @@ function AddPatient() {
             onChange={handleChange}
             rows="2"
           />
+          {errors.Allergies && <div className="text-danger small mt-1">{errors.Allergies}</div>}
         </div>
 
         
@@ -254,6 +268,7 @@ function AddPatient() {
             onChange={handleChange}
             rows="2"
           />
+          {errors.Current_medical_conditions && <div className="text-danger small mt-1">{errors.Current_medical_conditions}</div>}
         </div>
 
         
@@ -266,6 +281,7 @@ function AddPatient() {
             onChange={handleChange}
             rows="2"
           />
+          {errors.Past_surgeries && <div className="text-danger small mt-1">{errors.Past_surgeries}</div>}
         </div>
 
         
@@ -289,6 +305,7 @@ function AddPatient() {
             <option value="O+">O+</option>
             <option value="O-">O-</option>
           </select>
+          {errors.Blood_group && <div className="text-danger small mt-1">{errors.Blood_group}</div>}
         </div>
 
         

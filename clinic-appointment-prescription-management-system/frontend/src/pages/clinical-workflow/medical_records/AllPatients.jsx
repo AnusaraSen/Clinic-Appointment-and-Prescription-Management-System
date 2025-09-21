@@ -3,6 +3,7 @@ import '../../../styles/clinical-workflow/AllPatients.css';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAlert } from '../prescriptions/AlertProvider.jsx';
+import ClinicalSidebar from '../../../components/ClinicalSidebar';
 
 function AllPatients({ search = '' }) {
   const navigate = useNavigate();
@@ -129,10 +130,14 @@ function AllPatients({ search = '' }) {
   };
 
   return (
-    <div className="all-patients-wrapper">
-      <div className="no-print" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
-        <h1 style={{margin:0}}>All Patients</h1>
-        <div style={{display:'flex', gap:'0.8rem', alignItems:'center'}}>
+    <div className="clinical-main-layout">
+      <ClinicalSidebar />
+      
+      <div className="clinical-main-content">
+        <div className="all-patients-wrapper">
+          <div className="no-print" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
+            <h1 style={{margin:0}}>All Patients</h1>
+            <div style={{display:'flex', gap:'0.8rem', alignItems:'center'}}>
           <button
             onClick={() => navigate('/dashboard')}
             className="pt-btn pt-btn-print"
@@ -312,6 +317,8 @@ function AllPatients({ search = '' }) {
         </table>
       </div>
       <div className="no-print small text-muted" style={{marginTop:'0.6rem', textAlign:'right'}}>Showing {filtered.length} of {patients.length} patients</div>
+        </div>
+      </div>
     </div>
   );
 

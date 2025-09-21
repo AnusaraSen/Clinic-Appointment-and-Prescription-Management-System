@@ -1,0 +1,152 @@
+/* Update Lab Item Form Styles - Modern Design */
+
+@import url('./InsertLabItem.css'); /* Reuse base insert styles */
+
+/* Container override for edit mode */
+.lab-item-container.edit-mode {
+  background: linear-gradient(135deg, #e0f2fe, #ffffff, #c7d2fe);
+}
+
+/* Card subtle accent border for edit mode */
+.lab-item-container.edit-mode .lab-item-card {
+  border: 3px solid #0ea5e9;
+  box-shadow: 0 20px 60px rgba(14, 165, 233, 0.15), 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+/* Title styling for edit mode */
+.lab-item-container.edit-mode .lab-item-title {
+  background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
+  position: relative;
+}
+
+.lab-item-container.edit-mode .lab-item-title::after {
+  content: '✏️';
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+}
+
+/* Meta tag at top (ID info) */
+.lab-item-meta {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 3px solid #0ea5e9;
+}
+
+/* Readonly field styling */
+.lab-item-field.readonly input[disabled] {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  cursor: not-allowed;
+  opacity: 0.8;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Action buttons row */
+.lab-item-actions-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Button variants for update actions */
+.lab-item-btn.primary { 
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+}
+
+.lab-item-btn.primary:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  box-shadow: 0 8px 25px rgba(13, 148, 136, 0.4);
+}
+
+.lab-item-btn.danger { 
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.lab-item-btn.danger:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+}
+
+.lab-item-btn.secondary { 
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(71, 85, 105, 0.3);
+}
+
+.lab-item-btn.secondary:hover {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  box-shadow: 0 8px 25px rgba(71, 85, 105, 0.4);
+}
+
+/* Multiple buttons in row */
+.lab-item-actions-row .lab-item-btn {
+  flex: 0 1 auto;
+  min-width: 150px;
+  padding: 0.875rem 2rem;
+}
+
+/* State badges */
+.lab-item-state-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #334155;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 2px solid #cbd5e1;
+}
+
+.lab-item-state-badge.pending { 
+  background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.lab-item-state-badge.error { 
+  background: linear-gradient(135deg, #fecaca 0%, #f87171 100%);
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+.lab-item-state-badge.success { 
+  background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%);
+  color: #166534;
+  border-color: #22c55e;
+}
+
+@media (max-width: 900px) {
+  .lab-item-container.edit-mode .lab-item-card { 
+    margin: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .lab-item-actions-row { 
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .lab-item-btn { 
+    width: 100%;
+    min-width: unset;
+  }
+}

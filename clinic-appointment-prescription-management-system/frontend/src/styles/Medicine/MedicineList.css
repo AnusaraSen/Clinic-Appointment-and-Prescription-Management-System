@@ -1,0 +1,204 @@
+/* Medicine Inventory List - Professional Theme matching LabItemList */
+
+/* Layout adjustments for sidebar */
+.main-content-with-sidebar .medicine-item-details-page {
+  padding: 1rem;
+  min-height: calc(100vh - 2rem);
+}
+
+.medicine-item-details-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background-color: #f4f7fa;
+  padding: 2rem;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.medicine-item-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 1200px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.medicine-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  padding: 1.5rem 2rem;
+  color: #ffffff;
+}
+
+.medicine-item-header::before {
+  display: none;
+}
+
+.medicine-item-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.medicine-item-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.medicine-item-btn {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.75rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  background: #475569;
+  border: none;
+  cursor: pointer;
+}
+
+.medicine-item-btn:hover {
+  filter: brightness(.95);
+  text-decoration: none;
+}
+
+.medicine-item-btn.primary {
+  background: #059669;
+}
+
+.medicine-item-btn.primary:hover {
+  background: #059669;
+  filter: brightness(.95);
+}
+
+.medicine-item-body {
+  padding: 1.5rem;
+  overflow-x: auto;
+  color: #000000;
+}
+
+/* Table styling unified */
+.medicine-item-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.medicine-item-card th,
+.medicine-item-card td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.medicine-item-card th {
+  font-weight: 600;
+  color: #1f2937;
+  background: #f9fafb;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.medicine-item-card td {
+  color: #374151;
+}
+
+.medicine-item-card tbody tr:hover {
+  background-color: #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+/* Status Badges */
+.medicine-status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: #e5e7eb;
+  color: #334155;
+  min-width: 52px;
+  text-align: center;
+}
+
+.medicine-status-badge.low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.medicine-status-badge.expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.medicine-status-badge.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Text helpers consistent */
+.text-muted {
+  color: #6b7280;
+  font-style: italic;
+  font-size: .75rem;
+}
+
+.text-danger {
+  color: #dc2626;
+  font-size: .75rem;
+}
+
+/* Responsive tweaks matching lab list */
+@media (max-width: 768px) {
+  .medicine-item-details-page {
+    padding: 1rem;
+  }
+  
+  .medicine-item-header {
+    padding: 1rem;
+  }
+  
+  .medicine-item-title {
+    font-size: 1.5rem;
+  }
+  
+  .medicine-item-card table {
+    font-size: 0.85rem;
+  }
+  
+  .medicine-item-card th,
+  .medicine-item-card td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .medicine-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .medicine-item-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .medicine-item-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}

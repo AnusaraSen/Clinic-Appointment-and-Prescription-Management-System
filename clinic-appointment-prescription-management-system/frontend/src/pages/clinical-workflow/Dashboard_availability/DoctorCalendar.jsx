@@ -9,7 +9,7 @@ import {
   deleteAvailability,
   updateAvailability,
   testBackendConnection,
-} from "../api/AvailabilityAPI";
+} from "../../../api/AvailabilityAPI.js";
 
 function DoctorCalendar({ doctorId }) {
   const [events, setEvents] = useState([]);

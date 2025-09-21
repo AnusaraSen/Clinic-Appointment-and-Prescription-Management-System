@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Patient = require('../models/Medical_Records.js');
+const { validatePatient } = require('../../../middleware/validation');
 
 // For file upload (photo)
 const multer = require('multer');
@@ -122,7 +123,7 @@ router.delete('/deletePhoto/:id', async (req, res) => {
 
 
 // Create a new patient (with optional photo)
-router.route('/add').post(upload.single('photo'), (req, res) => {
+router.route('/add').post(upload.single('photo'), validatePatient, (req, res) => {
 
 
         const patient_ID = req.body.patient_ID;
@@ -201,7 +202,7 @@ router.route('/get/:id').get(async (req,res) =>{
 
 
 // updating a patient (with optional photo upload)
-router.route('/update/:id').put(upload.single('photo'), async (req, res) => {
+router.route('/update/:id').put(upload.single('photo'), validatePatient, async (req, res) => {
     const userId = req.params.id;
 
     // If using multipart/form-data (with file), fields are in req.body, file in req.file
