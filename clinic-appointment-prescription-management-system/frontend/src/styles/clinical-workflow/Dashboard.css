@@ -2,43 +2,55 @@
 .clinical-main-layout {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
 }
 
 .clinical-main-content {
   flex: 1;
-  margin-left: 280px; /* Match ClinicalSidebar width */
+  margin-left: 275px; /* Slightly reduced to remove gap */
   transition: margin-left 0.3s ease;
   min-height: 100vh;
+  width: calc(100vw - 275px);
+  max-width: calc(100vw - 275px);
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 /* When sidebar is collapsed */
 body.clinical-sidebar-collapsed .clinical-main-content {
-  margin-left: 70px; /* Match collapsed sidebar width */
+  margin-left: 65px; /* Slightly reduced to remove gap */
+  width: calc(100vw - 65px);
+  max-width: calc(100vw - 65px);
 }
 
 /* Dashboard Layout */
 .dashboard-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  width: 100%;
 }
 
 /* Main Content */
 .dashboard-main {
   flex: 1;
   width: 100%;
-  background: #f8fafc;
+  padding: 0;
+  margin: 0;
 }
 
 .dashboard-header {
   background: white;
-  padding: 1rem 2rem;
+  padding: 1.5rem 2rem;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  margin: 0;
 }
 
 .header-left {
@@ -115,9 +127,13 @@ body.clinical-sidebar-collapsed .clinical-main-content {
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Reduced min width for better fit */
   gap: 1.5rem;
-  padding: 1rem 1.5rem 2rem 0;
+  padding: 2rem; /* Reduced padding to fit more content */
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .stat-card {
@@ -130,6 +146,9 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   gap: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stat-card:hover {
@@ -199,8 +218,11 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-  padding: 0 1.5rem 2rem 0;
-  margin-bottom: 2rem;
+  padding: 0 2rem 2rem 2rem; /* Reduced padding to fit more content */
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .content-section {
@@ -209,6 +231,19 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   border: 1px solid #e5e7eb;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Specific styling for appointments section */
+.appointments-section {
+  min-height: 600px;
+}
+
+/* Specific styling for tasks section */
+.tasks-section {
+  min-height: 400px;
 }
 
 .section-header {
@@ -243,6 +278,8 @@ body.clinical-sidebar-collapsed .clinical-main-content {
 .appointments-list {
   max-height: 600px;
   overflow-y: auto;
+  padding: 0;
+  margin: 0;
 }
 
 .appointment-item {
@@ -252,6 +289,9 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   align-items: center;
   gap: 1rem;
   transition: background-color 0.2s ease;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .appointment-item:hover {
@@ -382,11 +422,15 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   border-bottom: 1px solid #e5e7eb;
   font-size: 1.25rem;
   color: #1f2937;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tasks-list {
   max-height: 400px;
   overflow-y: auto;
+  padding: 0;
+  margin: 0;
 }
 
 .task-item {
@@ -396,6 +440,9 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   align-items: center;
   gap: 1rem;
   transition: background-color 0.2s ease;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .task-item:hover {
@@ -454,12 +501,17 @@ body.clinical-sidebar-collapsed .clinical-main-content {
 
 /* Activity Section */
 .activity-section {
-  margin: 0 1.5rem 2rem 0;
+  margin: 0 2rem 2rem 2rem; /* Reduced padding to fit more content */
+  width: auto;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .activity-list {
   max-height: 400px;
   overflow-y: auto;
+  padding: 0;
+  margin: 0;
 }
 
 .activity-item {
@@ -469,6 +521,9 @@ body.clinical-sidebar-collapsed .clinical-main-content {
   justify-content: space-between;
   align-items: center;
   transition: background-color 0.2s ease;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .activity-item:hover {
@@ -526,52 +581,66 @@ body.clinical-sidebar-collapsed .clinical-main-content {
 @media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
+    padding: 0 1.5rem 2rem 1.5rem;
   }
   
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .dashboard-header {
-    padding: 1rem;
-  }
-  
-  .content-grid {
-    padding: 0 1rem;
+    padding: 1rem 1.5rem;
   }
   
   .activity-section {
-    margin: 0 1rem 2rem 1rem;
+    margin: 0 1.5rem 2rem 1.5rem;
+    width: auto;
+  }
+  
+  .clinical-main-content {
+    margin-left: 255px; /* Reduced for tablet view to remove gap */
+    width: calc(100vw - 255px);
+    max-width: calc(100vw - 255px);
+  }
+  
+  body.clinical-sidebar-collapsed .clinical-main-content {
+    margin-left: 55px; /* Reduced for collapsed tablet view */
+    width: calc(100vw - 55px);
+    max-width: calc(100vw - 55px);
   }
 }
 
 @media (max-width: 768px) {
   .clinical-main-content {
     margin-left: 0;
-  }
-  
-  .sidebar {
     width: 100%;
-    left: -100%;
+    max-width: 100%;
   }
   
-  .sidebar-close {
-    display: block;
+  body.clinical-sidebar-collapsed .clinical-main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .stats-grid {
     grid-template-columns: 1fr;
-    padding: 1rem 0;
+    padding: 1rem;
   }
   
   .content-grid {
     grid-template-columns: 1fr;
-    padding: 0 0 2rem 0;
+    padding: 0 1rem 2rem 1rem;
   }
   
   .activity-section {
-    margin: 0 0 2rem 0;
+    margin: 0 1rem 2rem 1rem;
+    width: auto;
+  }
+  
+  .dashboard-header {
+    padding: 1rem;
   }
   
   .appointment-item {
@@ -600,11 +669,6 @@ body.clinical-sidebar-collapsed .clinical-main-content {
 }
 
 @media (min-width: 1024px) {
-  .sidebar {
-    position: relative;
-    left: 0;
-  }
-  
   .dashboard-main {
     margin-left: 0;
   }

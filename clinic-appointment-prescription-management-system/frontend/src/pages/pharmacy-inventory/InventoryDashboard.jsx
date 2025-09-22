@@ -279,21 +279,8 @@ const InventoryDashboard = () => {
     <div className="inventory-nav-layout">
       <InventoryNavigationSidebar />
       <div className="inventory-nav-content">
-        <div className="dashboard-container">
-      {/* Header */}
-      <div className="header">
-            <div className="header-left">
-              <h1>Inventory Dashboard</h1>
-              <div className="current-date">Monday, September 2, 2025</div>
-            </div>
-            <div className="header-right">
-              <div className="pharmacist-info">
-                <i className="fas fa-user-circle"></i>
-                <span className="pharmacist-name">Inventory Manager</span>
-              </div>
-              
-            </div>
-          </div>
+        
+      
 
           {/* Dashboard Main Content */}
           <div className="dashboard-main">
@@ -572,7 +559,7 @@ const InventoryDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 

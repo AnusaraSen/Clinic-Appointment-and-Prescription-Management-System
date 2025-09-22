@@ -71,31 +71,31 @@
 }
 
 .nav-sidebar-toggle-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   color: white;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(15px);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   z-index: 100;
   flex-shrink: 0;
   position: relative;
 }
 
 .nav-sidebar-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .nav-sidebar-toggle-btn:active {
@@ -103,11 +103,21 @@
 }
 
 .nav-sidebar-toggle-btn i {
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .nav-sidebar-toggle-btn:hover i {
-  transform: scale(1.1);
+  transform: scale(1.2);
+}
+
+/* Enhanced arrow animation for better visual feedback */
+.inventory-nav-sidebar.collapsed .nav-sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.inventory-nav-sidebar.collapsed .nav-sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Navigation */
@@ -408,27 +418,27 @@
 }
 
 /* Enhanced Arrow Visibility and Animation */
-@keyframes pulseArrow {
+@keyframes pulseToggle {
   0% {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
   }
   50% {
-    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.3);
     border-color: rgba(255, 255, 255, 0.6);
   }
   100% {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
   }
 }
 
-/* Apply prominent pulse to make arrow very noticeable */
+/* Apply subtle pulse to make toggle button more noticeable */
 .nav-sidebar-toggle-btn {
-  animation: pulseArrow 2s ease-in-out infinite;
+  animation: pulseToggle 3s ease-in-out infinite;
 }
 
 .nav-sidebar-toggle-btn:hover {
@@ -437,17 +447,22 @@
 
 /* Arrow glow effect on hover */
 .nav-sidebar-toggle-btn:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 /* Smooth arrow rotation when toggling */
 .nav-sidebar-toggle-btn i {
   transform-origin: center;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Additional visual feedback */
+/* Additional visual feedback for different states */
 .inventory-nav-sidebar.collapsed .nav-sidebar-toggle-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+  animation: none;
+}
+
+.inventory-nav-sidebar.collapsed .nav-sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
 }

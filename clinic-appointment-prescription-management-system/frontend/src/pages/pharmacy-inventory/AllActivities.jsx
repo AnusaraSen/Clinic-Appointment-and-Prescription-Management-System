@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../../components/Sidebar';
+
+import InventoryNavigationSidebar from '../../components/InventoryNavigationSidebar';
 import '../../styles/Medicine/AllActivities.css';
 
 const AllActivities = () => {
@@ -247,9 +248,9 @@ const AllActivities = () => {
 
   if (loading) {
     return (
-      <div className="main-layout">
-        <Sidebar />
-        <div className="main-content-with-sidebar">
+      <div className="inventory-nav-layout">
+        <InventoryNavigationSidebar />
+        <div className="inventory-nav-content">
           <div className="loading-container">
             <div className="loading-spinner">
               <i className="fas fa-spinner fa-spin"></i>
@@ -262,14 +263,14 @@ const AllActivities = () => {
   }
 
   return (
-    <div className="main-layout">
-      <Sidebar />
-      <div className="main-content-with-sidebar">
+    <div className="inventory-nav-layout">
+      <InventoryNavigationSidebar />
+      <div className="inventory-nav-content">
         <div className="activities-container">
           {/* Header */}
           <div className="activities-header">
             <div className="header-left">
-              <button className="back-btn" onClick={() => navigate('/dashboard')}>
+              <button className="back-btn" onClick={() => navigate('/inventory-dashboard')}>
                 <i className="fas fa-arrow-left"></i>
                 Back to Dashboard
               </button>

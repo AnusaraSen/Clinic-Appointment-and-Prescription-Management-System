@@ -1,4 +1,22 @@
 /* All Activities Page Styles */
+
+/* Layout adjustments for inventory navigation sidebar */
+.inventory-nav-layout {
+  margin-left: 320px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+}
+
+.inventory-nav-layout.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+.inventory-nav-content {
+  padding: 0;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
 .activities-container {
   padding: 2rem;
   max-width: 1400px;
@@ -308,6 +326,12 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .inventory-nav-layout {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .activities-container {
     padding: 1rem;
