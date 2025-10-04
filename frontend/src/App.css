@@ -1,0 +1,63 @@
+/* App.css - Main application styles */
+
+/* Global app styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure all content respects the fixed navigation bar */
+body.has-fixed-navbar {
+  padding-top: 80px !important;
+  margin-top: 0 !important;
+}
+
+/* Global layout fixes for navbar spacing */
+body.has-fixed-navbar .App {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Ensure full-height layouts account for navbar */
+body.has-fixed-navbar .h-screen,
+body.has-fixed-navbar .min-h-screen {
+  height: calc(100vh - 80px) !important;
+  min-height: calc(100vh - 80px) !important;
+}
+
+/* Fix for flex layouts that use full viewport height */
+body.has-fixed-navbar .flex.h-screen {
+  height: calc(100vh - 80px) !important;
+  margin-top: 80px !important;
+}
+
+/* Ensure page content containers have proper spacing */
+body.has-fixed-navbar .page-container,
+body.has-fixed-navbar .main-content,
+body.has-fixed-navbar .content-wrapper,
+body.has-fixed-navbar [class*="dashboard"],
+body.has-fixed-navbar .dashboard {
+  padding-top: 20px !important;
+  margin-top: 0 !important;
+}
+
+/* Specific fix for pharmacist dashboard page */
+body.has-fixed-navbar .pharmacist-dashboard-page {
+  padding-top: 104px !important;
+  margin-top: 0 !important;
+  min-height: calc(100vh - 80px) !important;
+}
+
+/* Additional safety for inline styled components */
+body.has-fixed-navbar #root > div:first-child > *:first-child {
+  margin-top: 0 !important;
+}
+
+/* Ensure modals and overlays don't interfere */
+body.has-fixed-navbar .modal,
+body.has-fixed-navbar .overlay {
+  top: 80px !important;
+  height: calc(100vh - 80px) !important;
+}
+
+/* You can add custom app-wide styles here */
+/* Most styling is handled by Tailwind CSS classes in the components */

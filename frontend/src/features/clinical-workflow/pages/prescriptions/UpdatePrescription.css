@@ -1,0 +1,301 @@
+/* UpdatePrescription User-Friendly Styling */
+:root {
+  --up-primary: #4f46e5;
+  --up-primary-hover: #4338ca;
+  --up-secondary: #6b7280;
+  --up-success: #10b981;
+  --up-warning: #f59e0b;
+  --up-danger: #ef4444;
+  --up-background: #f9fafb;
+  --up-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --up-border-radius: 8px;
+  --up-transition: all 0.2s ease;
+}
+
+.update-prescription-container {
+  min-height: 100vh;
+  background: var(--up-background);
+  padding: 7rem 2rem 2rem;
+}
+
+.up-card {
+  background: white;
+  border-radius: var(--up-border-radius);
+  box-shadow: var(--up-card-shadow);
+  border: 1px solid #e5e7eb;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  transition: var(--up-transition);
+}
+
+.up-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.up-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.up-title {
+  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.up-subtitle {
+  color: var(--up-secondary);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.up-form-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.up-form-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.up-form-row.single {
+  grid-template-columns: 1fr;
+}
+
+.up-form-group {
+  position: relative;
+}
+
+.up-form-group label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.up-form-group input,
+.up-form-group select,
+.up-form-group textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: var(--up-transition);
+  background: white;
+}
+
+.up-form-group input:focus,
+.up-form-group select:focus,
+.up-form-group textarea:focus {
+  outline: none;
+  border-color: var(--up-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.up-form-group input:hover,
+.up-form-group select:hover,
+.up-form-group textarea:hover {
+  border-color: #9ca3af;
+}
+
+.up-section-title {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.up-medicine-block {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--up-border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+  transition: var(--up-transition);
+}
+
+.up-medicine-block:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.up-medicine-block::before {
+  content: attr(data-medicine-number);
+  position: absolute;
+  top: -10px;
+  left: 15px;
+  background: #4f46e5;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.up-medicine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Button Styles */
+.btn-up {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: var(--up-transition);
+  cursor: pointer;
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+
+.btn-up-primary {
+  background: var(--up-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.btn-up-primary:hover {
+  background: var(--up-primary-hover);
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.btn-up-danger {
+  background: var(--up-danger);
+  color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.btn-up-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-up-add {
+  background: var(--up-success);
+  color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.btn-up-add:hover {
+  background: #059669;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.up-submit-btn {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  min-height: 36px;
+}
+
+/* Error Messages */
+.text-danger {
+  color: var(--up-danger);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+/* Loading State */
+.up-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--up-secondary);
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .update-prescription-container {
+    padding: 7rem 1rem 1rem;
+  }
+  
+  .up-card {
+    padding: 1.5rem;
+  }
+  
+  .up-title {
+    font-size: 1.75rem;
+  }
+  
+  .up-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .up-medicine-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .up-card {
+    padding: 1rem;
+  }
+  
+  .up-title {
+    font-size: 1.5rem;
+  }
+  
+  .btn-up {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Animation for form appearance */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.up-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.up-medicine-block {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Enhanced focus styles for accessibility */
+.btn-up:focus,
+.up-form-group input:focus,
+.up-form-group select:focus,
+.up-form-group textarea:focus {
+  outline: 2px solid var(--up-primary);
+  outline-offset: 2px;
+}

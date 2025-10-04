@@ -1,0 +1,101 @@
+/* Container */
+.delete-appointments {
+ max-width: 1400px;
+  width: 100%;
+  margin: 4px auto 40px 240px;
+  padding: 48px 80px;
+  background: #f0f4f8;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+/* Header */
+.delete-appointments h2 {
+  color: #008080;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Form and input container */
+.delete-appointments div {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+/* Labels */
+.delete-appointments label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color:#008080;
+}
+
+/* Input fields */
+.delete-appointments input {
+  padding: 0.55rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #cfd8dc;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.delete-appointments input:focus {
+  border-color: #008080;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25);
+}
+
+/* Appointment info box */
+.delete-appointments > div > div {
+  background: #ffffff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #cfd8dc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.delete-appointments strong {
+  color: #0d47a1;
+}
+
+/* Delete button */
+.delete-appointments button {
+  padding: 0.65rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transition: all 0.3s ease;
+}
+
+.delete-appointments button:hover {
+  background: linear-gradient(135deg, #e53935, #c62828);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+/* Error message */
+.delete-appointments div[style*="color: red"] {
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .delete-appointments {
+    padding: 2rem 1.5rem;
+  }
+
+  .delete-appointments button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,523 @@
+/* Global Overflow Prevention */
+html, body {
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Dashboard Wrapper */
+.dashboard-wrapper {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Pharmacist Dashboard Styles */
+.pharmacist-dashboard {
+  display: flex;
+  min-height: calc(100vh - 80px);
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-top: 80px;
+  padding-top: 0;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+  padding-top: 0;
+  transition: margin-left 0.3s ease;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: auto;
+}
+
+/* Main content positioning based on sidebar state */
+.main-content.sidebar-expanded {
+  margin-left: 280px;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 70px;
+}
+
+
+
+/* Header Styles */
+.header {
+  background: white;
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ecf0f1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 0;
+  box-sizing: border-box;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.header-left h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.current-date {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pharmacist-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #000000;
+  font-size: 12px;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  /* increased bottom padding for extra breathing room */
+  padding: 24px 24px 48px 32px;
+  background: #f8f9fa;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pharmacist-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.pharmacist-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  /* keep consistent lateral padding and larger bottom padding */
+  padding: 24px 24px 48px;
+  overflow-y: auto;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b5998;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .header {
+    padding: 16px 24px;
+  }
+  
+  .content-area {
+    padding: 20px 24px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content.sidebar-expanded,
+  .main-content.sidebar-collapsed {
+    margin-left: 0 !important;
+  }
+
+  .header {
+    padding: 12px 16px;
+  }
+
+  .header-left h1 {
+    font-size: 20px;
+  }
+
+  .content-area {
+    padding: 16px 16px 40px;
+  }
+
+  .pharmacist-info {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 12px;
+  }
+  
+  .header-left h1 {
+    font-size: 18px;
+  }
+  
+  .content-area {
+    padding: 12px 12px 32px;
+  }
+}
+
+/* Icon Classes (you can replace with your preferred icon library) */
+.icon-dashboard::before { content: "📊"; }
+.icon-prescriptions::before { content: "📋"; }
+.icon-dispensing::before { content: "💊"; }
+.icon-pharmacist::before { content: "👨‍⚕️"; }
+.icon-logout::before { content: "🚪"; }
+.icon-refresh::before { content: "🔄"; }
+.icon-eye::before { content: "👁️"; }
+.icon-check::before { content: "✅"; }
+.icon-close::before { content: "✖️"; }
+.icon-search::before { content: "🔍"; }
+.icon-medicine::before { content: "💊"; }
+.icon-plus::before { content: "➕"; }
+.icon-report::before { content: "📈"; }
+.icon-patient::before { content: "👤"; }
+.icon-chevron-left::before { content: "◀️"; }
+.icon-chevron-right::before { content: "▶️"; }
+.icon-warning::before { content: "⚠️"; }
+.icon-email::before { content: "📧"; }
+.icon-lock::before { content: "🔒"; }
+.icon-login::before { content: "🔑"; }
+.icon-pharmacy::before { content: "🏥"; }
+.icon-emergency::before { content: "🚨"; }
+.icon-high::before { content: "⚡"; }
+.icon-normal::before { content: "📋"; }
+.icon-low::before { content: "📝"; }
+.icon-prescription::before { content: "📄"; }
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mb-32 { margin-bottom: 32px; }
+
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mt-32 { margin-top: 32px; }
+
+.p-16 { padding: 16px; }
+.p-24 { padding: 24px; }
+
+.hidden { display: none; }
+.visible { display: block; }
+
+
+/* Card Styles */
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #3b5998;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2d4373;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+}
+
+/* Status Badge Styles */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.green {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.orange {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.blue {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.purple {
+  background: #e2d9f3;
+  color: #5a3a7c;
+}
+
+.status-badge.red {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.gray {
+  background: #e9ecef;
+  color: #495057;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+/* Responsive Design - Removed conflicting sidebar styles */
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b5998;
+  box-shadow: 0 0 0 2px rgba(59, 89, 152, 0.1);
+}
+
+/* Table Styles */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.table td {
+  font-size: 14px;
+  color: #495057;
+}
+
+.table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Grid Layouts */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .grid-4,
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

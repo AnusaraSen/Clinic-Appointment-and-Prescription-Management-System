@@ -1,0 +1,16 @@
+/* Delete Prescription Themed Form */
+:root { --ap-accent:#007f83; --ap-accent-alt:#00b5bb; --ap-accent-soft:#e0f7fa; --ap-text-dark:#013f41; --ap-border:#b6e2e5; }
+.ap-form-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(6px); border:1px solid var(--ap-border); border-radius:28px; padding:1.75rem 1.6rem 2.2rem; margin:7rem auto 2.5rem; max-width:760px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.15); }
+.ap-form-wrapper h1 { font-size:1.35rem; font-weight:700; color:var(--ap-text-dark); text-align:center; letter-spacing:.5px; }
+.ap-readonly-block { background:#fff; border:1px solid var(--ap-border); border-radius:16px; padding:.85rem 1rem .9rem; margin-bottom:.9rem; }
+.ap-readonly-block label { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--ap-accent); font-weight:600; }
+.ap-readonly-block .form-control, .ap-readonly-block .form-select, .ap-readonly-block textarea { font-size:14px; padding:.4rem .6rem; background:#f7fcfc; }
+.ap-delete-warning { background:linear-gradient(135deg,#fff4f4,#ffecec); border:1px solid #ffc5c5; border-radius:18px; padding:.95rem 1.05rem; font-size:14px; color:#8a1c1c; margin:1rem 0 1.2rem; }
+.ap-delete-warning strong { color:#c11212; }
+.ap-actions-row { display:flex; gap:.75rem; justify-content:flex-end; }
+.btn-ap-cancel, .btn-ap-delete { font-size:14px; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; }
+.btn-ap-cancel { background:#fff; color:var(--ap-accent); border:1px solid var(--ap-accent); }
+.btn-ap-cancel:hover { background:var(--ap-accent-soft); }
+.btn-ap-delete { background:linear-gradient(135deg,#ff5a5f,#dc3545); color:#fff; border:1px solid #dc3545; }
+.btn-ap-delete:hover { background:linear-gradient(135deg,#dc3545,#ff5a5f); }
+@media (max-width:600px){ .ap-actions-row { flex-direction:column; align-items:stretch; } .ap-form-wrapper { padding:1.35rem 1rem 1.7rem; } }

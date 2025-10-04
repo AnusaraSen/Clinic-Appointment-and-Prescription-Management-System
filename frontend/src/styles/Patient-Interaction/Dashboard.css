@@ -1,0 +1,448 @@
+/* Professional Dashboard Layout */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+}
+
+/* Clinical Sidebar Customization for Patient Portal */
+.patient-sidebar-theme {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 2px 0 20px rgba(0, 128, 128, 0.1) !important;
+}
+
+.patient-sidebar-active {
+  background: #dcfce7 !important;
+  color: #059669 !important;
+}
+
+.patient-sidebar-toggle {
+  background: #008080 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.3) !important;
+}
+
+.patient-sidebar-toggle:hover {
+  background: #006666 !important;
+  transform: scale(1.05) !important;
+}
+
+.dashboard-main {
+  flex: 1;
+  min-height: 100vh;
+  background: transparent;
+  position: relative;
+  transition: margin-left 0.3s ease;
+}
+
+.dashboard-content {
+  padding: 84px 32px 32px 32px; /* Standard top padding for topbar */
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 84px);
+}
+
+/* Header Section Styling */
+.welcome-header {
+  margin-bottom: 32px;
+  padding: 32px 40px;
+  background: linear-gradient(135deg, #008080 0%, #20b2aa 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 128, 128, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.welcome-header h1 {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 8px 0 !important;
+  color: white !important;
+  position: relative;
+  z-index: 2;
+}
+
+.welcome-name {
+  color: #fef9c3 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-header p {
+  font-size: 1.2rem !important;
+  margin: 0 !important;
+  opacity: 0.9;
+  position: relative;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Stats Grid Enhancement */
+.stats-grid {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 250px;
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 128, 128, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+
+.stat-card:nth-child(1)::before {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.stat-card:nth-child(2)::before {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.stat-card:nth-child(3)::before {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+
+.stat-card:nth-child(4)::before {
+  background: linear-gradient(90deg, #06b6d4, #0891b2);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Content Cards Enhancement */
+.content-section {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.content-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 128, 128, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.content-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.appointments-card {
+  flex: 2;
+  min-width: 600px;
+}
+
+.prescriptions-card {
+  flex: 1;
+  min-width: 350px;
+}
+
+/* Professional Button Styling */
+.professional-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: white !important;
+  border: none !important;
+  padding: 14px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 1.08rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  width: 100% !important;
+}
+
+.professional-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4) !important;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+}
+
+.secondary-btn {
+  background: white !important;
+  color: #374151 !important;
+  border: 2px solid #e5e7eb !important;
+  padding: 14px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 1.08rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  width: 100% !important;
+}
+
+.secondary-btn:hover {
+  background: #f9fafb !important;
+  border-color: #008080 !important;
+  color: #008080 !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Enhanced Appointment Items */
+.appointment-item {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 0 -24px;
+  padding: 16px 24px !important;
+}
+
+.appointment-item:hover {
+  background: #f8fafc !important;
+  transform: translateX(4px);
+}
+
+/* Enhanced Prescription Items */
+.prescription-item {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 0 -24px;
+  padding: 12px 24px !important;
+}
+
+.prescription-item:hover {
+  background: #f8fafc !important;
+  transform: translateX(4px);
+}
+
+/* Action Icons Enhancement */
+.action-icon {
+  padding: 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.action-icon:hover {
+  transform: scale(1.1) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #008080;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.empty-message {
+  color: #6b7280 !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 20px !important;
+  border-radius: 8px !important;
+  text-align: center !important;
+  font-style: italic !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboard-main {
+    margin-left: 0 !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .content-section {
+    flex-direction: column;
+  }
+  
+  .appointments-card,
+  .prescriptions-card {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 84px 20px 20px 20px;
+  }
+  
+  .welcome-header {
+    padding: 24px 20px;
+    margin-bottom: 24px;
+  }
+  
+  .welcome-header h1 {
+    font-size: 2rem !important;
+  }
+  
+  .welcome-header p {
+    font-size: 1rem !important;
+  }
+  
+  .stats-grid {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .stat-card {
+    min-width: auto;
+  }
+  
+  .content-section {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 84px 16px 16px 16px;
+  }
+  
+  .welcome-header {
+    padding: 20px 16px;
+  }
+  
+  .welcome-header h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  .stats-grid {
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+}
+
+/* Legacy Container Styles - keeping for backward compatibility */
+.dashboard {
+  max-width: 900px;
+  margin: 48px auto;
+  padding: 36px 32px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 10px 32px rgba(0,128,128,0.18);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard h1, .dashboard h2, .dashboard h3 {
+  text-align: center;
+  color: #008080;
+  font-weight: 700;
+}
+
+.dashboard h1 {
+  font-size: 2.2rem;
+  margin-bottom: 18px;
+}
+
+.dashboard h2 {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.dashboard h3 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.dashboard .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.dashboard .card {
+  background: #f0f4f8;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,128,128,0.10);
+  padding: 24px 32px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #008080;
+  font-weight: 600;
+}
+
+.dashboard .card .icon {
+  margin-bottom: 12px;
+}
+
+.dashboard .actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.dashboard .actions button, .dashboard .card button {
+  padding: 14px 28px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(90deg, #008080 60%, #00bfae 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,128,128,0.10);
+  transition: background 0.3s, transform 0.2s;
+}
+
+.dashboard .actions button:hover, .dashboard .card button:hover {
+  background: linear-gradient(90deg, #006666 60%, #009e8e 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(0,128,128,0.18);
+}

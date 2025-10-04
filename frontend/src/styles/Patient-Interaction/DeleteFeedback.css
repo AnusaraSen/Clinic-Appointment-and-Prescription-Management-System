@@ -1,0 +1,66 @@
+/* Delete Feedback Page - Modern Style */
+.delete-feedback {
+  max-width: 600px;
+  margin: 48px auto;
+  padding: 36px 32px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0,128,128,0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.delete-feedback h2 {
+  text-align: center;
+  color: #d32f2f;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+.delete-feedback form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.delete-feedback label {
+  font-weight: 600;
+  color: #d32f2f;
+  margin-bottom: 8px;
+}
+.delete-feedback input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #d0dfe6;
+  border-radius: 10px;
+  font-size: 1.08rem;
+  background: #f9fdfd;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(211,47,47,0.09);
+}
+.delete-feedback input:focus {
+  border-color: #d32f2f;
+  outline: none;
+  box-shadow: 0 0 12px rgba(211,47,47,0.18);
+}
+.delete-feedback button {
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #d32f2f 60%, #b71c1c 100%);
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(211,47,47,0.10);
+  margin-top: 18px;
+}
+.delete-feedback button:hover {
+  background: linear-gradient(90deg, #e53935 60%, #c62828 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(211,47,47,0.18);
+}
+@media (max-width: 700px) {
+  .delete-feedback {
+    max-width: 98vw;
+    padding: 16px 4vw;
+  }
+}
