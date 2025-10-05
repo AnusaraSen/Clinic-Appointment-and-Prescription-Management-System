@@ -1,5 +1,4 @@
 // Admin management feature exports
-export { default as AdminDashboard } from './pages/AdminDashboard';
 export { default as DoctorDashboard } from './pages/DoctorDashboard';
 export { default as UsersPage } from './pages/UsersPage';
 
