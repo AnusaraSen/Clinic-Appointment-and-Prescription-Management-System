@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
-import AllPatients from './medical_records/AllPatients';
+import AllPatients from './medical-records/AllPatients';
 
 /**
  * 🩺 Medical Records Page with Clinical Sidebar

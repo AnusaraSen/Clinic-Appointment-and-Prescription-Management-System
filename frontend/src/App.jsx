@@ -75,6 +75,7 @@ import MedicalRecordsPage from './features/clinical-workflow/pages/MedicalRecord
 import PrescriptionsPage from './features/clinical-workflow/pages/PrescriptionsPage';
 import DoctorCalendarPage from './features/clinical-workflow/pages/DoctorCalendarPage';
 import DoctorProfilePage from './features/clinical-workflow/pages/DoctorProfilePage';
+import PatientHistoryPage from './features/clinical-workflow/pages/PatientHistoryPage';
 import Home from './pages/Home'
 import InventoryDashboard from './features/pharmacy-inventory/pages/InventoryDashboard'
 import AllActivities from './features/pharmacy-inventory/pages/AllActivities'
@@ -626,6 +627,7 @@ function App() {
           <Route path="/addPatient" element={<AddPatient />} />
           <Route path="/patient/all" element={<MedicalRecordsPage search={globalSearch} />} />
           <Route path="/getPatient" element={<MedicalRecordsPage search={globalSearch} />} />
+          <Route path="/patient/history/:patientId" element={<PatientHistoryPage />} />
           <Route path="/patient/update/:id" element={<UpdatePatient />} />
           <Route path="/updatePatient/:id" element={<UpdatePatient />} />
           <Route path="/patient/delete/:id" element={<DeletePatient />} />

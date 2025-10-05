@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const Prescription = require('../models/Prescription');
 const { validatePrescription } = require('../../patient-interaction/routes/validation');
+// Added: endpoint to fetch prescriptions by patient_ID for patient history feature
 
 // Create a new prescription
 
@@ -123,3 +124,16 @@ router.route('/delete/:id').delete(async (req, res) => {
 
 
 module.exports = router;
+
+// New endpoint: get prescriptions by patient_ID (NIC/code)
+router.get('/by-patient/:patientId', async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    if (!patientId) return res.status(400).json({ message: 'patientId is required' });
+    const prescriptions = await Prescription.find({ patient_ID: patientId }).sort({ Date: -1 });
+    return res.json({ items: prescriptions, count: prescriptions.length });
+  } catch (err) {
+    console.error('Error fetching prescriptions by patient:', err);
+    return res.status(500).json({ message: 'Failed to fetch prescriptions' });
+  }
+});
