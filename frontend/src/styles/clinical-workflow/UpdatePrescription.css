@@ -1,0 +1,20 @@
+/* Update Prescription Themed Form */
+:root { --ap-accent:#007f83; --ap-accent-alt:#00b5bb; --ap-accent-soft:#e0f7fa; --ap-text-dark:#013f41; --ap-border:#b6e2e5; }
+.ap-form-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(6px); border:1px solid var(--ap-border); border-radius:28px; padding:1.75rem 1.6rem 2.2rem; margin:7rem auto 2.5rem; max-width:760px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.15); }
+.ap-form-wrapper h1 { font-size:1.35rem; font-weight:700; color:var(--ap-text-dark); text-align:center; letter-spacing:.5px; text-shadow:0 2px 6px rgba(0,0,0,.08); }
+.ap-form-wrapper label { font-size:14px; font-weight:600; color:var(--ap-text-dark); }
+.ap-form-wrapper .form-control, .ap-form-wrapper .form-select, .ap-form-wrapper textarea { font-size:14px; }
+.ap-medicine-block { background:#fff; border:1px solid var(--ap-border); border-radius:16px; padding:.85rem .95rem .9rem; margin-bottom:1rem; box-shadow:0 2px 6px -3px rgba(0,0,0,.08); }
+.ap-medicine-block label { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--ap-accent); }
+.ap-medicine-block .form-control, .ap-medicine-block .form-select { font-size:14px; padding:.4rem .6rem; }
+.ap-section-title { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--ap-accent); margin:1.15rem 0 .7rem; }
+.btn-ap { font-size:14px; font-weight:600; border-radius:20px; padding:.6rem 1.15rem; letter-spacing:.35px; transition:.25s background,.25s color,.25s box-shadow; }
+.btn-ap-primary { background:linear-gradient(135deg,var(--ap-accent),var(--ap-accent-alt)); color:#fff; border:1px solid var(--ap-accent-alt); }
+.btn-ap-primary:hover { background:linear-gradient(135deg,var(--ap-accent-alt),var(--ap-accent)); }
+.btn-ap-outline { background:#fff; color:var(--ap-accent); border:1px solid var(--ap-accent); }
+.btn-ap-outline:hover { background:var(--ap-accent-soft); }
+.btn-ap-add { background:#fff; color:var(--ap-accent); border:1px dashed var(--ap-accent); }
+.btn-ap-add:hover { background:var(--ap-accent-soft); }
+.btn-ap-remove { background:linear-gradient(135deg,#ff5a5f,#dc3545); color:#fff; border:1px solid #dc3545; font-size:14px; padding:.45rem .75rem; }
+.btn-ap-remove:hover { background:linear-gradient(135deg,#dc3545,#ff5a5f); }
+@media (max-width:600px){ .ap-form-wrapper { padding:1.35rem 1rem 1.7rem; } }

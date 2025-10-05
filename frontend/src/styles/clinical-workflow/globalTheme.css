@@ -1,0 +1,42 @@
+/* Global application theme (full-page background) */
+:root {
+  --ap-bg-gradient: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.95), rgba(240,250,252,0.9) 40%, rgba(230,246,248,0.85) 70%);
+  --ap-accent: #007f83;
+  --ap-accent-alt: #00b5bb;
+  --ap-accent-soft: #e0f7fa;
+  --ap-text-dark: #013f41;
+  --ap-border: #b6e2e5;
+  --ap-danger: #dc3545;
+  --ap-warning: #ffc107;
+}
+html, body, #root { height:100%; min-height:100%; }
+body {
+  margin:0;
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background: linear-gradient(120deg, #e6f9fb 0%, #f2feff 35%, #e4f5f7 70%) fixed;
+  position:relative;
+  overflow-x:hidden;
+  color: var(--ap-text-dark);
+}
+/* Overlay subtle radial glaze using existing gradient for depth */
+body::before, body::after {
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:-2;
+}
+body::before { background: var(--ap-bg-gradient); mix-blend-mode:normal; }
+/* Concentric animated arcs */
+body::after { z-index:-1; background:none; }
+
+/* Separate pseudo elements for arcs to avoid painting over text */
+#root::before, #root::after { content:""; position:fixed; border:2px solid var(--ap-accent-alt); border-radius:50%; opacity:.23; pointer-events:none; animation: globalArc 26s linear infinite; z-index:-1; }
+#root::before { width:1600px; height:1600px; top:-900px; right:-780px; }
+#root::after { width:1100px; height:1100px; bottom:-650px; left:-620px; animation-direction:reverse; }
+
+@keyframes globalArc { 0%{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.03);} 100%{transform:rotate(360deg) scale(1);} }
+
+/* Utility surface class for panels (optional) */
+.ap-surface { background: rgba(255,255,255,0.82); backdrop-filter: blur(5px); border:1px solid var(--ap-border); border-radius:24px; box-shadow:0 4px 16px -4px rgba(0,0,0,.12); }
+
+@media (max-width: 640px) {
+  #root::before { width:1000px; height:1000px; top:-600px; right:-500px; }
+  #root::after { width:700px; height:700px; bottom:-420px; left:-400px; }
+}

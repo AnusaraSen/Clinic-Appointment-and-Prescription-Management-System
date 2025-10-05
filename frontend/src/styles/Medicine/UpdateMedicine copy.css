@@ -1,0 +1,284 @@
+/* UpdateMedicine.css - Professional Theme for Medicine Inventory Management */
+
+.medicine-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe, #ffffff, #dbeafe);
+  padding: 2rem;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.medicine-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.medicine-title {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  margin: 0;
+  padding: 2rem 2.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.medicine-form {
+  padding: 2.5rem;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.medicine-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medicine-field label {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.medicine-field label::after {
+  content: "*";
+  color: #ef4444;
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.medicine-field input {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.3s ease;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.medicine-field input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.25);
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.medicine-field input:hover:not(:focus) {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.medicine-field input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Professional button styling */
+.medicine-btn {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  min-width: 180px;
+}
+
+.medicine-btn-primary {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.medicine-btn-secondary {
+  background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+  box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+}
+
+.medicine-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.medicine-error {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #b91c1c;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+  border: 1px solid #fca5a5;
+  font-weight: 500;
+}
+
+.medicine-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.medicine-btn:hover::before {
+  left: 100%;
+}
+
+.medicine-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+}
+
+.medicine-btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+}
+
+.medicine-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.medicine-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
+}
+
+/* Loading state styling */
+.medicine-loading {
+  text-align: center;
+  margin-top: 3rem;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #64748b;
+  font-weight: 500;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  max-width: 400px;
+  margin: 3rem auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .medicine-container {
+    padding: 1rem;
+  }
+  
+  .medicine-form {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+  
+  .medicine-title {
+    padding: 1.5rem;
+    font-size: 1.75rem;
+  }
+  
+  .medicine-btn {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    min-width: 140px;
+  }
+  
+  .medicine-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .medicine-actions .medicine-btn {
+    width: 100%;
+  }
+}
+
+/* Enhanced focus states for accessibility */
+.medicine-field input:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.medicine-btn:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Smooth animations */
+* {
+  transition: all 0.2s ease;
+}
+
+/* Professional form field animations */
+.medicine-field {
+  position: relative;
+}
+
+.medicine-field input:focus + label,
+.medicine-field input:not(:placeholder-shown) + label {
+  transform: translateY(-0.125rem);
+  font-size: 0.875rem;
+  color: #10b981;
+}
+
+/* Success and error states */
+.medicine-field.success input {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.medicine-field.error input {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Professional gradient overlay for enhanced depth */
+.medicine-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.medicine-form {
+  position: relative;
+  z-index: 2;
+}

@@ -1,0 +1,106 @@
+/* Tailwind CSS v4: enable utilities */
+@import "tailwindcss";
+
+/* Custom theme tokens (CSS Custom Properties) */
+:root {
+  /* Brand palette */
+  --color-primary: #0FA3A3;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #116E6E;
+  --color-secondary-foreground: #FFFFFF;
+  --color-accent: #19C2C2;
+  --color-accent-foreground: #0B3C3C;
+
+  /* UI colors */
+  --color-background: #F4F8F8;
+  --color-surface: #FFFFFF;
+  --color-muted: #7A9494;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Tokens for utilities used below */
+  --shadow-soft: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --radius-card: 14px; /* Matches tailwind.config.js borderRadius.card */
+}
+
+/* Basic page styles using Tailwind classes applied globally */
+html, body, #root {
+  height: 100%;
+}
+
+body { background: var(--color-background); color: #0B3C3C; -webkit-font-smoothing: antialiased; margin:0; }
+
+h1, h2, h3, h4 { color: var(--color-secondary); }
+a { color: var(--color-primary); text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+/* Utility helpers */
+.card { background: var(--color-surface); box-shadow: var(--shadow-soft); border-radius: var(--radius-card); padding:1.5rem; }
+
+/* Small design system as regular classes */
+.btn-primary { background: var(--color-primary); color: var(--color-primary-foreground); font-weight:500; transition:filter .15s, box-shadow .2s; box-shadow:none; }
+.btn-primary:hover { filter:brightness(1.1); box-shadow: var(--shadow-soft); }
+.btn-secondary { background: var(--color-secondary); color: var(--color-secondary-foreground); font-weight:500; transition:filter .15s; }
+.btn-secondary:hover { filter:brightness(1.1); }
+.btn-outline { border:1px solid #d1d5db; color:#374151; background:#fff; transition:background .15s; }
+.btn-outline:hover { background:#f9fafb; }
+.card-shadow { box-shadow: var(--shadow-soft); }
+.rounded-card { border-radius: var(--radius-card); }
+.muted { color:#6b7280; }
+
+/* Inputs */
+.input, .select { width:100%; border:1px solid #e5e7eb; padding:.5rem; border-radius:.5rem; outline:none; transition: box-shadow .15s, border-color .15s; }
+.input:focus, .select:focus { border-color: var(--color-accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--color-accent) 60%, transparent); }
+
+/* Badges */
+.badge { padding:0.25rem 0.5rem; border-radius:9999px; font-size:.75rem; line-height:1rem; font-weight:500; display:inline-block; }
+.badge-success { background: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
+.badge-warning { background: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); }
+.badge-danger { background: color-mix(in srgb, var(--color-danger) 15%, transparent); color: var(--color-danger); }
+
+/* Admin form normalization: ensure forms match modal styling when inside .admin-form */
+.admin-form .input,
+.admin-form input,
+.admin-form textarea,
+.admin-form select,
+.admin-form .select {
+  width: 100%;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  padding: .5rem .75rem;
+  border-radius: .5rem; /* rounded-lg */
+  outline: none;
+  transition: box-shadow .15s, border-color .15s;
+}
+.admin-form .input:focus,
+.admin-form input:focus,
+.admin-form textarea:focus,
+.admin-form select:focus {
+  border-color: #60a5fa; /* blue-400 */
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.12);
+}
+
+/* High-specificity override to restore modal/admin form styling after external workflows
+   (Use minimal !important to defeat unexpected global overrides introduced by other modules) */
+body .admin-form .input,
+body .admin-form input,
+body .admin-form textarea,
+body .admin-form select,
+body .admin-form .select {
+  width: 100% !important;
+  border: 1px solid #e5e7eb !important; /* gray-200 */
+  padding: .5rem .75rem !important;
+  border-radius: .5rem !important; /* rounded-lg */
+  outline: none !important;
+  background: var(--color-surface) !important;
+  color: inherit !important;
+  font-size: 0.9375rem !important; /* ~15px to match modal inputs */
+  transition: box-shadow .15s, border-color .15s !important;
+}
+body .admin-form .input:focus,
+body .admin-form input:focus,
+body .admin-form textarea:focus,
+body .admin-form select:focus {
+  border-color: #60a5fa !important; /* blue-400 */
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.12) !important;
+}

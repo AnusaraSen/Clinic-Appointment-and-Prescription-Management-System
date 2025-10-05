@@ -1,0 +1,194 @@
+/* Container */
+.all-appointments {
+  margin: 2.5rem auto;
+  padding: 2rem;
+  background: #f0f4f8;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header */
+.all-appointments h2 {
+  color: #008080;
+  font-size: 2rem;
+}
+
+/* Top button container */
+.all-appointments > div > div {
+  display: flex;
+  gap: 8px;
+}
+
+/* Refresh button */
+.redo-btn {
+  padding: 0.55rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #008080, #42a5f5);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.redo-btn:hover {
+  background: linear-gradient(135deg, #1565c0, #1e88e5);
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Appointment list */
+.all-appointments ul {
+  list-style: none;
+  padding: 0;
+}
+
+.all-appointments li {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #cfd8dc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+/* Labels */
+.all-appointments strong {
+  color:#008080;
+}
+
+/* Action buttons */
+.all-appointments li div button {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.all-appointments li div button:first-child {
+  background: linear-gradient(135deg, #43a047, #66bb6a); /* green update button */
+  color: #fff;
+  margin-right: 8px;
+}
+
+.all-appointments li div button:first-child:hover {
+  background: linear-gradient(135deg, #388e3c, #4caf50);
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Delete button: red */
+.all-appointments li div button:last-child {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  color: #fff;
+}
+
+.all-appointments li div button:last-child:hover {
+  background: linear-gradient(135deg, #e53935, #c62828);
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Small text */
+.all-appointments small {
+  color: #555;
+}
+
+/* Error messages */
+.all-appointments div[style*="color: red"] {
+  font-weight: 600;
+  color: #d32f2f;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
+
+/* Table Styles */
+.appointments-table-container {
+  margin-top: 24px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; 
+  display: block;
+}
+
+.appointments-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,128,128,0.10);
+  font-size: 1rem;
+  table-layout: fixed;
+}
+
+.appointments-table th, .appointments-table td {
+  padding: 14px 12px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.appointments-table th {
+  background: #f0f4f8;
+  color: #008080;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.appointments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.appointments-table td {
+  color: #333;
+  word-break: break-word;
+}
+
+.appointments-table td button:first-child {
+  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
+  color: #fff !important;
+  border: 2px solid #43a047 !important;
+}
+.appointments-table td button:first-child:hover {
+  background: linear-gradient(135deg, #388e3c, #4caf50) !important;
+  border-color: #388e3c !important;
+  transform: translateY(-2px) scale(1.03);
+}
+.appointments-table td button:last-child {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c) !important;
+  color: #fff !important;
+  border: 2px solid #d32f2f !important;
+}
+.appointments-table td button:last-child:hover {
+  background: linear-gradient(135deg, #e53935, #c62828) !important;
+  border-color: #e53935 !important;
+  transform: translateY(-2px) scale(1.03);
+}
+
+.appointments-table th:nth-child(1), .appointments-table td:nth-child(1) { width: 110px; }
+.appointments-table th:nth-child(2), .appointments-table td:nth-child(2) { width: 110px; }
+.appointments-table th:nth-child(3), .appointments-table td:nth-child(3) { width: 90px; }
+.appointments-table th:nth-child(4), .appointments-table td:nth-child(4) { width: 80px; }
+.appointments-table th:nth-child(5), .appointments-table td:nth-child(5) { width: 90px; }
+.appointments-table th:nth-child(6), .appointments-table td:nth-child(6) { width: 140px; }
+.appointments-table th:nth-child(7), .appointments-table td:nth-child(7) { width: 140px; }
+.appointments-table th:nth-child(8), .appointments-table td:nth-child(8) { width: 120px; }
+.appointments-table th:nth-child(9), .appointments-table td:nth-child(9) { width: 120px; }
+
+@media (max-width: 900px) {
+  .appointments-table {
+    font-size: 0.95rem;
+  }
+}
+@media (max-width: 640px) {
+  .appointments-table th, .appointments-table td {
+    padding: 10px 6px;
+    font-size: 0.92rem;
+  }
+}

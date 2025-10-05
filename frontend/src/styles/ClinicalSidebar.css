@@ -1,0 +1,340 @@
+/* Clinical Sidebar Professional Styles */
+
+.clinical-sidebar {
+  width: 280px;
+  height: calc(100vh - 85px);
+  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 85px;
+  z-index: 1000;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  transition: width 0.3s ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.clinical-sidebar.collapsed {
+  width: 70px;
+}
+
+.clinical-sidebar-header {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.clinical-sidebar.collapsed .header-content {
+  justify-content: center;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.clinical-sidebar-header h3 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.clinical-sidebar.collapsed .clinical-sidebar-header h3 {
+  opacity: 0;
+  width: 0;
+}
+
+.clinical-sidebar.collapsed .logo-section {
+  justify-content: center;
+}
+
+.toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 0;
+  backdrop-filter: blur(10px);
+}
+
+.clinical-sidebar.collapsed .toggle-btn {
+  position: static;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.clinical-sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0;
+  overflow-y: auto;
+}
+
+.nav-section {
+  margin-bottom: 2rem;
+}
+
+.nav-section-title {
+  padding: 0 1.5rem 0.75rem 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.75rem;
+  transition: opacity 0.3s ease;
+}
+
+.clinical-sidebar.collapsed .nav-section-title {
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  font-weight: 500;
+  position: relative;
+  margin: 0.25rem 0;
+}
+
+.clinical-sidebar.collapsed .nav-item {
+  padding: 0.875rem 0.75rem;
+  justify-content: center;
+  gap: 0;
+}
+
+.nav-text {
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.clinical-sidebar.collapsed .nav-text {
+  opacity: 0;
+  width: 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  text-decoration: none;
+  border-left-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(2px);
+}
+
+/* Tooltip for collapsed state */
+.clinical-sidebar.collapsed .nav-item:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1001;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-left-color: #60a5fa;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active i {
+  color: #60a5fa;
+  text-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
+}
+
+.nav-item i {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.nav-item span {
+  font-size: 0.9rem;
+}
+
+.clinical-sidebar-footer {
+  padding: 1.5rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.clinical-sidebar.collapsed .user-info {
+  justify-content: center;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.2rem;
+  backdrop-filter: blur(10px);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.user-name {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.user-role {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.clinical-sidebar.collapsed .user-details {
+  display: none;
+}
+
+/* Main content with clinical sidebar */
+.clinical-main-layout {
+  display: flex;
+  min-height: calc(100vh - 85px);
+  margin-top: 0;
+}
+
+.clinical-main-content {
+  margin-left: 280px;
+  flex: 1;
+  min-height: calc(100vh - 85px);
+  transition: margin-left 0.3s ease;
+  background: #f8fafc;
+}
+
+/* Adjust main content when sidebar is collapsed */
+.clinical-sidebar.collapsed ~ .clinical-main-content,
+.clinical-main-content.clinical-sidebar-collapsed,
+body.clinical-sidebar-collapsed .clinical-main-content {
+  margin-left: 70px;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .clinical-sidebar {
+    width: 260px;
+  }
+  
+  .clinical-sidebar.collapsed {
+    width: 60px;
+  }
+  
+  .clinical-main-content {
+    margin-left: 260px;
+  }
+  
+  body.clinical-sidebar-collapsed .clinical-main-content {
+    margin-left: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .clinical-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 280px;
+  }
+  
+  .clinical-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .clinical-main-content {
+    margin-left: 0;
+  }
+  
+  .nav-item {
+    padding: 0.75rem 1rem;
+  }
+  
+  .clinical-sidebar-header h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Scrollbar styling for sidebar */
+.clinical-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.clinical-sidebar-nav::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.clinical-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.clinical-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

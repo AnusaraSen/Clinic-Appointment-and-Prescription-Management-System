@@ -1,0 +1,85 @@
+/* Container */
+.medicine-container {
+  display: flex;
+  align-items: flex-start; /* align to top */
+  justify-content: center; /* center horizontally */
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #e0f2fe, #ffffff, #dbeafe);
+  padding: 32px 16px; /* breathing space around centered card */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Card */
+.medicine-container .medicine-card {
+  width: 50%; /* requested half-page width */
+  max-width: none;
+  background: #fff; /* solid background for readability */
+  padding: 32px clamp(16px, 3vw, 48px);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: none;
+}
+
+
+
+/* Title */
+.medicine-container .medicine-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  color: #075985;
+  margin-bottom: 20px;
+}
+
+/* Form Fields */
+.medicine-container .medicine-form {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr; /* always single column */
+}
+
+/* Removed two-column layout to keep fields stacked vertically on all screens */
+
+/* On smaller screens, let the card grow for readability */
+@media (max-width: 900px) {
+  .medicine-container .medicine-card {
+    width: 90%;
+  }
+}
+
+.medicine-container .medicine-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.medicine-container .medicine-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.25s ease-in-out;
+  background: #f8fafc;
+}
+
+.medicine-container .medicine-field input:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.25);
+  background: #fff;
+}
+
+/* Button */
+.medicine-container .medicine-btn {
+  width: 100%;
+  background: #0284c7;
+  color: #fff;
+  padding: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+}

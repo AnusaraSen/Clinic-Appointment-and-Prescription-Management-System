@@ -1,0 +1,59 @@
+const express = require("express");
+const router = express.Router();
+const labTaskController = require("../Controllers/labTaskController");
+
+// Create a new task
+router.post("/", labTaskController.createTask);
+
+// // Debug raw MongoDB data
+// router.get("/debug/raw", labTaskController.debugRawData);
+
+// // Test populate functionality
+// router.get("/test/populate", labTaskController.testPopulate);
+
+// Get all tasks for a lab assistant
+router.get("/", labTaskController.getAllTasks);
+
+// Get tasks assigned to specific assistant
+router.get("/assistant/:assistantId", labTaskController.getTasksByAssistant);
+
+// Get all lab staff for assignment
+router.get("/lab-staff", labTaskController.getLabStaff);
+
+// Get single task by ID
+router.get("/:id", labTaskController.getTaskById);
+
+// Update a task
+router.put("/:id", labTaskController.updateTask);
+
+// Delete a task
+router.delete("/:id", labTaskController.deleteTask);
+
+// Lab Assistant specific endpoints
+
+// Get task notes
+router.get("/:id/notes", labTaskController.getTaskNotes);
+
+// Add task note
+router.post("/:id/notes", labTaskController.addTaskNote);
+
+// Get test executions for a task (includes both legacy executions and clinical processing)
+router.get("/:id/executions", labTaskController.getTestExecutions);
+
+// Legacy execution endpoint (backward compatibility)
+router.post("/:id/executions", labTaskController.addTestExecution);
+
+// New clinical processing endpoint
+router.post("/:id/processing", labTaskController.addClinicalProcessing);
+
+// Get task results
+router.get("/:id/results", labTaskController.getTaskResults);
+
+// Add task results
+router.post("/:id/results", labTaskController.addTaskResults);
+
+// File upload endpoint (this should be in a separate file upload route)
+router.post("/upload", labTaskController.uploadFile);
+
+module.exports = router;
+
