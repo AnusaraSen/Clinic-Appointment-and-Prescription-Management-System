@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const Patient = require('../models/Medical_Records.js');
 const { validatePatient } = require('../../patient-interaction/routes/validation');
+const Prescription = require('../models/Prescription'); // for history aggregation
+const PDFDocument = require('pdfkit');
 
 // For file upload (photo)
 const multer = require('multer');
@@ -270,3 +272,85 @@ router.route('/delete/:id').delete(async (req, res) => {
 
 
 module.exports = router;
+
+// Combined patient history endpoint by patient_ID (NIC/code)
+router.get('/history/:patientId', async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        if (!patientId) return res.status(400).json({ message: 'patientId is required' });
+        const patient = await Patient.findOne({ patient_ID: patientId });
+        if (!patient) return res.status(404).json({ message: 'Patient not found' });
+        const prescriptions = await Prescription.find({ patient_ID: patientId }).sort({ Date: -1 });
+        return res.json({ patient, prescriptions, prescriptionCount: prescriptions.length });
+    } catch (error) {
+        console.error('Error fetching patient history', error);
+        return res.status(500).json({ message: 'Failed to fetch patient history' });
+    }
+});
+
+// PDF export for patient history
+router.get('/history/:patientId/export/pdf', async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        if (!patientId) return res.status(400).json({ message: 'patientId is required' });
+        const patient = await Patient.findOne({ patient_ID: patientId });
+        if (!patient) return res.status(404).json({ message: 'Patient not found' });
+        const prescriptions = await Prescription.find({ patient_ID: patientId }).sort({ Date: -1 });
+
+        // Setup PDF
+        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="patient_${patientId}_history.pdf"`);
+        doc.pipe(res);
+
+        doc.fontSize(18).text('Patient History', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#555').text(`Generated: ${new Date().toLocaleString()}`);
+        doc.moveDown();
+
+        doc.fillColor('#000').fontSize(12).text('Patient Details', { underline: true });
+        doc.fontSize(10);
+        const details = [
+            ['Patient ID', patient.patient_ID],
+            ['Name', patient.patient_name],
+            ['Age', patient.patient_age],
+            ['Gender', patient.Gender],
+            ['Blood Group', patient.Blood_group],
+            ['Email', patient.Email],
+            ['Emergency Contact', patient.Emergency_Contact],
+            ['Allergies', patient.Allergies || '-'],
+            ['Current Conditions', patient.Current_medical_conditions || '-'],
+            ['Past Surgeries', patient.Past_surgeries || '-'],
+        ];
+        details.forEach(([k,v]) => doc.text(`${k}: ${v ?? '-'}`));
+        doc.moveDown();
+
+        doc.fontSize(12).text(`Prescriptions (${prescriptions.length})`, { underline: true });
+        doc.moveDown(0.5);
+
+        prescriptions.forEach((p, idx) => {
+            doc.fontSize(11).fillColor('#000').text(`${idx+1}. Date: ${p.Date ? new Date(p.Date).toLocaleDateString() : '-'}`);
+            doc.fontSize(10).fillColor('#000');
+            if (p.doctor_Name) doc.text(`Doctor: ${p.doctor_Name}`);
+            if (p.Diagnosis) doc.text(`Diagnosis: ${p.Diagnosis}`);
+            if (p.Symptoms) doc.text(`Symptoms: ${p.Symptoms}`);
+            if (p.Instructions) doc.text(`Instructions: ${p.Instructions}`);
+            if (Array.isArray(p.Medicines) && p.Medicines.length) {
+                doc.text('Medicines:');
+                p.Medicines.forEach(m => {
+                    const line = ` - ${m.Medicine_Name || m.name || 'Unknown'} | ${m.Dosage||''} ${m.Frequency||''} ${m.Duration||''}`.trim();
+                    doc.text(line);
+                });
+            }
+            doc.moveDown(0.5);
+            if (doc.y > 760) doc.addPage();
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error('Error exporting patient history PDF', error);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Failed to export PDF' });
+        }
+    }
+});

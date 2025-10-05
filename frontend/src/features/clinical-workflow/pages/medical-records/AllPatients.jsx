@@ -189,7 +189,9 @@ function AllPatients({ search = '' }) {
               letterSpacing: '.5px',
               borderBottom: '2px solid var(--pt-border)'
             }}>
-              <span>{openTabs.find(tab => tab._id === activeTab)?.patient.patient_name}</span>
+              <div style={{display:'flex',alignItems:'center',gap:20}}>
+                <span>{openTabs.find(tab => tab._id === activeTab)?.patient.patient_name}</span>
+              </div>
               <button
                 onClick={() => closeTab(activeTab)}
                 style={{ background: 'rgba(255,255,255,0.18)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '50%', width: 34, height: 34, fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -208,17 +210,19 @@ function AllPatients({ search = '' }) {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '40px 28px',
+                    justifyContent: 'flex-start',
+                    padding: '40px 28px 20px',
                     borderTopLeftRadius: 16,
                     borderBottomLeftRadius: 16,
-                    minHeight: 400,
+                    minHeight: 480,
+                    boxSizing: 'border-box',
+                    position: 'relative'
                   }}>
                     {tab.patient.photo ? (
                       <img
                         src={tab.patient.photo.startsWith('data:') ? tab.patient.photo : `data:image/jpeg;base64,${tab.patient.photo}`}
                         alt="Patient"
-                        style={{ width: 200, height: 200, objectFit: 'cover', borderRadius: '50%', border: '5px solid #fff', boxShadow: '0 4px 16px 0 rgba(255,255,255,0.13)', marginBottom: 32 }}
+                        style={{ width: 180, height: 180, objectFit: 'cover', borderRadius: '50%', border: '5px solid #fff', boxShadow: '0 4px 16px 0 rgba(255,255,255,0.13)', marginBottom: 28 }}
                       />
                     ) : (
                       <div style={{ width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, color: '#fff', margin: '0 auto 32px auto', border: '5px solid #fff' }}>No Photo</div>
@@ -227,9 +231,17 @@ function AllPatients({ search = '' }) {
                     <div style={{ fontSize: 16, marginBottom: 16 }}>ID: <span style={{ fontWeight: 700 }}>{tab.patient.patient_ID}</span></div>
                     <div style={{ fontSize: 16, marginBottom: 14 }}>Email: <span style={{ fontWeight: 600 }}>{tab.patient.Email}</span></div>
                     <div style={{ fontSize: 16, marginBottom: 14 }}>Emergency: <span style={{ fontWeight: 600 }}>{tab.patient.Emergency_Contact}</span></div>
-                    <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 32 }}>
-                      <Link to={`/updatePatient/${tab.patient._id}`} className="pt-btn pt-btn-update" style={{ fontSize: '1rem', padding: '0.8rem 2.1rem', borderRadius: 18, background: '#fff', color: 'var(--pt-accent)', border: '2px solid #fff', textDecoration: 'none' }}>Update</Link>
-                      <Link to={`/deletePatient/${tab.patient._id}`} className="pt-btn pt-btn-delete" style={{ fontSize: '1rem', padding: '0.8rem 2.1rem', borderRadius: 18, background: 'linear-gradient(135deg,#034447,#0d8c90)', color: '#fff', border: '2px solid #034447', textDecoration: 'none' }}>Delete</Link>
+                    <div style={{ width:'100%', maxWidth:300, marginTop: 30, display:'flex', flexDirection:'column', gap:16 }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/patient/history/${tab.patient.patient_ID}`)}
+                        style={{ fontSize: '1.02rem', padding: '0.9rem 2.1rem', borderRadius: 20, background: 'linear-gradient(135deg,#1e293b,#334155)', color: '#fff', border: '2px solid #1e293b', cursor: 'pointer', fontWeight: 700, letterSpacing:'.5px', width:'100%' }}
+                        className="pt-btn"
+                      >Open Full History</button>
+                      <div style={{ display:'flex', gap:14, width:'100%' }}>
+                        <Link to={`/updatePatient/${tab.patient._id}`} className="pt-btn pt-btn-update" style={{ flex:1, textAlign:'center', fontSize: '0.95rem', padding: '0.75rem 0.4rem', borderRadius: 16, background: '#fff', color: 'var(--pt-accent)', border: '2px solid #fff', textDecoration: 'none', fontWeight:600 }}>Update</Link>
+                        <Link to={`/deletePatient/${tab.patient._id}`} className="pt-btn pt-btn-delete" style={{ flex:1, textAlign:'center', fontSize: '0.95rem', padding: '0.75rem 0.4rem', borderRadius: 16, background: 'linear-gradient(135deg,#034447,#0d8c90)', color: '#fff', border: '2px solid #034447', textDecoration: 'none', fontWeight:600 }}>Delete</Link>
+                      </div>
                     </div>
                   </div>
                   {/* Right side: other details */}
@@ -311,7 +323,7 @@ function AllPatients({ search = '' }) {
               </tr>
             )) : (
               <tr>
-                <td colSpan="12" className="text-center">{search ? 'No matching patients' : 'Loading Medical Records....'}</td>
+                <td colSpan="13" className="text-center">{search ? 'No matching patients' : 'Loading Medical Records....'}</td>
               </tr>
             )}
           </tbody>

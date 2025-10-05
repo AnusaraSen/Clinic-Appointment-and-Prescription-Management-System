@@ -79,24 +79,12 @@ export const ClinicalSidebar = ({ isCollapsed, onToggle, currentPath }) => {
       isCollapsed ? 'w-16' : 'w-72'
     }`}>
       
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-emerald-600">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white bg-opacity-20 rounded-xl">
-                <Stethoscope className="h-6 w-6 text-black" />
-              </div>
-              <div>
-                <h2 className="text-white font-bold text-lg">Clinical Portal</h2>
-                <p className="text-blue-100 text-sm">Medical Navigation</p>
-              </div>
-            </div>
-          )}
-          
+      {/* Sidebar Header: show full header on other pages, minimal toggle-only bar on key clinical pages */}
+      {['/clinical/dashboard', '/patient/all', '/prescription/all', '/doctor-availability', '/doctor-profile'].includes(currentPath) ? (
+        <div className="p-2 border-b border-gray-200 bg-white flex items-center justify-end">
           <button
             onClick={onToggle}
-            className="p-2 bg-white bg-opacity-20 text-black rounded-lg hover:bg-opacity-30 transition-all duration-200"
+            className="p-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             {isCollapsed ? (
@@ -106,7 +94,35 @@ export const ClinicalSidebar = ({ isCollapsed, onToggle, currentPath }) => {
             )}
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-emerald-600">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white bg-opacity-20 rounded-xl">
+                  <Stethoscope className="h-6 w-6 text-black" />
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg">Clinical Portal</h2>
+                  <p className="text-blue-100 text-sm">Medical Navigation</p>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={onToggle}
+              className="p-2 bg-white bg-opacity-20 text-black rounded-lg hover:bg-opacity-30 transition-all duration-200"
+              title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Menu */}
       <nav className="p-4 space-y-2">
