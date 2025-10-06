@@ -71,8 +71,8 @@ const LowStockItems = () => {
     return '#10b981';
   };
 
-  // Optional: navigation helpers (kept simple to avoid missing IDs)
-  const goToCreateOrder = () => navigate('/orders/new');
+  // Navigate to create order with optional prefill
+  const goToCreateOrder = (prefillItems) => navigate('/orders/new', { state: { prefillItems } });
 
   const renderStockCard = (item) => {
     const isExpired = item.reason === 'Expired';
@@ -129,7 +129,7 @@ const LowStockItems = () => {
           </div>
         </div>
         <div className="stock-actions">
-          <button className="action-btn update" onClick={goToCreateOrder}>
+          <button className="action-btn update" onClick={() => goToCreateOrder([{ name: item.name, category: item.category }])}>
             <i className="fas fa-shopping-cart"></i>
             Create Order
           </button>
@@ -185,7 +185,7 @@ const LowStockItems = () => {
               <p className="header-subtitle">Monitor and manage low stock and expired items</p>
             </div>
             <div className="header-right">
-              <button className="action-btn update" onClick={goToCreateOrder}>
+              <button className="action-btn update" onClick={() => goToCreateOrder([])}>
                 <i className="fas fa-shopping-cart"></i>
                 Create Order
               </button>
