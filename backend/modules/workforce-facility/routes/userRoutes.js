@@ -18,17 +18,23 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     console.log('📋 Getting all users for dropdown...');
-    
-    const users = await User.find()
-      .select('user_id name email role lockUntil isActive') // Include lockUntil so virtual isLocked is available
-      .sort({ name: 1 }); // Sort alphabetically by name
+    const { role } = req.query || {};
+    const filter = {};
+    if (role) {
+      filter.role = role; // rely on enum validation at schema level
+    }
+
+    const users = await User.find(filter)
+      .select('user_id name email role lockUntil isActive')
+      .sort({ name: 1 });
     
     console.log(`✅ Found ${users.length} users`);
     
     res.status(200).json({
       success: true,
       count: users.length,
-      data: users
+      data: users,
+      filter: role ? { role } : undefined
     });
     
   } catch (error) {

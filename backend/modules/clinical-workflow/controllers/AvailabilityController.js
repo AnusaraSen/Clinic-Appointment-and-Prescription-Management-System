@@ -1,7 +1,11 @@
 const Availability = require("../models/Availability");
 const mongoose = require("mongoose");
 
-// @desc    Get availability for a doctor
+// Availability now references User (role=Doctor) via doctorId.
+// Seed example (see scripts/seedDoctorAvailability.js):
+// POST /api/availability { doctorId, date, startTime, endTime, deviationMinutes }
+
+// @desc    Get availability for a doctor (User id)
 // @route   GET /api/availability/doctor/:doctorId
 exports.getDoctorAvailability = async (req, res) => {
   try {
@@ -12,7 +16,7 @@ exports.getDoctorAvailability = async (req, res) => {
   }
 };
 
-// @desc    Add availability
+// @desc    Add availability (doctorId should be a User's _id with role=Doctor)
 // @route   POST /api/availability
 exports.addAvailability = async (req, res) => {
   console.log("Add availability request:", req.body);
@@ -23,18 +27,12 @@ exports.addAvailability = async (req, res) => {
   }
 
   try {
-    // If doctorId is not a valid ObjectId, create a temporary one or use a string
-    let validDoctorId;
-    if (mongoose.Types.ObjectId.isValid(doctorId)) {
-      validDoctorId = doctorId;
-    } else {
-      // For now, create a temporary ObjectId or use a default one
-      validDoctorId = new mongoose.Types.ObjectId();
-      console.log("Generated new ObjectId for doctor:", validDoctorId);
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return res.status(400).json({ message: "Invalid doctorId ObjectId" });
     }
 
     const newAvailability = new Availability({
-      doctorId: validDoctorId,
+      doctorId,
       date,
       startTime,
       endTime,
@@ -43,7 +41,6 @@ exports.addAvailability = async (req, res) => {
     });
 
     const saved = await newAvailability.save();
-    console.log("Availability saved:", saved);
     res.status(201).json(saved);
   } catch (error) {
     console.error("Error saving availability:", error);
@@ -79,5 +76,16 @@ exports.deleteAvailability = async (req, res) => {
     res.json({ message: "Availability deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    List all availability
+// @route   GET /api/availability
+exports.listAllAvailability = async (req, res) => {
+  try {
+    const docs = await Availability.find({}).limit(500).lean();
+    res.json({ count: docs.length, items: docs.map(d => ({ id: d._id, doctorId: d.doctorId, date: d.date, startTime: d.startTime, endTime: d.endTime, deviationMinutes: d.deviationMinutes })) });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
   }
 };

@@ -69,6 +69,7 @@ import DeletePatient from './features/clinical-workflow/pages/medical-records/De
 import ClinicalDashboard from './features/clinical-workflow/pages/Dashboard';
 import DoctorProfile from './features/clinical-workflow/pages/DoctorProfile';
 import DoctorAvailability from './features/clinical-workflow/pages/DoctorAvailability';
+import DoctorAppointmentsWrapper from './features/clinical-workflow/pages/DoctorAppointmentsWrapper';
 
 // Clinical pages with sidebar navigation
 import MedicalRecordsPage from './features/clinical-workflow/pages/MedicalRecordsPage';
@@ -611,6 +612,7 @@ function App() {
           <Route path="/admin-dashboard" element={<ClinicalDashboard />} />
           <Route path="/doctor-profile" element={<DoctorProfilePage />} />
           <Route path="/doctor-availability" element={<DoctorCalendarPage />} />
+          <Route path="/doctor-appointments" element={<DoctorAppointmentsWrapper />} />
 
           <Route path="/pharmacist/PrescriptionDetails" element={<PrescriptionDetails />} />
           

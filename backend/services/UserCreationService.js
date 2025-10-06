@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../modules/workforce-facility/models/User');
+const Counter = require('../models/Counter');
 const Patient = require('../modules/workforce-facility/models/Patient');
 const Doctor = require('../modules/workforce-facility/models/Doctor');
 const Pharmacist = require('../modules/workforce-facility/models/Pharmacist');
@@ -246,9 +247,27 @@ class UserCreationService {
     
     try {
       const result = await session.withTransaction(async () => {
-        // Step 1: Generate user_id for the main User model
-        const userCount = await User.countDocuments().session(session);
-        const userId = `USR-${String(userCount + 1).padStart(4, '0')}`;
+        // Step 1: Atomically increment user_id sequence using counters collection
+        const counter = await Counter.findOneAndUpdate(
+          { _id: 'user_id' },
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true, session, setDefaultsOnInsert: true }
+        );
+        const userId = `USR-${String(counter.seq).padStart(4, '0')}`;
+        
+        // Defensive re-check (should never happen due to uniqueness + atomic counter)
+        const existingSameId = await User.findOne({ user_id: userId }).session(session);
+        if (existingSameId) {
+          // Rare fallback: increment again
+            const counter2 = await Counter.findOneAndUpdate(
+              { _id: 'user_id' },
+              { $inc: { seq: 1 } },
+              { new: true, session }
+            );
+            console.warn('⚠️ Counter collision detected for', userId, 'advanced to', counter2.seq);
+            // eslint-disable-next-line require-atomic-updates
+            userId = `USR-${String(counter2.seq).padStart(4, '0')}`; // reassign for clarity
+        }
         
         // Step 2: Create the main user
         const user = new User({

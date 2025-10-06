@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import { getDoctorAppointments, getDoctorAppointmentsByName, getAllAppointments } from '../../../api/appointmentsApi.js';
+import { useAuth } from '../../authentication/context/AuthContext.jsx';
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -12,7 +14,12 @@ import {
 } from "../../../api/AvailabilityAPI.js";
 
 function DoctorCalendar({ doctorId }) {
+  const { user } = useAuth();
+  // Fallback: if component not given doctorId prop, use authenticated user id
+  const effectiveDoctorId = doctorId || user?._id;
   const [events, setEvents] = useState([]);
+    const [appointmentEvents, setAppointmentEvents] = useState([]); // separate for easier refresh
+    const [range, setRange] = useState({ start: null, end: null }); // current visible range (YYYY-MM-DD strings)
   const [showForm, setShowForm] = useState(false);
   const [formDate, setFormDate] = useState(null); // YYYY-MM-DD
   const [formValues, setFormValues] = useState({ startTime: '', endTime: '', description: '' });
@@ -25,6 +32,24 @@ function DoctorCalendar({ doctorId }) {
   const [deviationEventId, setDeviationEventId] = useState(null);
   const [deviationValue, setDeviationValue] = useState(0); // minutes (+ early, - delay)
   const STYLE_ID = 'calendar-hover-actions-style';
+
+  // Helper: adjust availability events display (background only in day view)
+  const adjustAvailabilityDisplay = () => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    let changed = false;
+    api.getEvents().forEach(ev => {
+      if (ev.extendedProps?.kind === 'availability') {
+        if (currentView === 'timeGridDay' && ev.display !== 'background') { ev.setProp('display','background'); changed = true; }
+        if (currentView !== 'timeGridDay' && ev.display === 'background') { ev.setProp('display','auto'); changed = true; }
+      }
+    });
+    if (changed) console.debug('[DoctorCalendar] adjustAvailabilityDisplay applied', { view: currentView });
+  };
+
+  useEffect(() => {
+    adjustAvailabilityDisplay();
+  }, [currentView, events.length]);
 
   // Inject one-time styles for hover action buttons (centered with blurred backdrop)
   useEffect(() => {
@@ -53,6 +78,32 @@ function DoctorCalendar({ doctorId }) {
   .fc-event.event-slot-3 {background:#6f42c1; border-color:#6f42c1; color:#fff;}
   .fc-event.event-slot-4 {background:#20c997; border-color:#20c997; color:#000;}
   .fc-event.event-slot-5 {background:#dc3545; border-color:#dc3545; color:#fff;}
+  /* Availability lighten (when not background) */
+  /* Availability events: use soft tinted backgrounds (no global opacity to keep text crisp) */
+  .availability-event { filter:none; opacity:1 !important; }
+  .availability-event.event-slot-0 { background:rgba(13,110,253,0.18) !important; color:#0b4da8 !important; border:1px solid rgba(13,110,253,0.35)!important; }
+  .availability-event.event-slot-1 { background:rgba(25,135,84,0.20) !important; color:#0f5a37 !important; border:1px solid rgba(25,135,84,0.38)!important; }
+  .availability-event.event-slot-2 { background:rgba(255,193,7,0.25) !important; color:#8a6500 !important; border:1px solid rgba(255,193,7,0.45)!important; }
+  .availability-event.event-slot-3 { background:rgba(111,66,193,0.22) !important; color:#4e278d !important; border:1px solid rgba(111,66,193,0.40)!important; }
+  .availability-event.event-slot-4 { background:rgba(32,201,151,0.22) !important; color:#117a5f !important; border:1px solid rgba(32,201,151,0.40)!important; }
+  .availability-event.event-slot-5 { background:rgba(220,53,69,0.22) !important; color:#96202d !important; border:1px solid rgba(220,53,69,0.40)!important; }
+  /* Appointment styling */
+  .doctor-appointment-event { background:linear-gradient(135deg,#0b5fa8,#0a4c82) !important; border-color:#0a4c82 !important; color:#fff !important; z-index:50 !important; box-shadow:0 2px 4px rgba(0,0,0,0.25); }
+  .doctor-appointment-event.compact {padding:4px 6px !important;}
+  .fc-timegrid-event.doctor-appointment-event {padding:8px 10px !important; border-radius:8px !important; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:4px; min-height:50px;}
+  .doctor-appointment-event .appt-inner {width:100%; display:flex; flex-direction:column; gap:4px;}
+  .doctor-appointment-event .appt-line {display:flex; width:100%; align-items:center; gap:8px; flex-wrap:wrap;}
+  .doctor-appointment-event .appt-time { font-size:0.7rem; font-weight:600; letter-spacing:.5px; opacity:0.95; }
+  .doctor-appointment-event .appt-patient { font-size:0.8rem; font-weight:600; line-height:1.1; flex:1; }
+  .doctor-appointment-event .appt-badges {display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .doctor-appointment-event .appt-badge { font-size:0.55rem; padding:3px 7px; border-radius:14px; font-weight:600; letter-spacing:.5px; background:rgba(255,255,255,0.18); backdrop-filter:blur(2px); border:1px solid rgba(255,255,255,0.25); text-transform:uppercase; }
+  .doctor-appointment-event .appt-badge.status-upcoming { background:#fff3cd; color:#7a5d00; border-color:#f8e49c; }
+  .doctor-appointment-event .appt-badge.status-cancelled { background:#5c1f24; color:#ffb3b8; text-decoration:line-through; }
+  .doctor-appointment-event .appt-badge.status-completed { background:#1d4831; color:#93f1b8; }
+  .doctor-appointment-event .appt-badge.timing-early { background:#d1e7dd; color:#0f5132; }
+  .doctor-appointment-event .appt-badge.timing-delay { background:#f8d7da; color:#842029; }
+  .doctor-appointment-event .appt-badge.timing-ontime { background:#d1f7c4; color:#0f5132; }
+  .doctor-appointment-event .appt-separator {height:1px; width:100%; background:rgba(255,255,255,0.25);}
   /* Custom event content */
   .fc-slot-time {font-size: 0.75rem; line-height:1.1;}
   .fc-slot-detail {font-size:0.7rem; line-height:1.1;}
@@ -76,6 +127,13 @@ function DoctorCalendar({ doctorId }) {
   .fc-dev-tag.ontime {background:#d1f7c4; color:#0f5132;}
   /* Month view: keep tag on same line with 15px spacing from time */
   .fc-daygrid .fc-daygrid-event .fc-dev-tag { margin-left:15px; margin-top:0; }
+  /* Hide appointment placeholders in month view */
+  .fc-dayGridMonth-view .doctor-appointment-event, .fc-dayGridMonth-view .fc-daygrid-event .fc-appt-month-hidden { display:none !important; }
+  /* Appointment event styling */
+  .doctor-appointment-event {background:linear-gradient(135deg,#0b508e 0%, #083d69 100%) !important; border-color:#083d69 !important; color:#fff !important; font-weight:500; box-shadow:0 2px 4px rgba(0,0,0,0.25);}  
+  .doctor-appointment-event .fc-slot-time {font-size:0.75rem; font-weight:600;}
+  .doctor-appointment-event .appt-status {font-size:0.65rem; font-weight:600; color:#ffd966;}
+  .fc-timegrid-event.doctor-appointment-event {z-index:50 !important;}
       `;
       document.head.appendChild(style);
     }
@@ -100,50 +158,121 @@ function DoctorCalendar({ doctorId }) {
     }
   };
 
-  // Load doctor's availability
+  // Load doctor's availability (when doctorId changes)
   useEffect(() => {
-  const fetchAvailability = async () => {
+    const fetchAvailability = async () => {
       try {
         const res = await getDoctorAvailability(doctorId);
-        // Group by date and assign color index per slot order
         const dateCounters = {};
-    const formatted = res.data
-          .sort((a,b)=>{
-            const da=a.date.localeCompare(b.date); if(da!==0) return da; return a.startTime.localeCompare(b.startTime);
-          })
-          .map((slot) => {
+        const availability = res.data
+          .sort((a,b)=>{ const da=a.date.localeCompare(b.date); if(da!==0) return da; return a.startTime.localeCompare(b.startTime); })
+          .map(slot => {
             const dateKey = slot.date.split('T')[0];
             const idx = dateCounters[dateKey] ?? 0;
             dateCounters[dateKey] = idx + 1;
-            const colorClass = 'event-slot-' + (idx % 6);
             return {
               id: slot._id,
               title: `${slot.startTime}-${slot.endTime}`,
               start: new Date(dateKey + 'T' + slot.startTime),
               end: new Date(dateKey + 'T' + slot.endTime),
-              classNames: [colorClass],
-              extendedProps: { description: slot.description || '', deviationMinutes: slot.deviationMinutes || 0 }
+              classNames: ['availability-event','event-slot-' + (idx % 6)],
+              extendedProps: { description: slot.description || '', deviationMinutes: slot.deviationMinutes || 0, kind: 'availability' }
             };
           });
-        setEvents(formatted);
+        setEvents(prev => {
+          const appts = appointmentEvents; // keep any already loaded appointments
+          return [...availability, ...appts];
+        });
       } catch (error) {
-        console.error(error);
+        console.error('Fetch availability failed', error);
       }
     };
-    fetchAvailability();
-  }, [doctorId]);
+    if (effectiveDoctorId) fetchAvailability();
+  }, [effectiveDoctorId]);
 
-  // Handle date click (add new availability)
-  const normalizeTime = (t) => {
-    if (!t) return "";
-    let v = t.trim();
-    v = v.replace(/[\.\-]/g, ":").replace(/\s+/g, "");
-    if (/^\d{4}$/.test(v)) v = v.slice(0, 2) + ":" + v.slice(2);
-    const m = v.match(/^(\d{1,2}):(\d{2})$/);
-    if (m) v = m[1].padStart(2, "0") + ":" + m[2];
-    return v;
-  };
-
+  // Fetch appointments whenever doctorId or visible range changes
+  useEffect(() => {
+    const fetchAppointments = async () => {
+  if (!effectiveDoctorId || !range.start || !range.end) return;
+      try {
+        let data;
+        try {
+          data = await getDoctorAppointments({ doctorId: effectiveDoctorId, start: range.start, end: range.end });
+        } catch (innerErr) {
+          console.error('[DoctorCalendar] Appointment fetch low-level error', innerErr.message);
+          return; // abort merge
+        }
+        if (!Array.isArray(data)) {
+          console.warn('[DoctorCalendar] Unexpected appointments payload', data);
+          return;
+        }
+        // Fallback: if no appointments by ID but we have a logged in doctor name, try by name
+        if (data.length === 0 && user?.name) {
+          try {
+            const byName = await getDoctorAppointmentsByName({ doctorName: user.name, start: range.start, end: range.end, loose: true });
+            if (Array.isArray(byName) && byName.length > 0) {
+              console.debug('[DoctorCalendar] Fallback by doctor_name succeeded', { count: byName.length, doctorName: user.name });
+              data = byName;
+            }
+          } catch (nameErr) {
+            console.debug('[DoctorCalendar] Fallback by name failed', nameErr.message);
+          }
+        }
+        if (data.length === 0 && range.start === range.end) {
+          // fallback: redundant single-day already, skip
+        } else if (data.length === 0 && range.start !== range.end) {
+          // If multi-day range yielded nothing but user is in day view, attempt single date fetch (when user switches view quickly datesSet may set a week range)
+          const api = calendarRef.current?.getApi();
+          const currentDate = api?.view?.currentStart;
+          if (currentDate) {
+            const dYMD = formatLocalYMD(currentDate);
+            try {
+              console.debug('[DoctorCalendar] Fallback single-date fetch', dYMD);
+              data = await getDoctorAppointments({ doctorId: effectiveDoctorId, start: dYMD, end: dYMD });
+            } catch (fallbackErr) {
+              console.warn('[DoctorCalendar] Fallback single-date fetch failed', fallbackErr.message);
+            }
+          }
+        }
+        // FINAL fallback: load all and filter by doctor_name substring if nothing yet
+        if (data.length === 0 && user?.name) {
+          try {
+            const all = await getAllAppointments();
+            const lowered = user.name.toLowerCase();
+            const filtered = (all||[]).filter(a => (a.doctor_name||'').toLowerCase().includes(lowered));
+            if (filtered.length > 0) {
+              console.debug('[DoctorCalendar] Final all+filter fallback succeeded', { count: filtered.length });
+              data = filtered;
+            }
+          } catch (allErr) {
+            console.debug('[DoctorCalendar] all+filter fallback failed', allErr.message);
+          }
+        }
+        const mapped = data.map(a => {
+          const dateStr = a.appointment_date?.split('T')[0] || a.appointment_date;
+          const start = new Date(dateStr + 'T' + a.appointment_time);
+            const end = new Date(start.getTime() + 30*60000);
+          return {
+            id: 'appt-' + a._id,
+            title: 'Appointment',
+            start,
+            end,
+            classNames: ['doctor-appointment-event'],
+            extendedProps: { kind: 'appointment', status: a.status, appointment_type: a.appointment_type, patient_name: a.patient_name, timing_status: a.timing_status, timing_offset_minutes: a.timing_offset_minutes }
+          };
+        });
+        setAppointmentEvents(mapped);
+        setEvents(prev => {
+          const availabilityOnly = prev.filter(e => e.extendedProps?.kind === 'availability');
+          return [...availabilityOnly, ...mapped];
+        });
+        console.debug('[DoctorCalendar] Loaded appointments', { doctorId: effectiveDoctorId, count: mapped.length, range, first: mapped[0] });
+      } catch (err) {
+        console.error('Fetch appointments failed', err);
+      }
+    };
+    fetchAppointments();
+  }, [effectiveDoctorId, range.start, range.end]);
   const handleDateClick = (info) => {
   // Only navigate to the selected date's day view; do NOT open the form automatically
   handleViewDate(info.dateStr);
@@ -169,6 +298,24 @@ function DoctorCalendar({ doctorId }) {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Normalize time inputs into strict HH:MM 24h format
+  const normalizeTime = (t) => {
+    if (!t) return '';
+    let v = String(t).trim();
+    // Allow user to type 0930 or 9:30 or 9.30 etc.
+    v = v.replace(/[\.\-]/g, ':').replace(/\s+/g, '');
+    if (/^\d{4}$/.test(v)) v = v.slice(0,2) + ':' + v.slice(2);
+    const m = v.match(/^(\d{1,2}):(\d{2})$/);
+    if (m) {
+      const hh = m[1].padStart(2,'0');
+      const mm = m[2];
+      if (parseInt(hh,10) > 23) return '';
+      if (parseInt(mm,10) > 59) return '';
+      return `${hh}:${mm}`;
+    }
+    return '';
+  };
+
   const handleAddSlot = async () => {
     if (editingEventId) return; // guard
     const startTime = normalizeTime(formValues.startTime);
@@ -188,27 +335,18 @@ function DoctorCalendar({ doctorId }) {
       console.log('Adding availability', payload);
       const res = await addAvailability(payload);
       setEvents((prev) => {
-        const updated = [...prev, {
+        // Separate availability & appointments
+        const availability = prev.filter(e => e.extendedProps?.kind === 'availability');
+        const appointments = prev.filter(e => e.extendedProps?.kind === 'appointment');
+        const newAvail = [...availability, {
           id: res.data._id,
           title: `${startTime}-${endTime}`,
           start: new Date(formDate + 'T' + startTime),
           end: new Date(formDate + 'T' + endTime),
-          extendedProps: { description: res.data.description || '', deviationMinutes: 0 }
+          extendedProps: { description: res.data.description || '', deviationMinutes: 0, kind: 'availability' }
         }];
-        // Re-index colors per date
-        const dateCounters = {};
-        return updated
-          .sort((a,b)=> {
-            const da = formatLocalYMD(new Date(a.start)).localeCompare(formatLocalYMD(new Date(b.start)));
-            if (da !== 0) return da;
-            return new Date(a.start) - new Date(b.start);
-          })
-          .map(evt => {
-            const dateKey = formatLocalYMD(new Date(evt.start));
-            const idx = dateCounters[dateKey] ?? 0;
-            dateCounters[dateKey] = idx + 1;
-            return { ...evt, classNames: ['event-slot-' + (idx % 6)] };
-          });
+        const reindexed = reindexColors(newAvail);
+        return [...reindexed, ...appointments];
       });
       setShowForm(false);
     } catch (error) {
@@ -260,10 +398,11 @@ function DoctorCalendar({ doctorId }) {
         return new Date(a.start) - new Date(b.start);
       })
       .map(evt => {
+        if (evt.extendedProps?.kind !== 'availability') return evt; // do not recolor appointments
         const dateKey = formatLocalYMD(new Date(evt.start));
         const idx = dateCounters[dateKey] ?? 0;
         dateCounters[dateKey] = idx + 1;
-        return { ...evt, classNames:[ 'event-slot-' + (idx % 6) ] };
+        return { ...evt, classNames:[ 'availability-event','event-slot-' + (idx % 6) ] };
       });
   };
 
@@ -364,7 +503,12 @@ function DoctorCalendar({ doctorId }) {
 
   return (
   <div className="doctor-calendar position-relative" style={{ width: '100%' }}>
-      <h3>Doctor Availability Calendar</h3>
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <h3 className="mb-0">Doctor Availability Calendar</h3>
+        {currentView === 'timeGridDay' && (
+          <span className="badge bg-primary" style={{fontSize:'0.75rem'}}>Appointments: {appointmentEvents.length}</span>
+        )}
+      </div>
 
   <div style={{ width: '100%' }}>
   <FullCalendar
@@ -387,38 +531,82 @@ function DoctorCalendar({ doctorId }) {
           right: 'addSlot dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         }}
         events={events}
-  // Removed dateClick that opened form; clicking a day no longer opens Add Slot form automatically
         eventClick={handleEventClick}
-        datesSet={(arg) => { // Track view & hide form in day view
-          setCurrentView(arg.view.type);
-          if (arg.view.type === 'timeGridDay' && showForm) setShowForm(false);
+        datesSet={(arg) => {
+          const newView = arg.view.type;
+          if (newView !== currentView) setCurrentView(newView);
+          if (newView === 'timeGridDay' && showForm) setShowForm(false);
+          const startYMD = formatLocalYMD(arg.start);
+          const endDate = new Date(arg.end.getTime() - 86400000);
+          const endYMD = formatLocalYMD(endDate);
+          setRange(r => (r.start === startYMD && r.end === endYMD) ? r : { start: startYMD, end: endYMD });
+          // Adjust availability events display without mutating during render cycles
+          const api = calendarRef.current?.getApi();
+          if (api) {
+            const avail = api.getEvents().filter(e => e.extendedProps?.kind === 'availability');
+            let changed = false;
+            avail.forEach(ev => {
+              if (newView === 'timeGridDay' && ev.display !== 'background') { ev.setProp('display','background'); changed = true; }
+              if (newView !== 'timeGridDay' && ev.display === 'background') { ev.setProp('display','auto'); changed = true; }
+            });
+            if (changed) console.debug('[DoctorCalendar] availability display adjusted for view', newView);
+          }
         }}
-        eventContent={(arg) => {
-          const viewType = arg.view.type;
-          const start = arg.event.start;
-          const end = arg.event.end;
-          const fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-          const range = start && end ? `${fmt(start)}-${fmt(end)}` : arg.timeText;
-            if (!start) return;
-            const fmt24 = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            const fmt12 = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).replace(/ /g,'');
-            const range24 = end ? `${fmt24(start)}-${fmt24(end)}` : fmt24(start);
-            const range12 = end ? `${fmt12(start)}-${fmt12(end)}` : fmt12(start);
+        eventOrder={(a,b) => {
+          // Ensure appointment events appear above availability (which are background anyway) and consistent ordering by start time
+          const ak = a.extendedProps?.kind;
+          const bk = b.extendedProps?.kind;
+          if (ak === bk) return 0;
+          if (ak === 'availability') return 1; // push availability lower
+          if (bk === 'availability') return -1;
+          return 0;
+        }}
+        
+    eventContent={(arg) => {
+      const viewType = arg.view.type;
+      const start = arg.event.start;
+      const end = arg.event.end;
+      if (!start) return;
+      const fmt24 = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      const fmt12 = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).replace(/ /g,'');
+      const range24 = end ? `${fmt24(start)}-${fmt24(end)}` : fmt24(start);
+      const range12 = end ? `${fmt12(start)}-${fmt12(end)}` : fmt12(start);
+      const kind = arg.event.extendedProps?.kind;
+            if (kind === 'appointment') {
+              const patient = 'Appointment';
+              const statusRaw = (arg.event.extendedProps?.status || '').toLowerCase();
+              const status = statusRaw ? `<span class='appt-badge status-${statusRaw}'>${statusRaw}</span>` : '';
+              const timingStatus = arg.event.extendedProps?.timing_status; // 'early' | 'delay' | 'on-time'
+              const offset = arg.event.extendedProps?.timing_offset_minutes;
+              let timing = '';
+              if (timingStatus) {
+                if (timingStatus === 'early' && typeof offset === 'number') timing = `<span class='appt-badge timing-early'>Early +${offset}m</span>`;
+                else if (timingStatus === 'delay' && typeof offset === 'number') timing = `<span class='appt-badge timing-delay'>Delay ${Math.abs(offset)}m</span>`;
+                else timing = `<span class='appt-badge timing-ontime'>On Time</span>`;
+              }
+              if (viewType === 'dayGridMonth') {
+                return { html: '<span class="fc-slot-time fc-appt-month-hidden"></span>' };
+              }
+              if (viewType === 'timeGridDay') {
+                return { html: `<div class='appt-inner'><div class='appt-line'><div class='appt-time'>${range24}</div></div><div class='appt-line appt-badges'>${status}${timing}</div></div>` };
+              }
+              return { html: `<div class='appt-time'>${range24}</div>` };
+            }
+            // Availability (default existing logic)
             if (viewType === 'dayGridMonth') {
               const dev = arg.event.extendedProps?.deviationMinutes || 0;
               return { html: `<span class=\"fc-slot-time\">${range12}</span>${deviationTagHTML(dev,false)}` };
             }
             if (viewType === 'timeGridDay') {
-              // Day view: show time (24h for precision) + description
               const desc = arg.event.extendedProps?.description;
               const dev = arg.event.extendedProps?.deviationMinutes || 0;
               return { html: `<div class="fc-slot-detail"><div class="fc-slot-time">${range24}</div>${desc ? `<div class="fc-slot-desc">${desc}</div>` : ''}${deviationTagHTML(dev,true)}</div>` };
             }
-            // Other views (week/list): just show 24h time (no description per current requirement)
-            return { html: `<div class="fc-slot-time">${range24}</div>` };
+            return { html: `<div class=\"fc-slot-time\">${range24}</div>` };
         }}
         eventDidMount={(arg) => {
           if (arg.view.type !== 'timeGridDay') return; // only day view
+          if (arg.event.extendedProps?.kind !== 'availability') return; // show actions only for availability
           const el = arg.el;
           if (el.querySelector('.fc-event-actions')) return;
           const actions = document.createElement('div');
