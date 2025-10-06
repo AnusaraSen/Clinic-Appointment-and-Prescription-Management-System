@@ -5,7 +5,10 @@ const {
   createMedicine,
   updateMedicine,
   deleteMedicine,
-  searchMedicines
+  searchMedicines,
+  getMedicineByName,
+  dispenseByName,
+  dispenseBulk
 } = require('../controllers/Medicine_Inventory');
 
 const router = express.Router();
@@ -18,6 +21,11 @@ router.use((req, res, next) => {
 
 // Search route (place before parameterized :id routes)
 router.get('/search', searchMedicines);
+// Lookup by name
+router.get('/by-name', getMedicineByName);
+// Dispense endpoints
+router.post('/dispense-by-name', dispenseByName);
+router.post('/dispense-bulk', dispenseBulk);
 
 // Collection routes
 router.route('/')

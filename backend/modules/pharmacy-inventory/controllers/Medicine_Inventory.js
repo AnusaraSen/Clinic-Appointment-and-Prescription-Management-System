@@ -277,5 +277,107 @@ module.exports = {
   createMedicine,
   updateMedicine,
   deleteMedicine,
-  searchMedicines
+  searchMedicines,
+  getMedicineByName,
+  dispenseByName,
+  dispenseBulk
 };
+
+// ========== EXTRA CONTROLLERS (Lookup/Dispense by Name) ==========
+// @desc    Get single medicine by case-insensitive name
+// @route   GET /api/medicines/by-name?name=Paracetamol
+// @access  Public
+async function getMedicineByName(req, res) {
+  try {
+    const name = (req.query.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Query parameter "name" is required' });
+    }
+    // Case-insensitive exact match on medicineName
+    const medicine = await Medicine.findOne({ medicineName: { $regex: `^${escapeRegex(name)}$`, $options: 'i' } });
+    if (!medicine) {
+      return res.status(404).json({ success: false, message: 'Medicine not found' });
+    }
+    return res.status(200).json({ success: true, data: medicine });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+}
+
+// @desc    Dispense (decrement) quantity by medicine name
+// @route   POST /api/medicines/dispense-by-name { name, quantity }
+// @access  Public (adjust as needed)
+async function dispenseByName(req, res) {
+  try {
+    const { name, quantity } = req.body || {};
+    const q = Number(quantity);
+    if (!name || Number.isNaN(q) || q <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid name and positive quantity are required' });
+    }
+
+    const medicine = await Medicine.findOne({ medicineName: { $regex: `^${escapeRegex(name)}$`, $options: 'i' } });
+    if (!medicine) {
+      return res.status(404).json({ success: false, code: 'NOT_FOUND', message: `Medicine not found: ${name}` });
+    }
+    if ((medicine.quantity ?? 0) < q) {
+      return res.status(400).json({ success: false, code: 'INSUFFICIENT', message: `Insufficient stock for ${medicine.medicineName}`, available: medicine.quantity ?? 0 });
+    }
+    medicine.quantity = Number(medicine.quantity) - q;
+    await medicine.save();
+    return res.status(200).json({ success: true, data: medicine, dispensed: q, remaining: medicine.quantity });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+}
+
+// @desc    Bulk dispense by names
+// @route   POST /api/medicines/dispense-bulk { items: [{ name, quantity }] }
+// @access  Public (adjust as needed)
+async function dispenseBulk(req, res) {
+  try {
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) {
+      return res.status(400).json({ success: false, message: 'items array is required' });
+    }
+
+    const results = [];
+    for (const it of items) {
+      const name = (it.name || '').trim();
+      const qty = Number(it.quantity);
+      if (!name || Number.isNaN(qty) || qty <= 0) {
+        results.push({ requestedName: name, name, requested: it.quantity, status: 'INVALID', message: 'Invalid name/quantity' });
+        continue;
+      }
+      const doc = await Medicine.findOne({ medicineName: { $regex: `^${escapeRegex(name)}$`, $options: 'i' } });
+      if (!doc) {
+        results.push({ requestedName: name, name, requested: qty, status: 'NOT_FOUND' });
+        continue;
+      }
+      const available = Number(doc.quantity ?? 0);
+      if (available < qty) {
+        results.push({ requestedName: name, name: doc.medicineName, requested: qty, status: 'INSUFFICIENT', available });
+        continue;
+      }
+      doc.quantity = available - qty;
+      await doc.save();
+      results.push({ requestedName: name, name: doc.medicineName, requested: qty, status: 'DISPENSED', dispensed: qty, remaining: doc.quantity, id: doc._id });
+    }
+
+    const summary = {
+      total: items.length,
+      dispensed: results.filter(r => r.status === 'DISPENSED').length,
+      notFound: results.filter(r => r.status === 'NOT_FOUND').length,
+      insufficient: results.filter(r => r.status === 'INSUFFICIENT').length,
+      invalid: results.filter(r => r.status === 'INVALID').length
+    };
+
+    return res.status(200).json({ success: true, results, summary });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+}
+
+// Utility to escape regex special chars in user input
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

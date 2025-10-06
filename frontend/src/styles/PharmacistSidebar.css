@@ -2,14 +2,14 @@
 .pharmacist-sidebar {
   width: 280px;
   height: calc(100vh - 80px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #ffffff; /* White sidebar */
+  color: #334155; /* Slate-700 text */
   position: fixed;
   left: 0;
   top: 80px;
   display: flex !important;
   flex-direction: column;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   z-index: 10000;
   margin: 0;
@@ -34,7 +34,7 @@
 /* Sidebar Header */
 .sidebar-header {
   padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e2e8f0; /* slate-200 */
 }
 
 .header-content {
@@ -51,26 +51,26 @@
 
 .sidebar-logo-icon {
   font-size: 32px;
-  color: #fff;
+  color: #3b82f6; /* primary */
 }
 
 .logo-text h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: white;
+  color: #0f172a; /* slate-900 */
 }
 
 .logo-text span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b; /* slate-500 */
   font-weight: 400;
 }
 
 .toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: #e2e8f0; /* slate-200 */
   border: none;
-  color: white;
+  color: #334155;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -82,7 +82,7 @@
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #cbd5e1; /* slate-300 */
 }
 
 /* Navigation */
@@ -106,7 +106,7 @@
   padding: 16px 20px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: #334155; /* slate-700 */
   text-align: left;
   cursor: pointer;
   display: flex;
@@ -124,15 +124,15 @@
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: #f1f5f9; /* slate-100 */
+  color: #0f172a;
   transform: translateX(4px);
 }
 
 .nav-link.active {
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: #e2e8f0; /* slate-200 */
+  color: #0f172a;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
 }
 
 .nav-icon {
@@ -155,7 +155,7 @@
   top: 50%;
   transform: translateY(-50%);
   background: #333;
-  color: white;
+  color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -184,7 +184,7 @@
 /* Sidebar Footer */
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -198,25 +198,25 @@
 
 .avatar {
   font-size: 36px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #64748b;
 }
 
 .info h4 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: #0f172a;
 }
 
 .info span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 .logout-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: #e2e8f0;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: #334155;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -228,8 +228,8 @@
 }
 
 .logout-btn:hover {
-  background: rgba(255, 86, 86, 0.3);
-  color: #ff5656;
+  background: #cbd5e1;
+  color: #0f172a;
 }
 
 /* Responsive Design */
@@ -301,11 +301,11 @@
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f1f5f9;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #cbd5e1;
   border-radius: 2px;
 }
 

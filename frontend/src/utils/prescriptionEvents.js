@@ -1,6 +1,7 @@
 // Simple global event + localStorage cache for prescription status updates
 
 const EVENT_NAME = 'prescriptionUpdated';
+const CHANGE_EVENT = 'prescriptionChanged';
 const LS_KEY = 'prescriptionStatusOverrides';
 const DISPENSE_LS_KEY = 'prescriptionDispenseOverrides';
 
@@ -44,6 +45,30 @@ export function emitPrescriptionUpdated(payload) {
   const event = new CustomEvent(EVENT_NAME, { detail: payload });
   window.dispatchEvent(event);
 }
+
+// Emit when a prescription is updated (medicines changed) or deleted
+// payload: { id: string, action: 'updated'|'deleted', changes?: any }
+export function emitPrescriptionChanged(payload) {
+  if (!payload?.id || !payload?.action) return;
+  if (payload.action === 'deleted') {
+    // Clear status + medicine overrides for this prescription
+    try {
+      const map = readOverrides();
+      if (map[payload.id]) {
+        delete map[payload.id];
+        writeOverrides(map);
+      }
+      clearDispenseOverridesForPrescription(payload.id);
+    } catch {
+      // ignore
+    }
+  }
+  const event = new CustomEvent(CHANGE_EVENT, { detail: payload });
+  window.dispatchEvent(event);
+}
+
+export const PRESCRIPTION_UPDATED_EVENT = EVENT_NAME;
+export const PRESCRIPTION_CHANGED_EVENT = CHANGE_EVENT;
 
 // Medicine-level dispense overrides (per prescription)
 function readDispenseMap() {

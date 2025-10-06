@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import prescriptionsApi from '../../../api/prescriptionsApi';
-import { getAllStatusOverrides } from '../../../utils/prescriptionEvents';
+import { getAllStatusOverrides, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 import '../../../styles/PrescriptionsList.css';
 
 const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
@@ -57,9 +57,13 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
     };
 
     window.addEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+    // If external changes occur (delete/update), refetch list
+    const handleChanged = () => fetchPrescriptions();
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handleChanged);
     
     return () => {
       window.removeEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+      window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handleChanged);
     };
   }, []);
 
@@ -282,7 +286,7 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Duration:</span>
-                        <span className="detail-value">{medication.duration}</span>
+                        <span className="detail-value">{medication.duration || '-'}</span>
                       </div>
                     </div>
                   </div>

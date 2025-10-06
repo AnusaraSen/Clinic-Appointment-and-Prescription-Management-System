@@ -158,7 +158,7 @@ const PrescriptionDetails = ({ prescription, onClose, onUpdate, pharmacistInfo }
         <div className="modal-header">
           <div className="header-content">
             <h2>Prescription Details</h2>
-            <span className="new-badge">NEW</span>
+            <span className="new-badge">{(currentPrescription?.status || 'NEW').toUpperCase()}</span>
           </div>
           <button className="close-btn" onClick={onClose}>
             ×
@@ -209,13 +209,26 @@ const PrescriptionDetails = ({ prescription, onClose, onUpdate, pharmacistInfo }
                       <div className="dosage-frequency">
                         <div className="dosage-section">
                           <span className="label">DOSAGE:</span>
-                          <span className="value">{medication.dosage || '500mg'}</span>
+                          <span className="value">{medication.dosage || '—'}</span>
                         </div>
                         <div className="frequency-section">
                           <span className="label">FREQUENCY:</span>
-                          <span className="value">{medication.frequency || 'Tw'}</span>
+                          <span className="value">{medication.frequency || '—'}</span>
                         </div>
                       </div>
+
+                      {/* Quantity and Duration row (reuses same styles) */}
+                      <div className="dosage-frequency" style={{ marginTop: 12 }}>
+                        <div className="dosage-section">
+                          <span className="label">QUANTITY:</span>
+                          <span className="value">{medication.quantityPrescribed || medication.quantity || '—'}</span>
+                        </div>
+                        <div className="frequency-section">
+                          <span className="label">DURATION:</span>
+                          <span className="value">{medication.duration || '—'}</span>
+                        </div>
+                      </div>
+
                       {medication.instructions && (
                         <div className="instructions">
                           <span className="label">Instructions:</span>
@@ -237,6 +250,16 @@ const PrescriptionDetails = ({ prescription, onClose, onUpdate, pharmacistInfo }
                       <div className="frequency-section">
                         <span className="label">FREQUENCY:</span>
                         <span className="value">Tw</span>
+                      </div>
+                    </div>
+                    <div className="dosage-frequency" style={{ marginTop: 12 }}>
+                      <div className="dosage-section">
+                        <span className="label">QUANTITY:</span>
+                        <span className="value">—</span>
+                      </div>
+                      <div className="frequency-section">
+                        <span className="label">DURATION:</span>
+                        <span className="value">—</span>
                       </div>
                     </div>
                   </div>

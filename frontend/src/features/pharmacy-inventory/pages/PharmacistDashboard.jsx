@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import pharmacyDashboardApi from '../../../api/pharmacyDashboardApi';
 import prescriptionsApi from '../../../api/prescriptionsApi';
-import { getStatusOverride } from '../../../utils/prescriptionEvents';
+import { getStatusOverride, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 import PharmacistSidebar from '../components/PharmacistSidebar';
 import DashboardStats from '../components/DashboardStats';
 import PrescriptionsList from '../components/PrescriptionsList';
@@ -87,6 +87,25 @@ const PharmacistDashboard = () => {
       window.removeEventListener('prescriptionUpdated', handlePrescriptionUpdate);
     };
   }, [dashboardData]);
+
+  // Listen for prescription structural changes (update/delete) and refresh lists
+  useEffect(() => {
+    const handler = (e) => {
+      const { id, action } = e.detail || {};
+      console.log('Dashboard detected prescription change:', id, action);
+      fetchDashboardData();
+    };
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+  }, []);
+
+  // Optional light polling fallback for recent prescriptions
+  useEffect(() => {
+    const t = setInterval(() => {
+      fetchDashboardData();
+    }, 30000); // 30s
+    return () => clearInterval(t);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {

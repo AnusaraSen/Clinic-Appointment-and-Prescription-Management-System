@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import medicineInventoryApi from '../../../api/medicineInventoryApi';
 import prescriptionsApi from '../../../api/prescriptionsApi';
-import { emitPrescriptionUpdated, setDispenseOverride, getDispenseOverride } from '../../../utils/prescriptionEvents';
+import { emitPrescriptionUpdated, setDispenseOverride, getDispenseOverride, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 // import { dispenseMedicines } from '../api/prescriptionApi'; // Commented out for demo - using mock data
 import '../../../styles/DispensingModule.css';
 
@@ -77,14 +78,24 @@ const DispensingModule = () => {
         const raw = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || []);
         // Build unique list of patients who have prescriptions
         const map = new Map();
+        const norm = (s) => (s || '').toString().replace(/\s+/g, ' ').trim();
+        const toTitle = (s) => norm(s).replace(/\b([a-z])/g, (m, c) => c.toUpperCase());
         raw.forEach((d) => {
-          const pid = d.patient_ID || d.patientId || d.patient?.id || d.patient?.code || '';
-          const pname = d.patient_name || d.patientName || d.patient?.name || '';
-          if (pid && pname && !map.has(pid)) {
+          const pid = norm(d.patient_ID || d.patientId || d.patient?.id || d.patient?.code || '');
+          const pnameRaw = d.patient_name || d.patientName || d.patient?.name || '';
+          const pname = toTitle(pnameRaw);
+          if (!pid || !pname) return;
+          const existing = map.get(pid);
+          if (!existing) {
             map.set(pid, { id: pid, name: pname });
+          } else {
+            // Prefer the most complete (longest) name we've seen for this ID
+            if ((pname?.length || 0) > (existing.name?.length || 0)) {
+              map.set(pid, { id: pid, name: pname });
+            }
           }
         });
-        setPatients(Array.from(map.values()));
+        setPatients(Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name)));
       } catch (e) {
         console.error('Failed to load patients from prescriptions', e);
         setPatients([]);
@@ -96,6 +107,15 @@ const DispensingModule = () => {
   useEffect(() => {
     fetchMedicinesFromInventory();
   }, []);
+
+  // Auto-refresh patient prescriptions on external changes
+  useEffect(() => {
+    const handler = () => {
+      if (selectedPatient) handlePatientChange(selectedPatient);
+    };
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+  }, [selectedPatient]);
 
   // Fetch real medicines from inventory API
   const fetchMedicinesFromInventory = async () => {
@@ -137,6 +157,24 @@ const DispensingModule = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper: find inventory item by flexible name match
+  const findInventoryByName = (prescribedName) => {
+    if (!prescribedName) return null;
+    const target = prescribedName.trim().toLowerCase();
+    // 1) Exact match on displayed name
+    let hit = allMedicines.find(m => (m.name || '').trim().toLowerCase() === target);
+    if (hit) return hit;
+    // 2) Exact match on base medicineName
+    hit = allMedicines.find(m => (m.originalData?.medicineName || '').trim().toLowerCase() === target);
+    if (hit) return hit;
+    // 3) Contains (inventory name includes prescribed)
+    hit = allMedicines.find(m => (m.name || '').toLowerCase().includes(target));
+    if (hit) return hit;
+    // 4) Contains (prescribed includes inventory base name)
+    hit = allMedicines.find(m => target.includes((m.originalData?.medicineName || '').trim().toLowerCase()));
+    return hit || null;
   };
 
   // Handle patient selection
@@ -200,6 +238,15 @@ const DispensingModule = () => {
         });
       });
       setPrescribedMedicines(flattened);
+      // Remove any items from the dispensing list that are no longer prescribed
+      const validKeys = new Set(flattened.map(pm => `${pm.prescriptionId}::${pm.name}`));
+      setSelectedMedicines(prev => {
+        const kept = prev.filter(m => validKeys.has(`${m.prescriptionId}::${m.name}`));
+        if (kept.length !== prev.length) {
+          alert('Some medicines were removed from the prescription and have been removed from your dispensing list.');
+        }
+        return kept;
+      });
     } catch (e) {
       console.error('Failed to load prescriptions for patient', patientId, e);
       setPrescribedMedicines([]);
@@ -211,18 +258,52 @@ const DispensingModule = () => {
     medicine.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddMedicine = (medicine) => {
-    if (!selectedMedicines.find(med => med.name === medicine.name)) {
-      const total = Number(medicine.quantity || 0);
-      const already = Number(medicine.dispensed || 0);
-      const remaining = Math.max(0, total - already);
-      setSelectedMedicines([...selectedMedicines, { 
-        ...medicine, 
-        // default to 1 but cap by remaining
-        dispensedQuantity: remaining > 0 ? Math.min(1, remaining) : 0,
-        maxQuantity: remaining || 0
-      }]);
+  const handleAddMedicine = async (medicine) => {
+    if (selectedMedicines.find(med => med.name === medicine.name)) return;
+    // Use local inventory list for robust matching
+    const inv = findInventoryByName(medicine.name);
+    if (!inv) {
+      alert(`This medicine is not available in inventory: ${medicine.name}`);
+      return;
     }
+    const exp = inv.originalData?.expiryDate ? new Date(inv.originalData.expiryDate) : null;
+    const expired = exp && exp < new Date();
+    if (expired) {
+      alert(`This medicine is expired in inventory: ${inv.originalData?.medicineName}`);
+      return;
+    }
+    const reorder = Number(
+      inv.originalData?.reorderLevel === undefined || inv.originalData?.reorderLevel === null || isNaN(inv.originalData?.reorderLevel)
+        ? 10
+        : inv.originalData.reorderLevel
+    );
+    const availableInv = Number(inv.available || inv.originalData?.quantity || 0);
+    if (availableInv <= 0) {
+      alert(`No stock available for ${inv.originalData?.medicineName}.`);
+      return;
+    }
+    if (availableInv <= reorder) {
+      alert(`Low stock for ${inv.originalData?.medicineName}: only ${availableInv} left (reorder level ${reorder}).`);
+      // Continue allowing add after alert
+    }
+
+    // Remaining from prescription perspective (if provided)
+    const totalPrescribed = Number(medicine.quantity || 0);
+    const alreadyDispensed = Number(medicine.dispensed || 0);
+    const remainingPrescribed = totalPrescribed > 0 ? Math.max(0, totalPrescribed - alreadyDispensed) : Infinity;
+
+    const maxDispensable = Math.min(availableInv, remainingPrescribed);
+    const initialQty = Math.max(1, Math.min(1, maxDispensable));
+
+    setSelectedMedicines([...selectedMedicines, {
+      ...medicine,
+      dispensedQuantity: initialQty,
+      maxQuantity: maxDispensable, // we now cap by inventory availability (and prescription if present)
+      inventoryKey: inv.originalData?.medicineName || inv.name,
+      inventoryAvailable: availableInv,
+      inventoryExpiryDate: inv.originalData?.expiryDate || null,
+      inventoryLowStock: availableInv <= reorder
+    }]);
   };
 
   const handleRemoveMedicine = (medicineName) => {
@@ -232,7 +313,7 @@ const DispensingModule = () => {
   const handleQuantityChange = (medicineName, quantity) => {
     setSelectedMedicines(selectedMedicines.map(med => {
       if (med.name !== medicineName) return med;
-      const maxQ = Number(med.maxQuantity || med.quantity || 1);
+      const maxQ = Number(med.maxQuantity || med.inventoryAvailable || med.quantity || 1);
       const val = Math.max(1, Math.min(maxQ, parseInt(quantity) || 1));
       return { ...med, dispensedQuantity: val };
     }));
@@ -241,7 +322,7 @@ const DispensingModule = () => {
   const increaseQuantity = (medicineName) => {
     setSelectedMedicines(selectedMedicines.map(med => {
       if (med.name !== medicineName) return med;
-      const maxQ = Number(med.maxQuantity || med.quantity || 1);
+      const maxQ = Number(med.maxQuantity || med.inventoryAvailable || med.quantity || 1);
       const val = Math.min(maxQ, Number(med.dispensedQuantity || 1) + 1);
       return { ...med, dispensedQuantity: val };
     }));
@@ -262,6 +343,29 @@ const DispensingModule = () => {
     }
 
     try {
+      // First attempt inventory decrement (bulk) aggregated by name
+      const bulk = selectedMedicines.reduce((acc, m) => {
+        const key = (m.inventoryKey || m.name || '').trim();
+        if (!key) return acc;
+        acc[key] = (acc[key] || 0) + Number(m.dispensedQuantity || 1);
+        return acc;
+      }, {});
+      const items = Object.entries(bulk).map(([name, quantity]) => ({ name, quantity }));
+      const invRes = await medicineInventoryApi.dispenseBulk(items);
+      const results = invRes?.results || [];
+      const notFound = results.filter(r => r.status === 'NOT_FOUND').map(r => r.name);
+      const insufficient = results.filter(r => r.status === 'INSUFFICIENT').map(r => `${r.name} (available ${r.available})`);
+      if (notFound.length || insufficient.length) {
+        const lines = [];
+        if (notFound.length) lines.push(`Not in inventory: ${notFound.join(', ')}`);
+        if (insufficient.length) lines.push(`Insufficient stock: ${insufficient.join(', ')}`);
+        alert(`Cannot complete dispensing:\n${lines.join('\n')}`);
+        // Only keep the successful ones to proceed updating prescription state
+      }
+  const successfulNames = new Set(results.filter(r => r.status === 'DISPENSED').map(r => (r.requestedName || r.name)));
+      if (successfulNames.size === 0) {
+        return; // nothing to dispense in prescription state
+      }
       // Group by prescriptionId to simulate per-prescription dispensing
       const groups = selectedMedicines.reduce((acc, m) => {
         const pid = m.prescriptionId || 'unknown';
@@ -272,10 +376,13 @@ const DispensingModule = () => {
 
       const summary = [];
       for (const [prescriptionId, meds] of Object.entries(groups)) {
-        const medicinesDispensed = meds.map(med => ({
-          medicineName: med.name,
-          quantityDispensed: med.dispensedQuantity || med.quantity || 1,
-        }));
+        const medicinesDispensed = meds
+          .filter(med => successfulNames.has(med.name))
+          .map(med => ({
+            medicineName: med.name,
+            quantityDispensed: med.dispensedQuantity || med.quantity || 1,
+          }));
+        if (medicinesDispensed.length === 0) continue;
 
         // Simulate success
         const response = {
@@ -293,7 +400,7 @@ const DispensingModule = () => {
         if (response.success) {
           // Update local prescribedMedicines entries
           setPrescribedMedicines(prev => prev.map(pm => {
-            const match = meds.find(m => (m.name === pm.name) && ((m.prescriptionId || 'unknown') === (pm.prescriptionId || 'unknown')));
+            const match = meds.find(m => (m.name === pm.name) && successfulNames.has(m.inventoryKey || m.name) && ((m.prescriptionId || 'unknown') === (pm.prescriptionId || 'unknown')));
             if (!match) return pm;
             const dispensedQty = match.dispensedQuantity || match.quantity || 1;
             const newDispensed = (pm.dispensed || 0) + dispensedQty;
@@ -317,12 +424,14 @@ const DispensingModule = () => {
             return newMap;
           });
 
-          summary.push(`Prescription ${prescriptionId}: ${meds.map(m => `${m.name} (${m.dispensedQuantity || m.quantity})`).join(', ')}`);
+          summary.push(`Prescription ${prescriptionId}: ${medicinesDispensed.map(m => `${m.medicineName} (${m.quantityDispensed})`).join(', ')}`);
         }
       }
 
       setSelectedMedicines([]);
-      alert(`✅ Medicines dispensed successfully to ${selectedPatientInfo?.name} (ID: ${selectedPatient}).\n\n${summary.join('\n')}`);
+      if (summary.length) {
+        alert(`✅ Medicines dispensed successfully to ${selectedPatientInfo?.name} (ID: ${selectedPatient}).\n\n${summary.join('\n')}`);
+      }
     } catch (error) {
       console.error('Error dispensing medicines:', error);
       alert(`Failed to dispense medicines. ${error?.message || ''}`);
@@ -476,6 +585,16 @@ const DispensingModule = () => {
                 </option>
               ))}
             </select>
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                className="view-btn"
+                title="Refresh prescriptions for this patient"
+                onClick={() => selectedPatient && handlePatientChange(selectedPatient)}
+              >
+                <i className="fas fa-sync"></i>
+              </button>
+            </div>
           </div>
 
           <div className="medicines-to-dispense">
