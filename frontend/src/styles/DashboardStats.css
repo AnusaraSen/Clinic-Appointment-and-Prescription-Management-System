@@ -66,6 +66,24 @@
   border-left: 4px solid #3498db;
 }
 
+.stat-card.chemicals {
+  border-left: 4px solid #8e44ad; /* purple */
+}
+
+.chemicals .stat-icon {
+  background: rgba(142, 68, 173, 0.1);
+  color: #8e44ad;
+}
+
+.stat-card.equipment {
+  border-left: 4px solid #16a085; /* teal */
+}
+
+.equipment .stat-icon {
+  background: rgba(22, 160, 133, 0.1);
+  color: #16a085;
+}
+
 .stat-icon {
   width: 56px;
   height: 56px;

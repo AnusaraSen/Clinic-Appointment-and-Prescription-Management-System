@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import prescriptionsApi from '../../../api/prescriptionsApi';
+import { emitPrescriptionUpdated, setDispenseOverride, getDispenseOverride } from '../../../utils/prescriptionEvents';
 // import { dispenseMedicines } from '../api/prescriptionApi'; // Commented out for demo - using mock data
 import '../../../styles/DispensingModule.css';
 
@@ -67,109 +69,32 @@ const DispensingModule = () => {
     }
   ];
 
-  // Mock patient data with prescriptions
-  const mockPatients = [
-    { 
-      id: 'P-001', 
-      name: 'John Smith',
-      prescriptions: [
-        {
-          id: 'P-001',
-          prescriptionId: 'P-001',
-          doctor: 'Dr. Robert Chen',
-          date: '2023-09-10',
-          status: 'New',
-          medicines: [
-            { 
-              name: 'Lisinopril 10mg', 
-              dosage: '10mg', 
-              frequency: 'Once daily', 
-              quantity: 30, 
-              duration: '30 days',
-              dispensed: 0,
-              status: 'Not Dispensed'
-            }
-          ]
-        }
-      ]
-    },
-    { 
-      id: 'P-002', 
-      name: 'Sarah Johnson',
-      prescriptions: [
-        {
-          id: 'P-002',
-          prescriptionId: 'P-002',
-          doctor: 'Dr. Emily Wilson',
-          date: '2023-09-08',
-          status: 'New',
-          medicines: [
-            { 
-              name: 'Metformin 850mg', 
-              dosage: '850mg', 
-              frequency: 'Twice daily', 
-              quantity: 60, 
-              duration: '30 days',
-              dispensed: 0,
-              status: 'Not Dispensed'
-            }
-          ]
-        }
-      ]
-    },
-    { 
-      id: 'P-003', 
-      name: 'Michael Brown',
-      prescriptions: [
-        {
-          id: 'P-003',
-          prescriptionId: 'P-003',
-          doctor: 'Dr. James Lee',
-          date: '2023-09-06',
-          status: 'Dispensed',
-          medicines: [
-            { 
-              name: 'Atorvastatin 20mg', 
-              dosage: '20mg', 
-              frequency: 'Once daily', 
-              quantity: 30, 
-              duration: '30 days',
-              dispensed: 30,
-              status: 'Fully Dispensed'
-            }
-          ]
-        }
-      ]
-    },
-    { 
-      id: 'P-004', 
-      name: 'Lisa Davis',
-      prescriptions: [
-        {
-          id: 'P-004',
-          prescriptionId: 'P-004',
-          doctor: 'Dr. Robert Chen',
-          date: '2023-09-07',
-          status: 'New',
-          medicines: [
-            { 
-              name: 'Omeprazole 20mg', 
-              dosage: '20mg', 
-              frequency: 'Once daily', 
-              quantity: 30, 
-              duration: '30 days',
-              dispensed: 0,
-              status: 'Not Dispensed'
-            }
-          ]
-        }
-      ]
-    }
-  ];
+  // Load patients from current prescriptions
+  useEffect(() => {
+    const loadPatientsFromPrescriptions = async () => {
+      try {
+        const res = await prescriptionsApi.list();
+        const raw = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || []);
+        // Build unique list of patients who have prescriptions
+        const map = new Map();
+        raw.forEach((d) => {
+          const pid = d.patient_ID || d.patientId || d.patient?.id || d.patient?.code || '';
+          const pname = d.patient_name || d.patientName || d.patient?.name || '';
+          if (pid && pname && !map.has(pid)) {
+            map.set(pid, { id: pid, name: pname });
+          }
+        });
+        setPatients(Array.from(map.values()));
+      } catch (e) {
+        console.error('Failed to load patients from prescriptions', e);
+        setPatients([]);
+      }
+    };
+    loadPatientsFromPrescriptions();
+  }, []);
 
   useEffect(() => {
     fetchMedicinesFromInventory();
-    setPatients(mockPatients);
   }, []);
 
   // Fetch real medicines from inventory API
@@ -179,11 +104,18 @@ const DispensingModule = () => {
       const response = await axios.get('http://localhost:5000/api/medicines');
       const medicinesData = response.data.data || [];
       
-      // Filter out expired and low stock medicines
+      // Filter to medicines with OK status (align with Medicine Inventory):
+      // OK = not expired AND quantity > reorderLevel (fallback to 10 if missing)
       const availableMedicines = medicinesData.filter(medicine => {
-        const isNotExpired = !medicine.expiryDate || new Date(medicine.expiryDate) >= new Date();
-        const hasAdequateStock = (medicine.quantity || 0) > 10;
-        return isNotExpired && hasAdequateStock;
+        const qty = Number(medicine.quantity ?? 0);
+        const reorder = Number(
+          medicine.reorderLevel === undefined || medicine.reorderLevel === null || isNaN(medicine.reorderLevel)
+            ? 10
+            : medicine.reorderLevel
+        );
+        const notExpired = !medicine.expiryDate || new Date(medicine.expiryDate) >= new Date();
+        const okStatus = qty > reorder;
+        return notExpired && okStatus;
       });
       
       // Transform data to match component structure
@@ -208,29 +140,68 @@ const DispensingModule = () => {
   };
 
   // Handle patient selection
-  const handlePatientChange = (patientId) => {
+  const handlePatientChange = async (patientId) => {
     setSelectedPatient(patientId);
     setSelectedMedicines([]);
-    
-    if (patientId) {
-      const patient = mockPatients.find(p => p.id === patientId);
-      setSelectedPatientInfo(patient);
-      
-      // Get all prescribed medicines for this patient
-      const allPrescribedMedicines = [];
-      patient.prescriptions.forEach(prescription => {
-        prescription.medicines.forEach(medicine => {
-          allPrescribedMedicines.push({
-            ...medicine,
-            prescriptionId: prescription.id,
-            doctor: prescription.doctor,
-            date: prescription.date
+
+    if (!patientId) {
+      setSelectedPatientInfo(null);
+      setPrescribedMedicines([]);
+      return;
+    }
+
+    const pInfo = patients.find((p) => p.id === patientId) || null;
+    setSelectedPatientInfo(pInfo);
+
+    try {
+      // Prefer by-patient API if available; otherwise filter the full list
+      const byPatient = await prescriptionsApi.listByPatient(patientId).catch(() => null);
+      let list = [];
+      if (byPatient && (Array.isArray(byPatient.data) || Array.isArray(byPatient.data?.items))) {
+        list = Array.isArray(byPatient.data) ? byPatient.data : byPatient.data.items;
+      } else {
+        const res = await prescriptionsApi.list();
+        const raw = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || []);
+        list = raw.filter((d) => (d.patient_ID || d.patientId || d.patient?.id || d.patient?.code) === patientId);
+      }
+
+      const normalized = list.map((d) => {
+        const meds = Array.isArray(d.Medicines)
+          ? d.Medicines.map((m) => ({
+              name: m.Medicine_Name || m.name || '',
+              dosage: m.Dosage || m.dosage || '',
+              frequency: m.Frequency || m.frequency || '',
+              quantity: m.Quantity || m.quantity || 0,
+              duration: m.Duration || m.duration || '',
+              dispensed: 0,
+              status: 'Not Dispensed',
+            }))
+          : [];
+        return {
+          id: (d._id || d.id || '').toString(),
+          doctor: d.doctor_Name || d.doctorName || d.doctor?.name || 'Doctor',
+          date: d.Date ? new Date(d.Date).toISOString().slice(0, 10) : '',
+          medicines: meds,
+        };
+      });
+
+      const flattened = [];
+      normalized.forEach((pres) => {
+        pres.medicines.forEach((m) => {
+          const override = getDispenseOverride(pres.id, m.name);
+          flattened.push({
+            ...m,
+            dispensed: override?.dispensed ?? m.dispensed ?? 0,
+            status: override?.status ?? m.status ?? 'Not Dispensed',
+            prescriptionId: pres.id,
+            doctor: pres.doctor,
+            date: pres.date,
           });
         });
       });
-      setPrescribedMedicines(allPrescribedMedicines);
-    } else {
-      setSelectedPatientInfo(null);
+      setPrescribedMedicines(flattened);
+    } catch (e) {
+      console.error('Failed to load prescriptions for patient', patientId, e);
       setPrescribedMedicines([]);
     }
   };
@@ -242,10 +213,14 @@ const DispensingModule = () => {
 
   const handleAddMedicine = (medicine) => {
     if (!selectedMedicines.find(med => med.name === medicine.name)) {
+      const total = Number(medicine.quantity || 0);
+      const already = Number(medicine.dispensed || 0);
+      const remaining = Math.max(0, total - already);
       setSelectedMedicines([...selectedMedicines, { 
         ...medicine, 
-        dispensedQuantity: 1,
-        maxQuantity: medicine.quantity
+        // default to 1 but cap by remaining
+        dispensedQuantity: remaining > 0 ? Math.min(1, remaining) : 0,
+        maxQuantity: remaining || 0
       }]);
     }
   };
@@ -255,9 +230,29 @@ const DispensingModule = () => {
   };
 
   const handleQuantityChange = (medicineName, quantity) => {
-    setSelectedMedicines(selectedMedicines.map(med =>
-      med.name === medicineName ? { ...med, dispensedQuantity: parseInt(quantity) || 1 } : med
-    ));
+    setSelectedMedicines(selectedMedicines.map(med => {
+      if (med.name !== medicineName) return med;
+      const maxQ = Number(med.maxQuantity || med.quantity || 1);
+      const val = Math.max(1, Math.min(maxQ, parseInt(quantity) || 1));
+      return { ...med, dispensedQuantity: val };
+    }));
+  };
+
+  const increaseQuantity = (medicineName) => {
+    setSelectedMedicines(selectedMedicines.map(med => {
+      if (med.name !== medicineName) return med;
+      const maxQ = Number(med.maxQuantity || med.quantity || 1);
+      const val = Math.min(maxQ, Number(med.dispensedQuantity || 1) + 1);
+      return { ...med, dispensedQuantity: val };
+    }));
+  };
+
+  const decreaseQuantity = (medicineName) => {
+    setSelectedMedicines(selectedMedicines.map(med => {
+      if (med.name !== medicineName) return med;
+      const val = Math.max(1, Number(med.dispensedQuantity || 1) - 1);
+      return { ...med, dispensedQuantity: val };
+    }));
   };
 
   const handleDispenseMedicines = async () => {
@@ -265,144 +260,72 @@ const DispensingModule = () => {
       alert('Please select a patient and add medicines to dispense.');
       return;
     }
-    
+
     try {
-      // Find the patient and their prescription
-      const patient = patients.find(p => p.id === selectedPatient);
-      if (!patient || !patient.prescriptions || patient.prescriptions.length === 0) {
-        alert('No prescriptions found for this patient.');
-        return;
-      }
+      // Group by prescriptionId to simulate per-prescription dispensing
+      const groups = selectedMedicines.reduce((acc, m) => {
+        const pid = m.prescriptionId || 'unknown';
+        acc[pid] = acc[pid] || [];
+        acc[pid].push(m);
+        return acc;
+      }, {});
 
-      // For now, we'll use the first prescription. In a real system, you'd need to identify which prescription each medicine belongs to
-      const prescription = patient.prescriptions[0];
-      
-      // Prepare the dispensing data for the API
-      const medicinesDispensed = selectedMedicines.map(med => ({
-        medicineName: med.name,
-        quantityDispensed: med.dispensedQuantity || med.quantity || 1
-      }));
+      const summary = [];
+      for (const [prescriptionId, meds] of Object.entries(groups)) {
+        const medicinesDispensed = meds.map(med => ({
+          medicineName: med.name,
+          quantityDispensed: med.dispensedQuantity || med.quantity || 1,
+        }));
 
-      const dispensingData = {
-        medicinesDispensed,
-        pharmacistId: 'PHARM001', // This should come from user authentication
-        pharmacistName: 'Pharmacist' // This should come from user authentication
-      };
-
-      // Call the API to dispense medicines
-      // const response = await dispenseMedicines(prescription.id, dispensingData);
-      
-      /* 
-       * DEMO MODE: Using mock response to avoid authentication errors
-       * 
-       * To enable real API calls:
-       * 1. Uncomment the line above
-       * 2. Comment out the mock response below
-       * 3. Ensure authentication token is properly set in prescriptionApi.js
-       * 4. Add authorization header like: "Authorization": `Bearer ${token}`
-       */
-      
-      // Mock API response for demo purposes (to avoid authentication issues)
-      console.log('DispensingModule: Simulating dispensing for prescription:', prescription.id);
-      console.log('DispensingModule: Medicines being dispensed:', medicinesDispensed);
-      
-      const response = {
-        success: true,
-        data: {
-          prescription: {
-            id: prescription.id,
-            status: 'Dispensed',
-            lastDispensed: new Date().toISOString(),
-            dispensedBy: 'Pharmacist'
+        // Simulate success
+        const response = {
+          success: true,
+          data: {
+            prescription: {
+              id: prescriptionId,
+              status: 'Dispensed',
+              lastDispensed: new Date().toISOString(),
+              dispensedBy: 'Pharmacist',
+            },
           },
-          message: 'Medicines dispensed successfully'
-        }
-      };
+        };
 
-      if (response.success) {
-        // Update local state to reflect the changes
-        const updatedPatients = [...patients];
-        const patientIndex = updatedPatients.findIndex(p => p.id === selectedPatient);
-        
-        if (patientIndex !== -1) {
-          // Update the prescription status in local state
-          updatedPatients[patientIndex].prescriptions.forEach(presc => {
-            if (presc.id === prescription.id) {
-              presc.status = response.data.prescription.status;
-              
-              // Update individual medicine quantities
-              selectedMedicines.forEach(dispensedMedicine => {
-                const medicineIndex = presc.medicines.findIndex(
-                  med => med.name === dispensedMedicine.name
-                );
-                
-                if (medicineIndex !== -1) {
-                  const medicine = presc.medicines[medicineIndex];
-                  const dispensedQty = dispensedMedicine.dispensedQuantity || dispensedMedicine.quantity;
-                  
-                  // Update medicine dispensing status
-                  medicine.dispensed = (medicine.dispensed || 0) + dispensedQty;
-                  
-                  if (medicine.dispensed >= medicine.quantity) {
-                    medicine.status = 'Fully Dispensed';
-                  } else {
-                    medicine.status = 'Partially Dispensed';
-                  }
-                }
-              });
-            }
-          });
+        if (response.success) {
+          // Update local prescribedMedicines entries
+          setPrescribedMedicines(prev => prev.map(pm => {
+            const match = meds.find(m => (m.name === pm.name) && ((m.prescriptionId || 'unknown') === (pm.prescriptionId || 'unknown')));
+            if (!match) return pm;
+            const dispensedQty = match.dispensedQuantity || match.quantity || 1;
+            const newDispensed = (pm.dispensed || 0) + dispensedQty;
+            const newStatus = newDispensed >= pm.quantity ? 'Fully Dispensed' : 'Partially Dispensed';
+            // persist override so reselecting patient retains status
+            setDispenseOverride(pm.prescriptionId, pm.name, { dispensed: newDispensed, status: newStatus });
+            return { ...pm, dispensed: newDispensed, status: newStatus };
+          }));
 
-          // Store the updated prescription info and dispatch event
           setUpdatedPrescriptions(prev => {
             const newMap = new Map(prev);
             const updatedPrescription = {
-              ...prescription,
+              id: prescriptionId,
               status: response.data.prescription.status,
               lastDispensed: new Date().toISOString(),
-              dispensedBy: 'Pharmacist'
+              dispensedBy: 'Pharmacist',
             };
-            newMap.set(prescription.id, updatedPrescription);
-            
-            // Dispatch custom event for prescription update
-            const event = new CustomEvent('prescriptionUpdated', {
-              detail: updatedPrescription
-            });
-            console.log('DispensingModule: Dispatching prescription update event:', updatedPrescription);
-            window.dispatchEvent(event);
-            
+            newMap.set(prescriptionId, updatedPrescription);
+            // Broadcast to whole app and persist override
+            emitPrescriptionUpdated(updatedPrescription);
             return newMap;
           });
-        }
-        
-        // Update the patients state
-        setPatients(updatedPatients);
-        
-        // Refresh the prescribed medicines for the current patient
-        handlePatientChange(selectedPatient);
 
-        // Show success message with details
-        const medicinesList = selectedMedicines.map(med => 
-          `${med.name} (${med.dispensedQuantity || med.quantity})`
-        ).join(', ');
-        
-        alert(`✅ Medicines dispensed successfully to ${selectedPatientInfo?.name}!\n\n📋 Dispensed medicines:\n${medicinesList}\n\n📝 Prescription status: ${response.data.prescription.status}\n\n🔄 Prescription list updated automatically\n💊 Inventory updated automatically`);
-        
-        setSelectedMedicines([]);
+          summary.push(`Prescription ${prescriptionId}: ${meds.map(m => `${m.name} (${m.dispensedQuantity || m.quantity})`).join(', ')}`);
+        }
       }
+
+      setSelectedMedicines([]);
+      alert(`✅ Medicines dispensed successfully to ${selectedPatientInfo?.name} (ID: ${selectedPatient}).\n\n${summary.join('\n')}`);
     } catch (error) {
       console.error('Error dispensing medicines:', error);
-      let errorMessage = 'Failed to dispense medicines. ';
-      
-      if (error.message) {
-        errorMessage += error.message;
-      } else if (typeof error === 'string') {
-        errorMessage += error;
-      } else {
-        errorMessage += 'Please try again or contact support.';
-      }
-      
-      alert(errorMessage);
+      alert(`Failed to dispense medicines. ${error?.message || ''}`);
     }
   };
 
@@ -527,7 +450,7 @@ const DispensingModule = () => {
                 <div className="table-footer">
                   <p className="stock-info">
                     <i className="fas fa-info-circle"></i>
-                    Only showing medicines with adequate stock (&gt;10 units) and not expired
+                    Showing medicines with OK status: not expired and quantity above reorder level
                   </p>
                 </div>
               </>
@@ -565,21 +488,40 @@ const DispensingModule = () => {
                   <div key={index} className="selected-medicine-item">
                     <div className="medicine-info">
                       <span className="medicine-name">{medicine.name}</span>
+                      <div className="medicine-meta-row">
+                        {medicine.prescriptionId && (
+                          <span className="pill pill-id" title={medicine.prescriptionId}>
+                            {String(medicine.prescriptionId).slice(0, 8)}
+                          </span>
+                        )}
+                        {medicine.doctor && (
+                          <span className="pill pill-doctor">Dr. {medicine.doctor}</span>
+                        )}
+                        {medicine.duration && (
+                          <span className="pill pill-duration">{medicine.duration}</span>
+                        )}
+                      </div>
                       <span className="medicine-details">
-                        {medicine.prescriptionId ? `${medicine.prescriptionId} | ` : ''}
                         {medicine.dosage} | {medicine.frequency}
+                      </span>
+                      <span className="remaining-info">
+                        Remaining: {Math.max(0, (medicine.maxQuantity ?? medicine.quantity ?? 0))} of {medicine.quantity || 0}
                       </span>
                     </div>
                     <div className="quantity-controls">
-                      <label>Qty:</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max={medicine.maxQuantity || medicine.quantity}
-                        value={medicine.dispensedQuantity || medicine.quantity}
-                        onChange={(e) => handleQuantityChange(medicine.name, e.target.value)}
-                        className="quantity-input"
-                      />
+                      <label>Qty</label>
+                      <div className="quantity-stepper">
+                        <button type="button" className="qty-btn" onClick={() => decreaseQuantity(medicine.name)}>-</button>
+                        <input
+                          type="number"
+                          min="1"
+                          max={medicine.maxQuantity || medicine.quantity}
+                          value={medicine.dispensedQuantity || 1}
+                          onChange={(e) => handleQuantityChange(medicine.name, e.target.value)}
+                          className="quantity-input"
+                        />
+                        <button type="button" className="qty-btn" onClick={() => increaseQuantity(medicine.name)}>+</button>
+                      </div>
                       <span className="max-qty">/ {medicine.maxQuantity || medicine.quantity}</span>
                     </div>
                     <button

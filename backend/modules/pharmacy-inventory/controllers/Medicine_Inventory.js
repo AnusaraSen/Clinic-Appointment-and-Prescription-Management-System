@@ -69,6 +69,20 @@ const createMedicine = async (req, res) => {
       }
       req.body.quantity = parsedQty;
     }
+    if (req.body.reorderLevel !== undefined) {
+      // Allow empty string to mean default/0
+      if (req.body.reorderLevel === '') delete req.body.reorderLevel;
+      else {
+        const parsedReorder = Number(req.body.reorderLevel);
+        if (Number.isNaN(parsedReorder) || parsedReorder < 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Reorder level must be a non-negative number'
+          });
+        }
+        req.body.reorderLevel = parsedReorder;
+      }
+    }
 
     // Auto-generate medicine_id if not provided using an atomic counter to avoid duplicates
     if (!req.body.medicine_id) {
@@ -145,6 +159,28 @@ const createMedicine = async (req, res) => {
 // @access  Public
 const updateMedicine = async (req, res) => {
   try {
+    // Defensive sanitization similar to create
+    if (req.body.quantity !== undefined) {
+      const parsedQty = Number(req.body.quantity);
+      if (Number.isNaN(parsedQty) || parsedQty < 0) {
+        return res.status(400).json({ success: false, message: 'Quantity must be a non-negative number' });
+      }
+      req.body.quantity = parsedQty;
+    }
+    if (req.body.reorderLevel !== undefined) {
+      if (req.body.reorderLevel === '') delete req.body.reorderLevel;
+      else {
+        const parsedReorder = Number(req.body.reorderLevel);
+        if (Number.isNaN(parsedReorder) || parsedReorder < 0) {
+          return res.status(400).json({ success: false, message: 'Reorder level must be a non-negative number' });
+        }
+        req.body.reorderLevel = parsedReorder;
+      }
+    }
+    ['expiryDate','manufactureDate'].forEach(f => {
+      if (req.body[f] === '') delete req.body[f];
+    });
+
     const medicine = await Medicine.findByIdAndUpdate(
       req.params.id,
       req.body,

@@ -1,0 +1,151 @@
+/* Unified, polished styling for medicine forms (Add/Update/Delete) */
+
+.medicine-container {
+  min-height: calc(100vh - 0px);
+  background: linear-gradient(135deg, #e0f2fe, #ffffff, #dbeafe);
+  padding: 24px;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* If page is rendered outside InventoryLayout, ensure we still avoid navbar underlap */
+body:not(.has-fixed-navbar) .medicine-container {
+  padding-top: 80px; /* fallback when InventoryLayout isn't used */
+}
+
+.medicine-card {
+  max-width: 880px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.medicine-title {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.medicine-form {
+  padding: 2rem;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.medicine-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medicine-field label {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.medicine-field input,
+.medicine-field select,
+.medicine-field textarea {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  color: #111827;
+}
+
+.medicine-field input:focus,
+.medicine-field select:focus,
+.medicine-field textarea:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.25);
+}
+
+.medicine-field input::placeholder {
+  color: #9ca3af;
+}
+
+/* Error state */
+.medicine-field.error input,
+.medicine-field.error select {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.input-error { color: #b91c1c; }
+
+.medicine-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.medicine-btn {
+  background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
+  letter-spacing: 0.02em;
+}
+
+.medicine-btn-primary { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+.medicine-btn-secondary { background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%); }
+
+.medicine-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(2, 132, 199, 0.32);
+}
+
+.medicine-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.medicine-error {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #b91c1c;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin: 1rem 2rem 0;
+  border: 1px solid #fca5a5;
+}
+
+/* Delete confirmation layout bits */
+.medicine-details {
+  padding: 1.5rem 2rem 0.5rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+}
+
+.detail-row { display: contents; }
+.detail-label { color: #475569; font-weight: 600; }
+.detail-value { color: #0f172a; }
+
+@media (max-width: 768px) {
+  .medicine-container { padding: 16px; }
+  .medicine-form { grid-template-columns: 1fr; padding: 1.25rem; }
+  .medicine-title { font-size: 1.5rem; padding: 1rem; }
+  .medicine-details { grid-template-columns: 1fr; }
+}

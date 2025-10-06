@@ -1,0 +1,43 @@
+/* Order Management styles matching dashboard look */
+.orders-page { padding: 24px; }
+.orders-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.orders-actions { display: flex; gap: 12px; }
+.btn-primary { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+.btn-warning { background: #d97706; color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+.btn { background: #e5e7eb; color: #111827; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+.btn-sm { padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.icon-btn { background: transparent; border: none; cursor: pointer; }
+.icon-btn.danger { color: #ef4444; }
+.orders-table-wrapper { background: white; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.orders-table { width: 100%; border-collapse: collapse; }
+.orders-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; padding: 16px; border-bottom: 1px solid #e5e7eb; }
+.orders-table td { padding: 16px; border-bottom: 1px solid #f3f4f6; }
+.orders-row-actions { display: flex; gap: 12px; align-items: center; }
+
+/* Modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; width: 800px; max-width: calc(100% - 40px); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.15); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+.modal-body { padding: 16px 20px; max-height: 60vh; overflow: auto; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; }
+.low-stock-table { width: 100%; border-collapse: collapse; }
+.low-stock-table th, .low-stock-table td { padding: 12px; border-bottom: 1px solid #f3f4f6; text-align: left; }
+.orders-error { background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 8px; }
+
+/* Forms */
+.order-form-page { padding: 24px; }
+.order-form-header { margin: 0 auto 12px; max-width: 820px; }
+.order-form-subtitle { color: #6b7280; margin: 4px 0 0 0; }
+.order-form { background: #fff; padding: 20px; border-radius: 12px; max-width: 820px; margin: 0 auto; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.order-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-weight: 600; color: #111827; }
+.order-form input, .order-form textarea, .order-form select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.col-span-2 { grid-column: 1 / span 2; }
+.field-help { font-size: 12px; color: #6b7280; margin-top: 6px; }
+.order-form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+@media (max-width: 720px) {
+	.order-form { max-width: 100%; }
+	.order-form-grid { grid-template-columns: 1fr; }
+	.col-span-2 { grid-column: auto; }
+}
