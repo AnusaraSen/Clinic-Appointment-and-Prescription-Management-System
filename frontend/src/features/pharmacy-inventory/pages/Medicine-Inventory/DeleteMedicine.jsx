@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import "../../../../styles/Medicine/InsertMedicine.css";
+import "../../../../styles/Medicine/MedicineForm.css";
 
 const DeleteMedicine = () => {
   const { id } = useParams();
@@ -34,7 +34,7 @@ const DeleteMedicine = () => {
       await axios.delete(`http://localhost:5000/api/medicines/${id}`);
       alert("✅ Medicine deleted successfully");
       setTimeout(() => {
-        navigate("/medicine/list", { replace: true });
+        navigate("/medicine-inventory", { replace: true });
       }, 100);
     } catch (err) {
       console.error("Error deleting medicine:", err);
@@ -128,7 +128,7 @@ const DeleteMedicine = () => {
             type="button"
             className="medicine-btn"
             style={{ background: "linear-gradient(135deg, #64748b 0%, #94a3b8 100%)" }}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/medicine-inventory")}
           >
             CANCEL
           </button>

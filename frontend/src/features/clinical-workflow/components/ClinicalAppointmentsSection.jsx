@@ -22,7 +22,7 @@ import {
  * ✅ Professional styling matching admin dashboard
  */
 
-export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUpdateAppointment }) => {
+export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, error, onUpdateAppointment }) => {
   const [expandedAppointment, setExpandedAppointment] = useState(null);
 
   const formatTime = (timeString) => {
@@ -37,15 +37,13 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'upcoming': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const statusMeta = {
+    upcoming: { dot: 'bg-blue-500', label: 'Upcoming' },
+    'in-progress': { dot: 'bg-amber-500', label: 'In Progress' },
+    completed: { dot: 'bg-emerald-500', label: 'Completed' },
+    cancelled: { dot: 'bg-rose-500', label: 'Cancelled' }
   };
+  const getStatusColor = (status) => 'bg-gray-100 text-gray-600';
 
   const handleActionClick = (appointmentId, action) => {
     if (typeof onUpdateAppointment === 'function') {
@@ -53,55 +51,30 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
     }
   };
 
-  // Mock data fallback if no appointments provided
-  const displayAppointments = appointments.length > 0 ? appointments : [
-    {
-      _id: '1',
-      patient_name: 'Sarah Johnson',
-      appointment_time: '09:00',
-      appointment_type: 'Regular Checkup',
-      status: 'upcoming',
-      phone: '+1 234-567-8901',
-      notes: 'Annual physical examination'
-    },
-    {
-      _id: '2',
-      patient_name: 'Michael Chen',
-      appointment_time: '10:30',
-      appointment_type: 'Follow-up',
-      status: 'completed',
-      phone: '+1 234-567-8902',
-      notes: 'Post-surgery follow-up'
-    },
-    {
-      _id: '3',
-      patient_name: 'Emily Davis',
-      appointment_time: '14:00',
-      appointment_type: 'Consultation',
-      status: 'upcoming',
-      phone: '+1 234-567-8903',
-      notes: 'New patient consultation'
-    }
-  ];
+  // Use only real appointments passed via props (already filtered server-side for today)
+  const displayAppointments = appointments;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+    <div className="cd-card" role="region" aria-label="Today's Appointments">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50">
-            <Calendar className="h-5 w-5 text-blue-600" />
+          <div className="p-2 rounded-lg bg-gray-100">
+            <Calendar className="h-5 w-5 text-gray-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Today's Appointments</h2>
-            <p className="text-sm text-gray-600">
-              {displayAppointments.length} appointments scheduled
-            </p>
+            <h2 className="text-lg font-semibold text-gray-800">Today's Appointments</h2>
+            <p className="text-xs text-gray-500">{displayAppointments.length} scheduled</p>
           </div>
         </div>
-        <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+        <button className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
           View Calendar
         </button>
       </div>
+      {error && !isLoading && (
+        <div className="mb-4 p-3 rounded-md bg-rose-50 border border-rose-100 text-rose-600 text-sm">
+          Failed to load today's appointments: {error}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-4">
@@ -122,7 +95,7 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
           {displayAppointments.map((appointment) => (
             <div
               key={appointment._id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200"
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -138,8 +111,8 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
 
                   {/* Patient Info */}
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-sm">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 font-semibold text-sm">
                         {getInitials(appointment.patient_name)}
                       </span>
                     </div>
@@ -161,29 +134,30 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
 
                 {/* Status and Actions */}
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                    {appointment.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-2 ${getStatusColor(appointment.status)}`}>
+                    <span className={`w-2 h-2 rounded-full ${statusMeta[appointment.status]?.dot || 'bg-gray-400'}`}></span>
+                    {statusMeta[appointment.status]?.label || appointment.status}
                   </span>
 
                   {appointment.status === 'upcoming' && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleActionClick(appointment._id, 'start')}
-                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-blue-200 rounded-md hover:bg-blue-50"
                       >
                         <Play className="h-3 w-3" />
                         Start
                       </button>
                       <button
                         onClick={() => handleActionClick(appointment._id, 'reschedule')}
-                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-amber-200 rounded-md hover:bg-amber-50"
                       >
                         <RotateCcw className="h-3 w-3" />
                         Reschedule
                       </button>
                       <button
                         onClick={() => handleActionClick(appointment._id, 'cancel')}
-                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-rose-200 rounded-md hover:bg-rose-50"
                       >
                         <X className="h-3 w-3" />
                         Cancel
@@ -216,11 +190,11 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, onUp
             </div>
           ))}
 
-          {displayAppointments.length === 0 && (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">No appointments scheduled for today</p>
-              <p className="text-gray-400 text-sm">Your schedule is clear!</p>
+          {displayAppointments.length === 0 && !error && (
+            <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
+              <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">No appointments scheduled for today</p>
+              <p className="text-gray-400 text-xs">New bookings will appear here automatically.</p>
             </div>
           )}
         </div>

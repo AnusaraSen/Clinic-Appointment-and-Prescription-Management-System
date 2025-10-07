@@ -36,6 +36,13 @@ export const ClinicalSidebar = ({ isCollapsed, onToggle, currentPath }) => {
       color: 'text-blue-600 bg-blue-50 border-blue-200'
     },
     {
+      id: 'appointments',
+      title: 'Appointments',
+      icon: <Calendar className="h-5 w-5" />,
+      path: '/doctor-appointments',
+      color: 'text-teal-600 bg-teal-50 border-teal-200'
+    },
+    {
       id: 'medical-records',
       title: 'Medical Records',
       icon: <FileText className="h-5 w-5" />,
@@ -80,7 +87,7 @@ export const ClinicalSidebar = ({ isCollapsed, onToggle, currentPath }) => {
     }`}>
       
       {/* Sidebar Header: show full header on other pages, minimal toggle-only bar on key clinical pages */}
-      {['/clinical/dashboard', '/patient/all', '/prescription/all', '/doctor-availability', '/doctor-profile'].includes(currentPath) ? (
+  {['/clinical/dashboard', '/doctor-appointments', '/patient/all', '/prescription/all', '/doctor-availability', '/doctor-profile'].includes(currentPath) ? (
         <div className="p-2 border-b border-gray-200 bg-white flex items-center justify-end">
           <button
             onClick={onToggle}
@@ -151,6 +158,7 @@ export const ClinicalSidebar = ({ isCollapsed, onToggle, currentPath }) => {
                 <p className="text-xs opacity-75">
                   {item.id === 'dashboard' && 'Clinical overview'}
                   {item.id === 'medical-records' && 'Patient records'}
+                  {item.id === 'appointments' && 'All doctor bookings'}
                   {item.id === 'prescriptions' && 'Medication management'}
                   {item.id === 'calendar' && 'Schedule management'}
                   {item.id === 'profile' && 'Professional settings'}

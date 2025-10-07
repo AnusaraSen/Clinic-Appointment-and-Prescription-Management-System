@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import "../../../../styles/Medicine/UpdateMedicine.css";
+import "../../../../styles/Medicine/MedicineForm.css";
 
 
 const UpdateMedicine = () => {
@@ -67,10 +67,10 @@ const UpdateMedicine = () => {
       
       alert("✅ Medicine updated successfully");
       
-      // Navigate back to medicine list with replace to prevent back button issues
-      console.log('Navigating back to medicine list...');
+      // Navigate back to unified medicine inventory view
+      console.log('Navigating back to medicine inventory...');
       setTimeout(() => {
-        navigate("/medicine/list", { replace: true });
+        navigate("/medicine-inventory", { replace: true });
       }, 100);
       
     } catch (err) {
@@ -224,7 +224,7 @@ const UpdateMedicine = () => {
             <button
               type="button"
               className="medicine-btn medicine-btn-secondary"
-              onClick={() => navigate("/medicine/list")}
+              onClick={() => navigate("/medicine-inventory")}
               disabled={submitting}
             >
               Cancel

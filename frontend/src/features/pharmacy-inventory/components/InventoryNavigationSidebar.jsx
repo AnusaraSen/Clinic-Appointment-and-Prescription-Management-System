@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../../styles/InventoryNavigationSidebar.css';
 
-const InventoryNavigationSidebar = () => {
+const InventoryNavigationSidebar = ({ collapsed = false, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(collapsed);
   const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
@@ -13,10 +13,12 @@ const InventoryNavigationSidebar = () => {
     const path = location.pathname;
     if (path.includes('/inventory-dashboard') || path === '/dashboard') {
       setActiveSection('dashboard');
-    } else if (path.includes('/medicine')) {
+    } else if (path.includes('/medicine') || path.includes('/medicine-inventory')) {
       setActiveSection('medicines');
-    } else if (path.includes('/lab')) {
-      setActiveSection('lab-items');
+    } else if (path.includes('/chemical-inventory')) {
+      setActiveSection('chemicals');
+    } else if (path.includes('/equipment-inventory')) {
+      setActiveSection('equipment');
     } else if (path.includes('/orders')) {
       setActiveSection('orders');
     }
@@ -34,15 +36,22 @@ const InventoryNavigationSidebar = () => {
       section: 'medicines',
       title: 'Medicine Inventory',
       icon: 'fas fa-pills',
-      path: '/medicine/list',
+      path: '/medicine-inventory',
       description: 'Manage pharmaceutical products'
     },
     {
-      section: 'lab-items',
-      title: 'Lab Inventory', 
+      section: 'chemicals',
+      title: 'Chemical Inventory',
       icon: 'fas fa-flask',
-      path: '/lab/list',
-      description: 'Manage laboratory equipment and supplies'
+      path: '/chemical-inventory',
+      description: 'Manage laboratory chemicals and reagents'
+    },
+    {
+      section: 'equipment',
+      title: 'Equipment Inventory', 
+      icon: 'fas fa-microscope',
+      path: '/equipment-inventory',
+      description: 'Manage laboratory equipment and instruments'
     },
     {
       section: 'orders',
@@ -57,12 +66,18 @@ const InventoryNavigationSidebar = () => {
     navigate(path);
   };
 
+  useEffect(() => {
+    setIsCollapsed(collapsed);
+  }, [collapsed]);
+
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    if (typeof onToggle === 'function') onToggle(next);
   };
 
   return (
-    <div className={`inventory-nav-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+  <div className={`inventory-nav-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Sidebar Header */}
       <div className="inventory-nav-sidebar-header">
         <div className="inventory-nav-sidebar-logo">
@@ -76,10 +91,11 @@ const InventoryNavigationSidebar = () => {
             </div>
           )}
         </div>
-        <button 
+        <button
           className="nav-sidebar-toggle-btn"
           onClick={toggleSidebar}
           title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'left'}`}></i>
         </button>

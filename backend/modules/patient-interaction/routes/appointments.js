@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Appointment = require("../models/Appointments.js"); // This will be PatientAppointment model
 const Patient = require("../models/Patient.js"); // ensures model registered
 const Doctor = require("../models/Doctor.js");
+const { verifyToken } = require("../../../middleware/authMiddleware.js");
 
 const router = express.Router();
 
@@ -43,13 +44,50 @@ router.post("/add", async (req, res) => {
         }
       : undefined,
   };
+  // Rebuild appointmentData preserving original logic
+  const appointmentDateObj = appointment_date ? new Date(appointment_date) : undefined;
+  const data = {
+    patient_id,
+    patient_name,
+    doctor_id,
+    doctor_name,
+    doctor_specialty,
+    appointment_date: appointmentDateObj,
+    appointment_time,
+    appointment_type,
+    status,
+    reason,
+    notes,
+    follow_up: follow_up ? { date: follow_up.date ? new Date(follow_up.date) : undefined, time: follow_up.time } : undefined,
+  };
 
   try {
-    const newAppointment = new Appointment(appointmentData);
-    await newAppointment.save();
-    res.json("Appointment added successfully");
+    if (!doctor_id || !appointmentDateObj || !appointment_time) {
+      return res.status(400).json({ message: 'doctor_id, appointment_date and appointment_time are required' });
+    }
+    // Pre-conflict check (quick) - same doctor/date/time
+    const startDay = new Date(appointmentDateObj); startDay.setHours(0,0,0,0);
+    const endDay = new Date(startDay); endDay.setDate(endDay.getDate()+1);
+    const existing = await Appointment.findOne({
+      doctor_id: doctor_id,
+      appointment_time: appointment_time,
+      appointment_date: { $gte: startDay, $lt: endDay }
+    }).select('_id');
+    if (existing) {
+      return res.status(409).json({ message: 'Time slot already booked' });
+    }
+    const newAppointment = new Appointment(data);
+    await newAppointment.save().catch(err => {
+      // Handle race condition with unique index duplicate key
+      if (err?.code === 11000) {
+        throw Object.assign(new Error('Time slot already booked'), { statusCode: 409 });
+      }
+      throw err;
+    });
+    res.json({ message: 'Appointment added successfully' });
   } catch (err) {
-    res.status(400).json("Error: " + err.message);
+    const status = err.statusCode || (err.message.includes('duplicate key') ? 409 : 400);
+    res.status(status).json({ error: err.message });
   }
 });
 
@@ -197,6 +235,195 @@ router.delete("/delete/:id", async (req, res) => {
     res.status(200).json({ status: "Appointment deleted successfully" });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Cancel appointment (doctor action) - sets status=Cancelled, records metadata
+router.patch('/cancel/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, actor } = req.body; // actor could be doctor user id or role
+    const appt = await Appointment.findById(id);
+    if (!appt) return res.status(404).json({ message: 'Appointment not found' });
+    appt.status = 'Cancelled';
+    appt.cancelled_by = actor || 'doctor';
+    appt.cancelled_at = new Date();
+    if (reason) appt.cancellation_reason = reason.slice(0,500);
+    await appt.save();
+    res.json({ message: 'Appointment cancelled', appointment: {
+      _id: appt._id,
+      status: appt.status,
+      cancelled_by: appt.cancelled_by,
+      cancelled_at: appt.cancelled_at,
+      cancellation_reason: appt.cancellation_reason
+    }});
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Timing deviation: doctor sets early/late offset (minutes). Positive => late, Negative => early
+router.patch('/timing/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { offset_minutes } = req.body; // could be string
+    if (offset_minutes === undefined || offset_minutes === null) return res.status(400).json({ message: 'offset_minutes required' });
+    offset_minutes = Number(offset_minutes);
+    if (Number.isNaN(offset_minutes)) return res.status(400).json({ message: 'offset_minutes must be a number' });
+    // clamp to schema bounds
+    if (offset_minutes > 720) offset_minutes = 720;
+    if (offset_minutes < -720) offset_minutes = -720;
+    const appt = await Appointment.findById(id);
+    if (!appt) return res.status(404).json({ message: 'Appointment not found' });
+    // If already cancelled do not allow timing changes
+    if (appt.status && appt.status.toLowerCase().startsWith('cancel')) {
+      return res.status(409).json({ message: 'Cannot set timing on a cancelled appointment' });
+    }
+    appt.timing_offset_minutes = offset_minutes;
+    appt.timing_status = offset_minutes === 0 ? 'on-time' : (offset_minutes < 0 ? 'early' : 'late');
+    appt.timing_updated_at = new Date();
+    await appt.save();
+    res.json({
+      message: 'Timing updated',
+      appointment: {
+        _id: appt._id,
+        timing_offset_minutes: appt.timing_offset_minutes,
+        timing_status: appt.timing_status,
+        timing_updated_at: appt.timing_updated_at
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// List booked appointment times for a doctor (optionally filter by date=YYYY-MM-DD)
+router.get('/booked/:doctorId', async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { date } = req.query; // optional filter
+    if (!doctorId) return res.status(400).json({ message: 'doctorId required' });
+    const criteria = { doctor_id: doctorId };
+    if (date) {
+      const d = new Date(date + 'T00:00:00');
+      const d2 = new Date(d); d2.setDate(d2.getDate()+1);
+      criteria.appointment_date = { $gte: d, $lt: d2 };
+    }
+    const docs = await Appointment.find(criteria).select('appointment_date appointment_time doctor_id');
+    res.json(docs.map(a => ({ id: a._id, date: a.appointment_date, time: a.appointment_time })));
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Get appointments by doctor (supports ?date=YYYY-MM-DD or ?start=YYYY-MM-DD&end=YYYY-MM-DD)
+router.get('/by-doctor/:doctorId', async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    if (!doctorId) return res.status(400).json({ message: 'doctorId required' });
+    const { date, start, end } = req.query;
+    const criteria = { doctor_id: doctorId };
+    if (date) {
+      const d = new Date(date + 'T00:00:00');
+      if (!isNaN(d.getTime())) {
+        const d2 = new Date(d); d2.setDate(d2.getDate()+1);
+        criteria.appointment_date = { $gte: d, $lt: d2 };
+      }
+    } else if (start && end) {
+      const s = new Date(start + 'T00:00:00');
+      const e = new Date(end + 'T00:00:00');
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+        const e2 = new Date(e); e2.setDate(e2.getDate()+1);
+        criteria.appointment_date = { $gte: s, $lt: e2 };
+      }
+    }
+    const docs = await Appointment.find(criteria).sort({ appointment_date: 1, appointment_time: 1 });
+    res.json(docs.map(d => ({
+      _id: d._id,
+      appointment_date: d.appointment_date,
+      appointment_time: d.appointment_time,
+      appointment_type: d.appointment_type,
+      status: d.status,
+      patient_name: d.patient_name,
+      doctor_id: d.doctor_id,
+      timing_offset_minutes: d.timing_offset_minutes,
+      timing_status: d.timing_status,
+      timing_updated_at: d.timing_updated_at
+    })));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Fallback: Get appointments by doctor name (exact or case-insensitive match)
+// /appointments/by-doctor-name/:name?date=YYYY-MM-DD or ?start=YYYY-MM-DD&end=YYYY-MM-DD
+router.get('/by-doctor-name/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    if (!name) return res.status(400).json({ message: 'name required' });
+    const { date, start, end, loose } = req.query;
+    let criteria = { doctor_name: loose ? new RegExp(name, 'i') : name };
+    if (date) {
+      const d = new Date(date + 'T00:00:00');
+      if (!isNaN(d.getTime())) { const d2 = new Date(d); d2.setDate(d2.getDate()+1); criteria.appointment_date = { $gte: d, $lt: d2 }; }
+    } else if (start && end) {
+      const s = new Date(start + 'T00:00:00');
+      const e = new Date(end + 'T00:00:00');
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime())) { const e2 = new Date(e); e2.setDate(e2.getDate()+1); criteria.appointment_date = { $gte: s, $lt: e2 }; }
+    }
+    const docs = await Appointment.find(criteria).sort({ appointment_date: 1, appointment_time: 1 });
+    res.json(docs.map(d => ({
+      _id: d._id,
+      appointment_date: d.appointment_date,
+      appointment_time: d.appointment_time,
+      appointment_type: d.appointment_type,
+      status: d.status,
+      patient_name: d.patient_name,
+      doctor_id: d.doctor_id,
+      doctor_name: d.doctor_name,
+      timing_offset_minutes: d.timing_offset_minutes,
+      timing_status: d.timing_status,
+      timing_updated_at: d.timing_updated_at
+    })));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Authenticated patient: get only their own appointments
+// GET /appointments/my
+router.get('/my', verifyToken, async (req, res) => {
+  try {
+    const user = req.user; // from auth middleware
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+    // patient_id stored as string; some user models may use _id or a custom patientCode
+    // Accept either exact match on user._id or user.patientId / patient_id field if present
+    const possibleIds = new Set();
+    if (user._id) possibleIds.add(String(user._id));
+    if (user.patientId) possibleIds.add(String(user.patientId));
+    if (user.patient_id) possibleIds.add(String(user.patient_id));
+    if (possibleIds.size === 0) {
+      return res.json([]); // no patient identifier => no appointments
+    }
+    const docs = await Appointment.find({ patient_id: { $in: Array.from(possibleIds) } })
+      .sort({ appointment_date: 1, appointment_time: 1 });
+    const sanitized = docs.map(d => ({
+      _id: d._id,
+      appointment_date: d.appointment_date,
+      appointment_time: d.appointment_time,
+      appointment_type: d.appointment_type,
+      status: d.status,
+      doctor_id: d.doctor_id,
+      doctor_name: d.doctor_name,
+      timing_offset_minutes: d.timing_offset_minutes,
+      timing_status: d.timing_status,
+      timing_updated_at: d.timing_updated_at,
+      follow_up: d.follow_up,
+      created_at: d.created_at
+    }));
+    res.json(sanitized);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
   }
 });
 

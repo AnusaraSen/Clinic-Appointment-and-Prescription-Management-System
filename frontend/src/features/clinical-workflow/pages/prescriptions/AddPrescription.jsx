@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import '../../../../styles/clinical-workflow/AddPrescription.css';
 import axios from "axios";
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAlert } from './AlertProvider.jsx';
 import { validatePrescriptionForm, formatValidationErrors } from '../../../../utils/validation';
+import { useAuth } from '../../../../features/authentication/context/AuthContext.jsx';
 
 function AddPrescription() {
   const today = new Date().toISOString().split("T")[0];
@@ -15,6 +16,8 @@ function AddPrescription() {
   const [date, setDate] = useState(today);
   const [symptoms, setSymptoms] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [patients, setPatients] = useState([]); // list of {patient_ID, patient_name}
+  const [loadingPatients, setLoadingPatients] = useState(false);
 
   const [medicines, setMedicines] = useState([
     { Medicine_Name: "", Dosage: "", Frequency: "", Duration: "" }
@@ -23,6 +26,34 @@ function AddPrescription() {
 
   const navigate = useNavigate();
   const { pushAlert } = useAlert();
+  const { user } = useAuth();
+
+  // Derive doctor display name from user object
+  useEffect(() => {
+    if (user) {
+      // Derive raw name
+      let base = user.fullName || user.name || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || '';
+      base = base.replace(/[^A-Za-z .'-]/g,' ').replace(/\s+/g,' ').trim();
+      if(base.toLowerCase().startsWith('dr. ')) base = base.slice(4).trim(); // remove existing Dr. to avoid duplication
+      const prefixed = base ? `Dr. ${base}` : '';
+      if (prefixed && prefixed !== dName) setDName(prefixed);
+    } else if (dName) {
+      setDName("");
+    }
+  }, [user]);
+
+  // Fetch patients for dropdown
+  useEffect(() => {
+    setLoadingPatients(true);
+    axios.get('http://localhost:5000/patient/get')
+      .then(res => {
+        setPatients(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(err => {
+        pushAlert(err?.message || 'Failed to load patients list','error');
+      })
+      .finally(()=> setLoadingPatients(false));
+  }, [pushAlert]);
 
   const handleMedicineChange = (index, field, value) => {
     const newMedicines = [...medicines];
@@ -72,11 +103,11 @@ function AddPrescription() {
 
     axios.post("http://localhost:5000/prescription/add", newPrescription)
       .then(() => {
-  pushAlert("Prescription created","info");
+        pushAlert("Prescription created","info");
         navigate("/prescription/all");
         setPName(""); 
         setPId(""); 
-        setDName("");
+        // Keep doctor name (still logged in) so don't clear dName
         setMedicines([{ Medicine_Name: "", Dosage: "", Frequency: "", Duration: "" }]);
         setDate(today); 
         setDiagnosis(""); 
@@ -84,7 +115,21 @@ function AddPrescription() {
         setInstructions("");
       })
       .catch((err) => {
-        pushAlert(err?.response?.data?.message || 'Failed to add prescription','error');
+        const resp = err?.response?.data;
+        if(resp?.errors && Array.isArray(resp.errors)){
+          // Map backend errors to local field errors shape for inline hints
+          const backendFieldErrors = {};
+          resp.errors.forEach(e => {
+            if(e.field && e.message) backendFieldErrors[e.field] = e.message;
+          });
+            setErrors(prev => ({...prev, ...backendFieldErrors}));
+          // Show first error prominently
+          const first = resp.errors[0];
+          pushAlert(`${first.field || 'Validation'}: ${first.message}`, 'error');
+          console.warn('Prescription validation errors:', resp.errors);
+        } else {
+          pushAlert(resp?.message || 'Failed to add prescription','error');
+        }
       });
   }
 
@@ -96,13 +141,37 @@ function AddPrescription() {
           <div className="ap-form-row">
             <div className="ap-form-group">
               <label>Patient ID</label>
-              <input type="text" value={pId} maxLength={12} required onChange={(e) => setPId(e.target.value)} className="form-control" placeholder="Enter patient ID" />
+              <select
+                className="form-select"
+                value={pId}
+                required
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPId(val);
+                  const match = patients.find(p => p.patient_ID === val);
+                  if (match) setPName(match.patient_name || '');
+                }}
+              >
+                <option value="">{loadingPatients ? 'Loading patients...' : 'Select Patient ID'}</option>
+                {patients.map(p => (
+                  <option key={p._id || p.patient_ID} value={p.patient_ID}>{p.patient_ID}</option>
+                ))}
+              </select>
               {errors.patient_ID && <div className="text-danger">{errors.patient_ID}</div>}
+              {!loadingPatients && !patients.length && <div className="text-warning" style={{fontSize:'0.8rem'}}>No patients found. Add a patient first.</div>}
             </div>
 
             <div className="ap-form-group">
               <label>Patient Name</label>
-              <input type="text" value={pName} required onChange={(e) => setPName(e.target.value)} className="form-control" placeholder="Enter patient name" />
+              <input
+                type="text"
+                value={pName}
+                required
+                readOnly
+                className="form-control"
+                placeholder={pId ? 'Auto-filled' : 'Select a patient ID first'}
+                style={{ background:'#f3f6f8', cursor:'not-allowed' }}
+              />
               {errors.patient_name && <div className="text-danger">{errors.patient_name}</div>}
             </div>
           </div>
@@ -110,8 +179,17 @@ function AddPrescription() {
           <div className="ap-form-row">
             <div className="ap-form-group">
               <label>Doctor Name</label>
-              <input type="text" value={dName} required onChange={(e) => setDName(e.target.value)} className="form-control" placeholder="Enter doctor name" />
+              <input
+                type="text"
+                value={dName}
+                required
+                readOnly
+                className="form-control"
+                placeholder={user ? 'Auto-filled from your profile' : 'Login required'}
+                style={{ background:'#f3f6f8', cursor:'not-allowed' }}
+              />
               {errors.doctor_Name && <div className="text-danger">{errors.doctor_Name}</div>}
+              {!dName && <div style={{fontSize:'0.7rem', color:'#666'}}>Doctor name will appear after login.</div>}
             </div>
 
             <div className="ap-form-group">

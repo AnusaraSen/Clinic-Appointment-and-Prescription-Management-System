@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getMyAppointments } from '../../../api/appointmentsApi';
 import "../../../styles/Patient-Interaction/AllAppointments.css";
 import { useNavigate } from "react-router-dom";
 import PatientLayout from "../components/PatientLayout";
@@ -26,42 +27,18 @@ function AllAppointments() {
 
   // Try proxy first (works when `proxy` is set in frontend/package.json),
   // then fall back to absolute addresses.
-  const endpoints = [
-    "/appointment/", // proxy to backend when dev server is used
-    "http://localhost:5000/appointment/",
-    "http://127.0.0.1:5000/appointment/",
-  ];
-
   const fetchAppointments = async () => {
     setLoading(true);
     setError("");
-    setAppointments([]);
-    let lastErr = null;
-
-    for (const url of endpoints) {
-      try {
-        // short timeout helps fail fast during diagnostics
-        const res = await axios.get(url, { timeout: 5000 });
-        setAppointments(res.data || []);
-        setLoading(false);
-        setError("");
-        return;
-      } catch (err) {
-        lastErr = err;
-        // keep trying next endpoint
-        console.warn(`Failed to fetch from ${url}:`, err?.response?.status, err?.message || err);
-      }
+    try {
+      const data = await getMyAppointments();
+      setAppointments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('[AllAppointments] Failed to load my appointments', err);
+      setError(err.message || 'Failed to load appointments');
+    } finally {
+      setLoading(false);
     }
-
-    // After trying all endpoints — show actionable message with details
-    const status = lastErr?.response?.status;
-    const data = lastErr?.response?.data;
-    const msg = data || lastErr?.message || "Failed to reach backend";
-    setError(
-      `Unable to reach backend. Tried: ${endpoints.join(", ")}.\nStatus: ${status || "n/a"}. Error: ${msg}.\nSuggestions: ensure backend is running on port 5000, check CORS, or open the browser devtools network tab for more details.`
-    );
-    console.error("All fetch attempts failed:", { status, data, err: lastErr });
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -93,7 +70,7 @@ function AllAppointments() {
                 <table className="appointments-table">
                   <thead>
                     <tr>
-                      <th>Patient</th>
+                      {/* Patient column removed: only the authenticated patient's appointments shown */}
                       <th>Doctor</th>
                       <th>Date</th>
                       <th>Time</th>
@@ -107,7 +84,7 @@ function AllAppointments() {
                   <tbody>
                     {appointments.map((app) => (
                       <tr key={app._id}>
-                        <td>{app.patient_id && typeof app.patient_id === 'object' ? app.patient_id.name : app.patient_id}</td>
+                        {/* Patient cell omitted */}
                         <td>{app.doctor_id && typeof app.doctor_id === 'object' ? app.doctor_id.name : app.doctor_id}</td>
                         <td>{formatDateOnly(app.date)}</td>
                         <td>{app.time || "-"}</td>

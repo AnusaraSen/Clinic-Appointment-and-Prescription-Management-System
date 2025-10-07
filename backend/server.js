@@ -104,16 +104,27 @@ app.use('/api/test', testRoutes);
 app.use('/api/test-results', testResultRoutes);
 
 // Route imports - pharmacy inventory
-const medicineRoutes = require('./modules/pharmacy-inventory/routes/medicineRoutes');
-const labInventoryRoutes = require('./modules/pharmacy-inventory/routes/labInventoryRoutes');
-const authRoutes = require('./modules/auth/routes/authRoutes');
+
+
 // const pharmacistRoutes = require('./modules/workforce-facility/routes/pharmacistRoutes'); // File doesn't exist
+// Route imports - pharmacy inventory
+const medicineRoutes = require('./modules/pharmacy-inventory/routes/medicineRoutes');
+const chemicalRoutes = require('./modules/pharmacy-inventory/routes/chemicalRoutes');
+// Distinct name to avoid shadowing the workforce equipment routes
+const equipmentInventoryRoutes = require('./modules/pharmacy-inventory/routes/equipmentRoutes');
+const orderRoutes = require('./modules/pharmacy-inventory/routes/OrderRoutes');
+const pharmacyDashboardRoutes = require('./modules/pharmacy-inventory/routes/dashboardRoutes');
+const authRoutes = require('./modules/auth/routes/authRoutes');
+// const pharmacistRoutes = require('./modules/workforce-facility/routes/pharmacistRoutes'); // TODO: add route file or remove
 
 // Routes - pharmacy
 app.use("/api/medicines", medicineRoutes);
-app.use("/api/lab-inventory", labInventoryRoutes);
+app.use("/api/chemical-inventory", chemicalRoutes);
+app.use("/api/equipment-inventory", equipmentInventoryRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/pharmacy-dashboard", pharmacyDashboardRoutes);
 app.use("/api/auth", authRoutes);
-// app.use("/api/pharmacist", pharmacistRoutes); // File doesn't exist
+// app.use("/api/pharmacist", pharmacistRoutes);
 
 // Route imports - patient interaction (converted to CommonJS temporarily)
 const appointmentRouter = require("./modules/patient-interaction/routes/appointments.js");

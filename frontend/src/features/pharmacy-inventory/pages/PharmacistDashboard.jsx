@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import pharmacyDashboardApi from '../../../api/pharmacyDashboardApi';
+import prescriptionsApi from '../../../api/prescriptionsApi';
+import { getStatusOverride, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 import PharmacistSidebar from '../components/PharmacistSidebar';
 import DashboardStats from '../components/DashboardStats';
 import PrescriptionsList from '../components/PrescriptionsList';
@@ -19,6 +22,7 @@ const PharmacistDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [recentPrescriptions, setRecentPrescriptions] = useState([]);
 
   // Add body class for fixed navbar
   useEffect(() => {
@@ -84,60 +88,93 @@ const PharmacistDashboard = () => {
     };
   }, [dashboardData]);
 
+  // Listen for prescription structural changes (update/delete) and refresh lists
+  useEffect(() => {
+    const handler = (e) => {
+      const { id, action } = e.detail || {};
+      console.log('Dashboard detected prescription change:', id, action);
+      fetchDashboardData();
+    };
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handler);
+  }, []);
+
+  // Optional light polling fallback for recent prescriptions
+  useEffect(() => {
+    const t = setInterval(() => {
+      fetchDashboardData();
+    }, 30000); // 30s
+    return () => clearInterval(t);
+  }, []);
+
   const fetchDashboardData = async () => {
     try {
-      // Define thresholds for low stock alerts
-      const LOW_STOCK_THRESHOLD = 50;
-      const CRITICAL_STOCK_THRESHOLD = 20;
+      // Fetch aggregated, realistic inventory stats
+      const res = await pharmacyDashboardApi.summary();
+      const payload = res.data?.data || {};
+      const items = Array.isArray(payload.lowExpiredItems) ? payload.lowExpiredItems : [];
 
-      // Fetch medicine inventory data
-      const medicineResponse = await axios.get('http://localhost:5000/api/medicines');
-      const medicines = medicineResponse.data.data || medicineResponse.data; // Handle both response structures
+      // Build Low Stock Medicines list from server-calculated low/expired items
+      const meds = items
+        .filter((it) => it.category === 'Medicine')
+        .filter((it) => it.reason === 'Low Stock' || it.reason === 'Expired')
+        .map((it) => {
+          const qty = Number(it.quantity || 0);
+          const thr = Number(it.threshold || 0);
+          const criticalByThreshold = thr > 0 ? qty <= Math.max(1, Math.floor(thr / 2)) : qty <= 10;
+          const status = it.reason === 'Expired' ? 'critical' : (criticalByThreshold ? 'critical' : 'low');
+          return {
+            name: it.name,
+            quantity: qty,
+            unit: it.unit, // may be undefined; UI handles it
+            category: 'Medicine',
+            status,
+          };
+        })
+        .sort((a, b) => a.quantity - b.quantity);
 
-      // Filter and categorize low stock medicines
-      const lowStockMedicines = medicines
-        .filter(medicine => medicine.quantity <= LOW_STOCK_THRESHOLD)
-        .map(medicine => ({
-          ...medicine,
-          status: medicine.quantity <= CRITICAL_STOCK_THRESHOLD ? 'critical' : 'low'
-        }))
-        .sort((a, b) => a.quantity - b.quantity); // Sort by quantity, lowest first
-
-      // Mock data for other statistics (replace with real API calls later)
       const dashboardData = {
+        // Keep existing non-inventory cards for now; can be wired later
         statistics: {
           totalPrescriptions: 156,
           newPrescriptions: 12,
           pendingPrescriptions: 8,
-          dispensedToday: 45
+          dispensedToday: 45,
         },
-        recentPrescriptions: [
-          {
-            id: 'P-001',
-            patientName: 'John Smith',
-            prescriptionId: 'RX-2024-001',
-            doctorName: 'Dr. Brown',
-            status: 'Pending',
-            dateIssued: new Date().toISOString()
-          },
-          {
-            id: 'P-002',
-            patientName: 'Sarah Wilson',
-            prescriptionId: 'RX-2024-002',
-            doctorName: 'Dr. Johnson',
-            status: 'Dispensed',
-            dateIssued: new Date().toISOString()
-          }
-        ],
-        lowStockMedicines: lowStockMedicines
+        recentPrescriptions: [],
+        lowStockMedicines: meds,
+        inventoryKPIs: payload.kpis || {
+          medicines: { total: 0, expired: 0, lowStock: 0, outOfStock: 0 },
+          chemicals: { total: 0, expired: 0, lowStock: 0 },
+          equipment: { total: 0, lowStock: 0, needsMaintenance: 0, outOfService: 0 },
+          orders: { monthCount: 0, pending: 0 },
+        },
       };
-      
+
       setDashboardData(dashboardData);
-      console.log('Dashboard data loaded with real medicine inventory:', {
-        totalMedicines: medicines.length,
-        lowStockCount: lowStockMedicines.length,
-        criticalStockCount: lowStockMedicines.filter(m => m.status === 'critical').length
-      });
+      console.log('Pharmacy dashboard summary:', payload.kpis);
+
+      // Fetch recent prescriptions (latest 5)
+      try {
+        const presRes = await prescriptionsApi.list();
+        const raw = Array.isArray(presRes.data) ? presRes.data : (presRes.data?.items || presRes.data?.data || []);
+        const mapped = raw.map((d) => {
+          const id = (d._id || d.id || '').toString();
+          const override = getStatusOverride(id);
+          return {
+            id,
+            patient: d.patient_name || d.patientName || d.patient?.name || 'Unknown',
+            time: d.Date ? new Date(d.Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+            status: override || d.status || 'New',
+            date: d.Date ? new Date(d.Date).toISOString() : null,
+          };
+        });
+        const sorted = mapped.sort((a, b) => (b.date ? Date.parse(b.date) : 0) - (a.date ? Date.parse(a.date) : 0));
+        setRecentPrescriptions(sorted.slice(0, 5));
+      } catch (e) {
+        console.warn('Failed to fetch recent prescriptions:', e?.message || e);
+        setRecentPrescriptions([]);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       // Use mock data as fallback
@@ -205,8 +242,8 @@ const PharmacistDashboard = () => {
   };
 
   const handleNavigateToLowStockMedicines = () => {
-    // Navigate to medicine inventory with low stock filter applied
-    navigate('/medicine/list?filter=lowStock');
+    // Navigate to unified low/expired items page
+    navigate('/low-stock-items');
   };
 
   // Handle URL-based navigation
@@ -283,6 +320,7 @@ const PharmacistDashboard = () => {
               {activeTab === 'dashboard' && (
                 <DashboardStats 
                   data={dashboardData} 
+                  recentPrescriptions={recentPrescriptions}
                   onRefresh={fetchDashboardData}
                   onPrescriptionClick={handlePrescriptionClick}
                   onNavigateToPrescriptions={handleNavigateToPrescriptions}

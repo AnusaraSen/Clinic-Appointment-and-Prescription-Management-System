@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// Corrected path: styles folder is a sibling of components, so use ../styles
+import '../styles/clinicalDashboard.css';
 import { 
   Calendar, 
   Users, 
@@ -434,6 +436,13 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
     }
   ];
 
+  const palette = [
+    { accent: 'cd-accent-blue', icon: 'cd-icon-wrap', bar: 'cd-accent-bar cd-accent-blue' },
+    { accent: 'cd-accent-emerald', icon: 'cd-icon-wrap', bar: 'cd-accent-bar cd-accent-emerald' },
+    { accent: 'cd-accent-indigo', icon: 'cd-icon-wrap', bar: 'cd-accent-bar cd-accent-indigo' },
+    { accent: 'cd-accent-amber', icon: 'cd-icon-wrap', bar: 'cd-accent-bar cd-accent-amber' }
+  ];
+
   // Debug logging
   console.log('Clinical Stats:', clinicalStats);
   console.log('First Card Data:', clinicalKPICards[0]);
@@ -451,68 +460,20 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
         </div>
       )}
 
-      {clinicalKPICards.map((card, index) => (
-        <div 
-          key={index} 
-          className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group"
-        >
-          {/* Medical Gradient Background */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${card.bgGradient} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
-          
-          {/* Card Content */}
-          <div className="relative p-6">
-            {/* Header with Medical Icon */}
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-4 rounded-2xl bg-gradient-to-br ${card.bgGradient} shadow-lg`}>
-                <span className="text-white">
-                  {card.icon}
-                </span>
-              </div>
-              <div className="text-right">
-                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                  {card.title}
-                </h3>
-                <div className="flex items-center gap-2 mt-1 justify-end">
-                  {card.trendDirection === 'up' && <TrendingUp className="h-3 w-3 text-emerald-500" />}
-                  {card.trendDirection === 'down' && <TrendingDown className="h-3 w-3 text-rose-500" />}
-                  {card.trendDirection === 'stable' && <CheckCircle className="h-3 w-3 text-blue-500" />}
-                  <span className={`text-xs font-semibold ${
-                    card.trendDirection === 'up' ? 'text-emerald-600' : 
-                    card.trendDirection === 'down' ? 'text-rose-600' : 'text-blue-600'
-                  }`}>
-                    {card.trend}
-                  </span>
-                </div>
-              </div>
+      {clinicalKPICards.map((card, index) => {
+        const scheme = palette[index % palette.length];
+        return (
+          <div key={index} className="cd-card cd-fade-in" aria-live="polite">
+            <span className={scheme.bar} aria-hidden="true"></span>
+            <div className="cd-card-header">
+              <div className={scheme.icon}>{card.icon}</div>
+              <h3 className="cd-title">{card.title}</h3>
             </div>
-
-            {/* Main Metric Display */}
-            <div className="mb-6">
-              <div className="text-center">
-                <span className={`text-5xl font-bold bg-gradient-to-br ${card.bgGradient} bg-clip-text text-transparent`}>
-                  {card.total || 0}
-                </span>
-                <div className="text-gray-500 text-sm font-medium mt-1">
-                  total cases
-                </div>
-              </div>
-            </div>
-
-            {/* Medical Breakdown Statistics */}
-            <div className="space-y-3 mb-4">
-              {/* Removed breakdown statistics */}
-            </div>
-
-            {/* Medical Progress Visualization */}
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              {/* Removed progress bar and metrics label */}
-            </div>
+            <div className="cd-metric" aria-label={`${card.total} ${card.title}`}>{card.total || 0}</div>
+            <p className="cd-subtle" role="note">{card.trend}</p>
           </div>
-
-          {/* Medical Border Accent */}
-          <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${card.bgGradient}`}></div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

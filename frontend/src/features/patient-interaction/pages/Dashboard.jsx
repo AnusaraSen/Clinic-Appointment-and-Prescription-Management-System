@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CalendarClock, FileText, Activity, CheckCircle, Eye, Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { PatientLayout } from '../components/PatientLayout';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
@@ -33,8 +33,11 @@ const Dashboard = () => {
     return (first + last).toUpperCase() || 'DR';
   };
 
-  useEffect(() => {
-    const fetchAppointments = async () => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const fetchAppointments = useCallback(async (manual=false) => {
+      if (manual) setRefreshing(true);
       setLoading(true);
       setError("");
       try {
@@ -65,16 +68,19 @@ const Dashboard = () => {
         
         const upcoming = (res.data || [])
           .filter(app => {
-            // Use appointment_date field instead of date
             const appDate = new Date(app.appointment_date || app.date);
             appDate.setHours(0, 0, 0, 0);
-            return appDate >= today; // Future appointments
+            return appDate >= today; // today + future
           })
           .sort((a, b) => {
-            // Sort by appointment_date in ascending order (soonest first)
-            const dateA = new Date(a.appointment_date || a.date);
-            const dateB = new Date(b.appointment_date || b.date);
-            return dateA - dateB;
+            // Earliest upcoming first (soonest)
+            const baseA = new Date(a.appointment_date || a.date);
+            const baseB = new Date(b.appointment_date || b.date);
+            const [hA, mA] = (a.appointment_time || '00:00').split(':').map(Number);
+            const [hB, mB] = (b.appointment_time || '00:00').split(':').map(Number);
+            baseA.setHours(hA||0, mA||0, 0, 0);
+            baseB.setHours(hB||0, mB||0, 0, 0);
+            return baseA - baseB;
           });
 
         const completed = (res.data || [])
@@ -91,17 +97,23 @@ const Dashboard = () => {
         setCompletedVisitsCount(completed.length);
         
         // Cache a patientId for Topbar navigation convenience (first upcoming appointment)
-        const first = upcoming[0];
-        const pid = first ? (typeof first.patient_id === 'object' ? first.patient_id?._id : first.patient_id) : null;
+        const first = upcoming[0]; // soonest upcoming
+  const pid = first ? (typeof first.patient_id === 'object' ? first.patient_id?._id : first.patient_id) : null;
         if (pid) localStorage.setItem('patientId', pid);
+        setLastRefreshed(new Date());
       } catch (err) {
         const msg = err?.response?.data || err?.message || "Failed to load appointments";
         setError(`Failed to load appointments: ${msg}`);
       }
       setLoading(false);
-    };
-    fetchAppointments();
-  }, []);
+      if (manual) setRefreshing(false);
+    }, [setUpcomingAppointments, setCompletedVisitsCount]);
+
+  useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+
+  const handleRefreshAppointments = () => {
+    fetchAppointments(true);
+  };
   // Fetch last 2 prescriptions via route param patient code
   useEffect(() => {
     const fetchPrescriptions = async () => {
@@ -307,7 +319,7 @@ const Dashboard = () => {
               transition: 'all 0.3s ease'
             }}>
               <div style={{ padding: '28px 32px', borderBottom: '1px solid rgba(0, 0, 0, 0.06)', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.3rem', color: 'white', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: '1.3rem', color: 'white', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
                   <div style={{ background: 'rgba(255, 255, 255, 0.2)', padding: 10, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CalendarClock size={24} color="white" />
                   </div>
@@ -323,6 +335,30 @@ const Dashboard = () => {
                   }}>
                     {upcomingAppointments.length} {upcomingAppointments.length === 1 ? 'appointment' : 'appointments'}
                   </span>
+                  <button
+                    onClick={handleRefreshAppointments}
+                    disabled={refreshing}
+                    title={lastRefreshed ? `Last refreshed at ${lastRefreshed.toLocaleTimeString()}` : 'Refresh appointments'}
+                    style={{
+                      marginLeft: 12,
+                      background: 'rgba(255,255,255,0.25)',
+                      backdropFilter: 'blur(2px)',
+                      border: '1px solid rgba(255,255,255,0.4)',
+                      color: 'white',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      cursor: refreshing ? 'wait' : 'pointer',
+                      opacity: refreshing ? 0.7 : 1,
+                      transition: 'background .2s'
+                    }}
+                  >
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
               </div>
               <div style={{ padding: '32px 32px 24px 32px' }}>
@@ -360,8 +396,14 @@ const Dashboard = () => {
                     margin: '0 -32px 8px -32px', 
                     marginLeft: -32, 
                     marginRight: -32,
-                    background: index === 0 ? 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)' : 'transparent',
-                    border: index === 0 ? '2px solid rgba(59, 130, 246, 0.1)' : 'none',
+                    background: (app.status && app.status.toLowerCase().startsWith('cancel'))
+                      ? 'linear-gradient(135deg,#f8fafc 0%, #f1f5f9 100%)'
+                      : index === 0 ? 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)' : 'transparent',
+                    border: (app.status && app.status.toLowerCase().startsWith('cancel'))
+                      ? '2px solid rgba(239,68,68,0.25)'
+                      : index === 0 ? '2px solid rgba(59, 130, 246, 0.1)' : 'none',
+                    opacity: (app.status && app.status.toLowerCase().startsWith('cancel')) ? 0.55 : 1,
+                    filter: (app.status && app.status.toLowerCase().startsWith('cancel')) ? 'grayscale(0.4)' : 'none',
                     position: 'relative'
                   }}>
                     {index === 0 && (
@@ -378,6 +420,23 @@ const Dashboard = () => {
                         boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                       }}>
                         NEXT
+                      </div>
+                    )}
+                    {app.status && app.status.toLowerCase().startsWith('cancel') && (
+                      <div style={{
+                        position: 'absolute',
+                        top: -4,
+                        right: 12,
+                        background: 'linear-gradient(135deg,#dc2626,#b91c1c)',
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        fontSize: '0.55rem',
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        boxShadow: '0 4px 12px rgba(220,38,38,0.35)'
+                      }}>
+                        CANCELLED BY DOCTOR
                       </div>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -510,20 +569,44 @@ const Dashboard = () => {
                           <span style={{ fontWeight: 600, color: '#6366f1', fontSize: '0.9rem' }}>
                             {app.appointment_time || app.time}
                           </span>
+                          {typeof app.timing_status !== 'undefined' && app.timing_status && app.status && !app.status.toLowerCase().startsWith('cancel') && (
+                            <span style={{
+                              marginLeft: 8,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              letterSpacing: 0.5,
+                              padding: '4px 8px',
+                              borderRadius: 6,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: app.timing_status === 'on-time' ? 'linear-gradient(135deg,#f1f5f9,#e2e8f0)' : (app.timing_status === 'early' ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)' : 'linear-gradient(135deg,#fee2e2,#fecaca)'),
+                              color: app.timing_status === 'on-time' ? '#334155' : (app.timing_status === 'early' ? '#047857' : '#b91c1c'),
+                              border: '1px solid rgba(0,0,0,0.06)'
+                            }} title={app.timing_status === 'on-time' ? 'Doctor expects to be on schedule' : app.timing_status === 'early' ? 'Doctor may see you earlier' : 'Doctor is delayed'}>
+                              {app.timing_status === 'on-time' && 'ON TIME'}
+                              {app.timing_status === 'early' && `EARLY (${Math.abs(app.timing_offset_minutes||0)}m)`}
+                              {app.timing_status === 'late' && `DELAY (${app.timing_offset_minutes||0}m)`}
+                            </span>
+                          )}
                         </div>
                         {app.appointment_type && (
                           <div style={{ 
-                            color: '#059669', 
+                            color: (app.status && app.status.toLowerCase().startsWith('cancel')) ? '#b91c1c' : '#059669', 
                             fontSize: '0.8rem', 
                             marginTop: 6, 
                             fontWeight: 600, 
-                            background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)', 
+                            background: (app.status && app.status.toLowerCase().startsWith('cancel'))
+                              ? 'linear-gradient(135deg,#fee2e2 0%, #fecaca 100%)'
+                              : 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)', 
                             padding: '3px 8px', 
                             borderRadius: 8, 
                             display: 'inline-block',
-                            border: '1px solid rgba(34, 197, 94, 0.2)'
+                            border: (app.status && app.status.toLowerCase().startsWith('cancel'))
+                              ? '1px solid rgba(220,38,38,0.35)'
+                              : '1px solid rgba(34, 197, 94, 0.2)'
                           }}>
-                            📋 {app.appointment_type}
+                            {app.status && app.status.toLowerCase().startsWith('cancel') ? '🚫 ' : '📋 '}{app.appointment_type}
                           </div>
                         )}
                       </div>

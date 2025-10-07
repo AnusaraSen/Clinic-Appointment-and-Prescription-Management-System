@@ -69,6 +69,7 @@ import DeletePatient from './features/clinical-workflow/pages/medical-records/De
 import ClinicalDashboard from './features/clinical-workflow/pages/Dashboard';
 import DoctorProfile from './features/clinical-workflow/pages/DoctorProfile';
 import DoctorAvailability from './features/clinical-workflow/pages/DoctorAvailability';
+import DoctorAppointmentsWrapper from './features/clinical-workflow/pages/DoctorAppointmentsWrapper';
 
 // Clinical pages with sidebar navigation
 import MedicalRecordsPage from './features/clinical-workflow/pages/MedicalRecordsPage';
@@ -84,13 +85,22 @@ import MedicineList from './features/pharmacy-inventory/pages/Medicine-Inventory
 import InsertMedicine from './features/pharmacy-inventory/pages/Medicine-Inventory/InsertMedicine'
 import UpdateMedicine from './features/pharmacy-inventory/pages/Medicine-Inventory/UpdateMedicine'
 import DeleteMedicine from './features/pharmacy-inventory/pages/Medicine-Inventory/DeleteMedicine'
+import ChemicalList from './features/pharmacy-inventory/pages/Lab-Inventory/Chemical-inventory/ChemicalList'
+import InsertChemical from './features/pharmacy-inventory/pages/Lab-Inventory/Chemical-inventory/InsertChemical'
+import UpdateChemical from './features/pharmacy-inventory/pages/Lab-Inventory/Chemical-inventory/UpdateChemical'
+import EquipmentList from './features/pharmacy-inventory/pages/Lab-Inventory/Equipment-Inventory/EquipmentList';
+import InsertEquipment from './features/pharmacy-inventory/pages/Lab-Inventory/Equipment-Inventory/InsertEquipment';
+import UpdateEquipment from './features/pharmacy-inventory/pages/Lab-Inventory/Equipment-Inventory/UpdateEquipment';
 import LabItemList from './features/pharmacy-inventory/pages/Lab-Inventory/LabItemList'
 import InsertLabItem from './features/pharmacy-inventory/pages/Lab-Inventory/InsertLabItem'
 import UpdateLabItem from './features/pharmacy-inventory/pages/Lab-Inventory/UpdateLabItem'
 import DeleteLabItem from './features/pharmacy-inventory/pages/Lab-Inventory/DeleteLabItem'
 import OrdersPage from './features/pharmacy-inventory/pages/OrdersPage'
+import CreateOrder from './features/pharmacy-inventory/pages/OrderManagement/CreateOrder'
+import UpdateOrder from './features/pharmacy-inventory/pages/OrderManagement/UpdateOrder'
 import PharmacistDashboard from './features/pharmacy-inventory/pages/PharmacistDashboard'
 import PrescriptionDetails from './features/pharmacy-inventory/components/PrescriptionDetails';
+import InventoryLayout from './features/pharmacy-inventory/components/InventoryLayout';
 // Patient Interaction imports
 import AddAppointments from "./features/patient-interaction/pages/AddAppointments";
 import AllAppointments from "./features/patient-interaction/pages/AllAppointments";
@@ -611,6 +621,7 @@ function App() {
           <Route path="/admin-dashboard" element={<ClinicalDashboard />} />
           <Route path="/doctor-profile" element={<DoctorProfilePage />} />
           <Route path="/doctor-availability" element={<DoctorCalendarPage />} />
+          <Route path="/doctor-appointments" element={<DoctorAppointmentsWrapper />} />
 
           <Route path="/pharmacist/PrescriptionDetails" element={<PrescriptionDetails />} />
           
@@ -633,17 +644,30 @@ function App() {
           <Route path="/patient/delete/:id" element={<DeletePatient />} />
           <Route path="/deletePatient/:id" element={<DeletePatient />} />
 
-          {/* Pharmacy Inventory Routes */}
-          <Route path="/inventory-dashboard" element={<InventoryDashboard />} />
-          <Route path="/lab/Pdashboard" element={<InventoryDashboard />} />
-          <Route path="/activities" element={<AllActivities />} />
-          <Route path="/low-stock-items" element={<LowStockItems />} />
+          {/* Pharmacy/Inventory Routes with persistent sidebar */}
+          <Route path="/inventory-dashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
+          <Route path="/lab/Pdashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
+          <Route path="/activities" element={<InventoryLayout><AllActivities /></InventoryLayout>} />
+          <Route path="/low-stock-items" element={<InventoryLayout><LowStockItems /></InventoryLayout>} />
+          
+          {/* Chemical Inventory Routes (aliases for sidebar) */}
+          <Route path="/chemical-inventory" element={<InventoryLayout><ChemicalList /></InventoryLayout>} />
+          <Route path="/chemical-inventory/add" element={<InventoryLayout><InsertChemical /></InventoryLayout>} />
+          <Route path="/chemical-inventory/edit/:id" element={<InventoryLayout><UpdateChemical /></InventoryLayout>} />
+
+          {/* Medicine Inventory Routes (alias for sidebar) */}
+          <Route path="/medicine-inventory" element={<InventoryLayout><MedicineList /></InventoryLayout>} />
+
+          {/* Equipment Inventory Routes (aliases for sidebar) */}
+          <Route path="/equipment-inventory" element={<InventoryLayout><EquipmentList /></InventoryLayout>} />
+          <Route path="/equipment-inventory/add" element={<InventoryLayout><InsertEquipment /></InventoryLayout>} />
+          <Route path="/equipment-inventory/edit/:id" element={<InventoryLayout><UpdateEquipment /></InventoryLayout>} />
           
           {/* Medicine Inventory Routes */}
           <Route path="/medicine/list" element={<MedicineList />} />
-          <Route path="/medicine/add" element={<InsertMedicine />} />
-          <Route path="/medicine/edit/:id" element={<UpdateMedicine />} />
-          <Route path="/medicine/delete/:id" element={<DeleteMedicine />} />
+          <Route path="/medicine/add" element={<InventoryLayout><InsertMedicine /></InventoryLayout>} />
+          <Route path="/medicine/edit/:id" element={<InventoryLayout><UpdateMedicine /></InventoryLayout>} />
+          <Route path="/medicine/delete/:id" element={<InventoryLayout><DeleteMedicine /></InventoryLayout>} />
           
           {/* Lab Inventory Routes */}
           <Route path="/lab/list" element={<LabItemList />} />
@@ -652,7 +676,10 @@ function App() {
           <Route path="/lab/delete/:id" element={<DeleteLabItem />} />
           
           {/* Order Management Routes */}
-          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/*" element={<InventoryLayout><OrdersPage /></InventoryLayout>} />
+          <Route path="/orders/new" element={<InventoryLayout><CreateOrder /></InventoryLayout>} />
+          <Route path="/orders/edit/:id" element={<InventoryLayout><UpdateOrder /></InventoryLayout>} />
+          <Route path="/order-management" element={<Navigate to="/orders" replace />} />
           <Route path="/pharmacist/dashboard" element={<PharmacistDashboard />} />
           <Route path="/pharmacist/prescriptions" element={<PharmacistDashboard />} />
           <Route path="/pharmacist/dispensing" element={<PharmacistDashboard />} />

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import InventoryNavigationSidebar from '../components/InventoryNavigationSidebar';
 import '../../../styles/Medicine/AllActivities.css';
 
 const AllActivities = () => {
@@ -248,25 +247,17 @@ const AllActivities = () => {
 
   if (loading) {
     return (
-      <div className="inventory-nav-layout">
-        <InventoryNavigationSidebar />
-        <div className="inventory-nav-content">
-          <div className="loading-container">
-            <div className="loading-spinner">
-              <i className="fas fa-spinner fa-spin"></i>
-              <p>Loading activities...</p>
-            </div>
-          </div>
+      <div className="loading-container">
+        <div className="loading-spinner">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading activities...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="inventory-nav-layout">
-      <InventoryNavigationSidebar />
-      <div className="inventory-nav-content">
-        <div className="activities-container">
+    <div className="activities-container">
           {/* Header */}
           <div className="activities-header">
             <div className="header-left">
@@ -397,8 +388,6 @@ const AllActivities = () => {
               ))
             )}
           </div>
-        </div>
-      </div>
     </div>
   );
 };
