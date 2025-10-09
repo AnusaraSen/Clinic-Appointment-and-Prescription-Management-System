@@ -31,7 +31,13 @@ router.get('/', async (req, res) => {
   try {
     console.log('📋 Getting all users for dropdown...');
     
-    const users = await User.find()
+    const { role } = req.query || {};
+    const filter = {};
+    if (role) {
+      filter.role = role; // rely on enum validation at schema level
+    }
+
+    const users = await User.find(filter)
       .select('user_id name email role lockUntil isActive lastLogin') // Include lockUntil so virtual isLocked is available and lastLogin for reports table
       .sort({ name: 1 }); // Sort alphabetically by name
     
@@ -40,7 +46,8 @@ router.get('/', async (req, res) => {
     res.status(200).json({
       success: true,
       count: users.length,
-      data: users
+      data: users,
+      filter: role ? { role } : undefined
     });
     
   } catch (error) {

@@ -1,10 +1,66 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../../../styles/Medicine/UpdateMedicine.css";
+import "../../../../styles/Medicine/MedicineForm.css";
+
+function generateBatchNumber() {
+  const d = new Date();
+  const y = String(d.getFullYear()).slice(2);
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `BATCH-${y}${m}${day}-${rnd}`;
+}
 
 const InsertMedicine = () => {
   const navigate = useNavigate();
+
+  const GENERIC_NAMES = useMemo(
+    () => [
+      "Paracetamol",
+      "Amoxicillin",
+      "Ibuprofen",
+      "Aspirin",
+      "Metformin",
+      "Omeprazole",
+      "Cetirizine",
+      "Azithromycin",
+    ],
+    []
+  );
+  const STRENGTHS = useMemo(
+    () => ["100 mg", "250 mg", "500 mg", "1 g", "5 mg/ml", "10 mg/ml"],
+    []
+  );
+  const UNITS = useMemo(
+    () => [
+      "tablets",
+      "capsules",
+      "ml",
+      "l",
+      "vials",
+      "boxes",
+      "tubes",
+      "sachets",
+      "bottles",
+    ],
+    []
+  );
+  const DOSAGE_FORMS = useMemo(
+    () => [
+      "Tablet",
+      "Capsule",
+      "Syrup",
+      "Suspension",
+      "Injection",
+      "Ointment",
+      "Cream",
+      "Gel",
+      "Drops",
+      "Inhaler",
+    ],
+    []
+  );
 
   const [medicine, setMedicine] = useState({
     medicineName: "",
@@ -13,46 +69,72 @@ const InsertMedicine = () => {
     unit: "",
     quantity: "",
     expiryDate: "",
-    batchNumber: "",
+    batchNumber: generateBatchNumber(),
     dosageForm: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [errorDetails, setErrorDetails] = useState([]);
 
-  // Handle input changes
   const handleChange = (e) => {
-    setMedicine({ ...medicine, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setMedicine((prev) => ({ ...prev, [name]: value }));
+    if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError("");
+    setFieldErrors({});
+    setErrorDetails([]);
 
-    // Basic client-side validation
-    const requiredFields = ['medicineName','unit','quantity'];
+    const requiredFields = ["medicineName", "unit", "quantity"];
     for (const f of requiredFields) {
-      if (!medicine[f] || String(medicine[f]).trim() === '') {
+      if (!medicine[f] || String(medicine[f]).trim() === "") {
         setSubmitting(false);
-        return setError(`Field "${f}" is required.`);
+        setFieldErrors((prev) => ({ ...prev, [f]: "This field is required" }));
+        setError("Please fix the highlighted fields.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
       }
     }
 
-    const payload = {
-      ...medicine,
-      quantity: medicine.quantity === '' ? 0 : Number(medicine.quantity)
-    };
+    const payload = { ...medicine };
+    [
+      "medicineName",
+      "genericName",
+      "strength",
+      "unit",
+      "batchNumber",
+      "dosageForm",
+    ].forEach((f) => {
+      if (typeof payload[f] === "string") payload[f] = payload[f].trim();
+    });
+
+    if (!payload.batchNumber) payload.batchNumber = generateBatchNumber();
+    payload.quantity = medicine.quantity === "" ? 0 : Number(medicine.quantity);
+    if (payload.expiryDate === "") delete payload.expiryDate;
+
     if (Number.isNaN(payload.quantity) || payload.quantity < 0) {
       setSubmitting(false);
-      return setError('Quantity must be a non-negative number');
+      setFieldErrors((prev) => ({
+        ...prev,
+        quantity: "Quantity must be a non-negative number",
+      }));
+      setError("Please fix the highlighted fields.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
 
     try {
-      console.log('Adding new medicine...', payload);
-      const response = await axios.post(`http://localhost:5000/api/medicines`, payload);
-      console.log('Insert response:', response.data);
+      const response = await axios.post(
+        `http://localhost:5000/api/medicines`,
+        payload
+      );
+      console.log("Insert response:", response.data);
       alert("✅ Medicine added successfully!");
       setMedicine({
         medicineName: "",
@@ -61,25 +143,57 @@ const InsertMedicine = () => {
         unit: "",
         quantity: "",
         expiryDate: "",
-        batchNumber: "",
+        batchNumber: generateBatchNumber(),
         dosageForm: "",
       });
-      setTimeout(() => navigate("/medicine/list", { replace: true }), 100);
+      setFieldErrors({});
+      setErrorDetails([]);
+      setTimeout(() => navigate("/medicine-inventory", { replace: true }), 100);
     } catch (err) {
       console.error("Error adding medicine:", err);
-      if (err.response?.data) {
-        console.log('[InsertMedicine] Backend error payload:', err.response.data);
-        const data = err.response.data;
+      const data = err.response?.data;
+      if (data) {
         if (data.details?.length) {
-          setError(data.details.map(d => `${d.field}: ${d.message}`).join('; '));
-        } else if (data.message) {
-          setError(data.message);
+          const map = {};
+          data.details.forEach((d) => {
+            if (d.field) map[d.field] = d.message;
+          });
+          setFieldErrors(map);
+          setError("Validation failed. Please check the highlighted fields.");
+          setErrorDetails(data.details.map((d) => `${d.field}: ${d.message}`));
+        } else if (data.field && data.message) {
+          setFieldErrors({ [data.field]: data.message });
+          setError(`${data.field}: ${data.message}`);
+          setErrorDetails([`${data.field}: ${data.message}`]);
+        } else if (data.errors && typeof data.errors === "object") {
+          const map = {};
+          const list = [];
+          Object.entries(data.errors).forEach(([field, msg]) => {
+            map[field] =
+              typeof msg === "string" ? msg : msg?.message || "Invalid value";
+            list.push(`${field}: ${map[field]}`);
+          });
+          setFieldErrors(map);
+          setError("Validation failed. Please check the highlighted fields.");
+          setErrorDetails(list);
+        } else if (data.message || data.error) {
+          const main = data.message || data.error;
+          setError(main);
+          const detailsArr = [];
+          if (typeof data.error === "string" && data.error !== main)
+            detailsArr.push(data.error);
+          setErrorDetails(detailsArr.length ? detailsArr : [main]);
         } else {
-          setError('Failed to add medicine. Please try again.');
+          setError(
+            "Failed to add medicine. Please check your input and try again."
+          );
+          setErrorDetails([]);
         }
       } else {
-        setError('Failed to add medicine. Network or server error.');
+        setError("Failed to add medicine. Network or server error.");
+        setErrorDetails([]);
       }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -92,12 +206,23 @@ const InsertMedicine = () => {
 
         {error && (
           <div className="medicine-error">
-            {error}
+            <div style={{ marginBottom: errorDetails.length ? "0.5rem" : 0 }}>
+              {error}
+            </div>
+            {errorDetails.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                {errorDetails.map((d, i) => (
+                  <li key={i} style={{ lineHeight: 1.4 }}>
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="medicine-form" noValidate>
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.medicineName ? "error" : ""}`}>
             <label htmlFor="medicineName">Medicine Name</label>
             <input
               id="medicineName"
@@ -109,51 +234,96 @@ const InsertMedicine = () => {
               required
               disabled={submitting}
             />
+            {fieldErrors.medicineName && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.medicineName}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.genericName ? "error" : ""}`}>
             <label htmlFor="genericName">Generic Name</label>
-            <input
+            <select
               id="genericName"
-              type="text"
               name="genericName"
               value={medicine.genericName}
               onChange={handleChange}
-              placeholder="Enter generic name"
-              required
               disabled={submitting}
-            />
+            >
+              <option value="">Select generic name</option>
+              {GENERIC_NAMES.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.genericName && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.genericName}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.strength ? "error" : ""}`}>
             <label htmlFor="strength">Strength</label>
-            <input
+            <select
               id="strength"
-              type="text"
               name="strength"
               value={medicine.strength}
               onChange={handleChange}
-              placeholder="Enter strength (e.g., 500mg)"
-              required
               disabled={submitting}
-            />
+            >
+              <option value="">Select strength</option>
+              {STRENGTHS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.strength && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.strength}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.unit ? "error" : ""}`}>
             <label htmlFor="unit">Unit</label>
-            <input
+            <select
               id="unit"
-              type="text"
               name="unit"
               value={medicine.unit}
               onChange={handleChange}
-              placeholder="Enter unit (e.g., tablets, ml)"
               required
               disabled={submitting}
-            />
+            >
+              <option value="">Select unit</option>
+              {UNITS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.unit && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.unit}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.quantity ? "error" : ""}`}>
             <label htmlFor="quantity">Quantity</label>
             <input
               id="quantity"
@@ -166,9 +336,17 @@ const InsertMedicine = () => {
               required
               disabled={submitting}
             />
+            {fieldErrors.quantity && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.quantity}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.expiryDate ? "error" : ""}`}>
             <label htmlFor="expiryDate">Expiry Date</label>
             <input
               id="expiryDate"
@@ -176,42 +354,72 @@ const InsertMedicine = () => {
               name="expiryDate"
               value={medicine.expiryDate}
               onChange={handleChange}
-              required
               disabled={submitting}
             />
+            {fieldErrors.expiryDate && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.expiryDate}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.batchNumber ? "error" : ""}`}>
             <label htmlFor="batchNumber">Batch Number</label>
             <input
               id="batchNumber"
               type="text"
               name="batchNumber"
               value={medicine.batchNumber}
-              onChange={handleChange}
-              placeholder="Enter batch number"
+              readOnly
+              placeholder="Auto-generated batch number"
               required
               disabled={submitting}
             />
+            <div style={{ color: "#64748b", fontSize: 12 }}>
+              Auto-generated (duplicates allowed)
+            </div>
+            {fieldErrors.batchNumber && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.batchNumber}
+              </div>
+            )}
           </div>
 
-          <div className="medicine-field">
+          <div className={`medicine-field ${fieldErrors.dosageForm ? "error" : ""}`}>
             <label htmlFor="dosageForm">Dosage Form</label>
-            <input
+            <select
               id="dosageForm"
-              type="text"
               name="dosageForm"
               value={medicine.dosageForm}
               onChange={handleChange}
-              placeholder="Enter dosage form (e.g., tablet, capsule)"
-              required
               disabled={submitting}
-            />
+            >
+              <option value="">Select dosage form</option>
+              {DOSAGE_FORMS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.dosageForm && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.dosageForm}
+              </div>
+            )}
           </div>
 
           <div className="medicine-actions">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="medicine-btn medicine-btn-primary"
               disabled={submitting}
             >
@@ -220,7 +428,7 @@ const InsertMedicine = () => {
             <button
               type="button"
               className="medicine-btn medicine-btn-secondary"
-              onClick={() => navigate("/medicine/list")}
+              onClick={() => navigate("/medicine-inventory")}
               disabled={submitting}
             >
               Cancel
@@ -230,6 +438,6 @@ const InsertMedicine = () => {
       </div>
     </div>
   );
-}
+};
 
 export default InsertMedicine;

@@ -1,19 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Sidebar } from '../../../shared/components/layout/Sidebar';
+import orderApi from '../../../api/orderApi';
 import '../../../styles/Medicine/LowStockItems.css';
 
 const LowStockItems = () => {
   const navigate = useNavigate();
-  const [lowStockData, setLowStockData] = useState({
-    medicines: [],
-    labItems: [],
-    expiredMedicines: [],
-    expiredLabItems: []
-  });
+  // items: { low: Array<Item>, expired: Array<Item> }
+  const [items, setItems] = useState({ low: [], expired: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('lowStock');
+  // filterCategory: all | medicine | chemical | equipment
   const [filterCategory, setFilterCategory] = useState('all');
 
   useEffect(() => {
@@ -23,93 +19,86 @@ const LowStockItems = () => {
   const fetchLowStockData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch medicines data
-      const medicinesRes = await axios.get('http://localhost:5000/api/medicines');
-      const allMedicines = medicinesRes.data.data || [];
-      
-      // Fetch lab inventory data
-      const labRes = await axios.get('http://localhost:5000/api/lab-inventory');
-      const allLabItems = labRes.data.data || [];
-      
-      // Filter low stock items (quantity <= 10)
-      const lowStockMedicines = allMedicines.filter(med => (med.quantity || 0) <= 10);
-      const lowStockLabItems = allLabItems.filter(item => (item.quantity || 0) <= 10);
-      
-      // Filter expired items
-      const expiredMedicines = allMedicines.filter(med => 
-        med.expiryDate && new Date(med.expiryDate) < new Date()
-      );
-      const expiredLabItems = allLabItems.filter(item => 
-        item.expiryDate && new Date(item.expiryDate) < new Date()
-      );
-      
-      setLowStockData({
-        medicines: lowStockMedicines,
-        labItems: lowStockLabItems,
-        expiredMedicines,
-        expiredLabItems
+      const res = await orderApi.lowStock();
+      const data = res?.data?.data || [];
+
+      // Normalize into our UI shape
+      const normalizeCategory = (c) => {
+        if (!c) return 'other';
+        const map = { Medicine: 'medicine', Chemical: 'chemical', Equipment: 'equipment' };
+        return map[c] || 'other';
+      };
+
+      const normalized = data.map((it, idx) => ({
+        id: `${it.name}|${it.category}|${idx}`,
+        name: it.name,
+        category: normalizeCategory(it.category), // medicine | chemical | equipment
+        rawCategory: it.category, // original label from server
+        quantity: Number(it.quantity || 0),
+        threshold: Number(it.threshold || 0),
+        reason: it.reason, // 'Low Stock' | 'Expired'
+      }));
+
+      setItems({
+        low: normalized.filter((it) => it.reason === 'Low Stock'),
+        expired: normalized.filter((it) => it.reason === 'Expired'),
       });
     } catch (error) {
       console.error('Error fetching low stock data:', error);
+      setItems({ low: [], expired: [] });
     } finally {
       setLoading(false);
     }
   };
 
-  const getStockLevel = (quantity) => {
+  // Determine stock severity relative to threshold when available
+  const getStockLevel = (quantity, threshold) => {
+    if (threshold > 0) {
+      if (quantity <= Math.max(1, Math.floor(threshold / 2))) return 'critical';
+      if (quantity < threshold) return 'warning';
+      return 'normal';
+    }
+    // Fallback heuristic when threshold unknown
     if (quantity <= 5) return 'critical';
     if (quantity <= 10) return 'warning';
     return 'normal';
   };
 
-  const getStockLevelColor = (quantity) => {
-    if (quantity <= 5) return '#ef4444';
-    if (quantity <= 10) return '#f59e0b';
+  const getStockLevelColor = (quantity, threshold) => {
+    const level = getStockLevel(quantity, threshold);
+    if (level === 'critical') return '#ef4444';
+    if (level === 'warning') return '#f59e0b';
     return '#10b981';
   };
 
-  const handleUpdateItem = (item, category) => {
-    if (category === 'medicine') {
-      navigate(`/medicine/edit/${item._id}`);
-    } else {
-      navigate(`/lab/edit/${item._id}`);
-    }
-  };
+  // Navigate to create order with optional prefill
+  const goToCreateOrder = (prefillItems) => navigate('/orders/new', { state: { prefillItems } });
 
-  const handleDeleteItem = (item, category) => {
-    if (category === 'medicine') {
-      navigate(`/medicine/delete/${item._id}`);
-    } else {
-      navigate(`/lab/delete/${item._id}`);
-    }
-  };
-
-  const renderStockCard = (item, category) => {
-    const isExpired = item.expiryDate && new Date(item.expiryDate) < new Date();
-    const stockLevel = getStockLevel(item.quantity || 0);
+  const renderStockCard = (item) => {
+    const isExpired = item.reason === 'Expired';
+    const stockLevel = getStockLevel(item.quantity || 0, item.threshold || 0);
+    const category = item.category; // normalized
     
     return (
       <div key={item._id} className={`stock-card ${stockLevel} ${isExpired ? 'expired' : ''}`}>
         <div className="stock-card-header">
           <div className="item-icon">
-            <i className={category === 'medicine' ? 'fas fa-pills' : 'fas fa-flask'}></i>
+            <i className={
+              category === 'medicine'
+                ? 'fas fa-pills'
+                : category === 'chemical'
+                ? 'fas fa-flask'
+                : category === 'equipment'
+                ? 'fas fa-tools'
+                : 'fas fa-box'
+            }></i>
           </div>
           <div className="item-info">
-            <h3 className="item-name">
-              {category === 'medicine' ? item.medicineName : item.itemName}
-              {category === 'medicine' && item.strength && ` ${item.strength}`}
-            </h3>
+            <h3 className="item-name">{item.name}</h3>
             <div className="item-meta">
               <span className={`category-badge ${category}`}>
-                {category === 'medicine' ? '💊 Medicine' : '🧪 Lab Item'}
+                {category === 'medicine' ? '💊 Medicine' : category === 'chemical' ? '🧪 Chemical' : category === 'equipment' ? '🔧 Equipment' : 'Inventory'}
               </span>
-              {item.manufacturer && (
-                <span className="manufacturer">{item.manufacturer}</span>
-              )}
-              {item.location && (
-                <span className="location">📍 {item.location}</span>
-              )}
             </div>
           </div>
         </div>
@@ -125,7 +114,7 @@ const LowStockItems = () => {
                 className="progress-bar" 
                 style={{ 
                   width: `${Math.min(((item.quantity || 0) / 50) * 100, 100)}%`,
-                  backgroundColor: getStockLevelColor(item.quantity || 0)
+                  backgroundColor: getStockLevelColor(item.quantity || 0, item.threshold || 0)
                 }}
               ></div>
             </div>
@@ -133,87 +122,49 @@ const LowStockItems = () => {
               {stockLevel === 'critical' ? 'Critical Stock' : 'Low Stock'}
             </div>
           </div>
-
-          {item.expiryDate && (
-            <div className="expiry-info">
-              <div className="expiry-label">Expiry Date:</div>
-              <div className={`expiry-date ${isExpired ? 'expired' : ''}`}>
-                {new Date(item.expiryDate).toLocaleDateString()}
-                {isExpired && <span className="expired-badge">EXPIRED</span>}
-              </div>
-            </div>
-          )}
-
-          {item.batchNumber && (
-            <div className="batch-info">
-              <span className="batch-label">Batch:</span>
-              <span className="batch-number">{item.batchNumber}</span>
-            </div>
-          )}
+          <div className="threshold-info">
+            <span className="threshold-label">Reorder Level:</span>
+            <span className="threshold-value">{item.threshold || '—'}</span>
+            {isExpired && <span className="expired-badge" style={{ marginLeft: 8 }}>EXPIRED</span>}
+          </div>
         </div>
-
         <div className="stock-actions">
-          <button 
-            className="action-btn update"
-            onClick={() => handleUpdateItem(item, category)}
-          >
-            <i className="fas fa-edit"></i>
-            Update Stock
+          <button className="action-btn update" onClick={() => goToCreateOrder([{ name: item.name, category: item.category }])}>
+            <i className="fas fa-shopping-cart"></i>
+            Create Order
           </button>
-          {isExpired && (
-            <button 
-              className="action-btn delete"
-              onClick={() => handleDeleteItem(item, category)}
-            >
-              <i className="fas fa-trash"></i>
-              Remove Expired
-            </button>
-          )}
         </div>
       </div>
     );
   };
 
   const getFilteredItems = () => {
-    let items = [];
-    
-    if (activeTab === 'lowStock') {
-      if (filterCategory === 'all' || filterCategory === 'medicine') {
-        items = [...items, ...lowStockData.medicines.map(item => ({ ...item, category: 'medicine' }))];
-      }
-      if (filterCategory === 'all' || filterCategory === 'lab') {
-        items = [...items, ...lowStockData.labItems.map(item => ({ ...item, category: 'lab' }))];
-      }
-    } else if (activeTab === 'expired') {
-      if (filterCategory === 'all' || filterCategory === 'medicine') {
-        items = [...items, ...lowStockData.expiredMedicines.map(item => ({ ...item, category: 'medicine' }))];
-      }
-      if (filterCategory === 'all' || filterCategory === 'lab') {
-        items = [...items, ...lowStockData.expiredLabItems.map(item => ({ ...item, category: 'lab' }))];
-      }
+    const src = activeTab === 'lowStock' ? itemsState.low : itemsState.expired;
+    let out = src;
+    if (filterCategory !== 'all') {
+      out = out.filter((it) => it.category === filterCategory);
     }
-
-    // Sort by quantity (lowest first) for low stock, by expiry date for expired
+    // Sort by quantity ascending for low stock; for expired keep as-is
     if (activeTab === 'lowStock') {
-      items.sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
-    } else {
-      items.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+      out = [...out].sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
     }
-
-    return items;
+    return out;
   };
+
+  // Memoize items for filtering and summary
+  const itemsState = useMemo(() => items, [items]);
+
+  // Compute derived counts with hooks BEFORE any early returns to keep hook order stable
+  const criticalCount = useMemo(() => {
+    return itemsState.low.filter((it) => getStockLevel(it.quantity, it.threshold) === 'critical').length;
+  }, [itemsState.low]);
 
   if (loading) {
     return (
-      <div className="main-layout">
-        <Sidebar />
-        <div className="main-content-with-sidebar">
-          <div className="loading-container">
-            <div className="loading-spinner">
-              <i className="fas fa-spinner fa-spin"></i>
-              <p>Loading stock data...</p>
-            </div>
-          </div>
+      <div className="loading-container">
+        <div className="loading-spinner">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading stock data...</p>
         </div>
       </div>
     );
@@ -222,19 +173,22 @@ const LowStockItems = () => {
   const filteredItems = getFilteredItems();
 
   return (
-    <div className="main-layout">
-      <Sidebar />
-      <div className="main-content-with-sidebar">
-        <div className="low-stock-container">
+    <div className="low-stock-container">
           {/* Header */}
           <div className="low-stock-header">
             <div className="header-left">
-              <button className="back-btn" onClick={() => navigate('/dashboard')}>
+              <button className="back-btn" onClick={() => navigate('/inventory-dashboard')}>
                 <i className="fas fa-arrow-left"></i>
                 Back to Dashboard
               </button>
               <h1>Stock Management</h1>
               <p className="header-subtitle">Monitor and manage low stock and expired items</p>
+            </div>
+            <div className="header-right">
+              <button className="action-btn update" onClick={() => goToCreateOrder([])}>
+                <i className="fas fa-shopping-cart"></i>
+                Create Order
+              </button>
             </div>
           </div>
 
@@ -245,10 +199,7 @@ const LowStockItems = () => {
                 <i className="fas fa-exclamation-triangle"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value">
-                  {lowStockData.medicines.filter(m => (m.quantity || 0) <= 5).length + 
-                   lowStockData.labItems.filter(l => (l.quantity || 0) <= 5).length}
-                </div>
+                <div className="stat-value">{criticalCount}</div>
                 <div className="stat-label">Critical Stock</div>
               </div>
             </div>
@@ -258,9 +209,7 @@ const LowStockItems = () => {
                 <i className="fas fa-exclamation-circle"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value">
-                  {lowStockData.medicines.length + lowStockData.labItems.length}
-                </div>
+                <div className="stat-value">{itemsState.low.length}</div>
                 <div className="stat-label">Low Stock Items</div>
               </div>
             </div>
@@ -270,9 +219,7 @@ const LowStockItems = () => {
                 <i className="fas fa-times-circle"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value">
-                  {lowStockData.expiredMedicines.length + lowStockData.expiredLabItems.length}
-                </div>
+                <div className="stat-value">{itemsState.expired.length}</div>
                 <div className="stat-label">Expired Items</div>
               </div>
             </div>
@@ -287,9 +234,7 @@ const LowStockItems = () => {
               >
                 <i className="fas fa-exclamation-triangle"></i>
                 Low Stock Items
-                <span className="tab-count">
-                  {lowStockData.medicines.length + lowStockData.labItems.length}
-                </span>
+                <span className="tab-count">{itemsState.low.length}</span>
               </button>
               <button 
                 className={`tab ${activeTab === 'expired' ? 'active' : ''}`}
@@ -297,9 +242,7 @@ const LowStockItems = () => {
               >
                 <i className="fas fa-times-circle"></i>
                 Expired Items
-                <span className="tab-count">
-                  {lowStockData.expiredMedicines.length + lowStockData.expiredLabItems.length}
-                </span>
+                <span className="tab-count">{itemsState.expired.length}</span>
               </button>
             </div>
 
@@ -310,8 +253,9 @@ const LowStockItems = () => {
                 className="category-filter"
               >
                 <option value="all">All Categories</option>
-                <option value="medicine">Medicines Only</option>
-                <option value="lab">Lab Items Only</option>
+                <option value="medicine">Medicines</option>
+                <option value="chemical">Chemicals</option>
+                <option value="equipment">Equipment</option>
               </select>
             </div>
           </div>
@@ -332,12 +276,10 @@ const LowStockItems = () => {
               </div>
             ) : (
               <div className="items-grid">
-                {filteredItems.map((item) => renderStockCard(item, item.category))}
+                {filteredItems.map((item) => renderStockCard(item))}
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   );
 };

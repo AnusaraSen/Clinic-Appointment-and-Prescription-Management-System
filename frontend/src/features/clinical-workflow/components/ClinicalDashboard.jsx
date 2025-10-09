@@ -5,6 +5,8 @@ import { ClinicalAppointmentsSection } from './ClinicalAppointmentsSection';
 import { ClinicalTasksSection } from './ClinicalTasksSection';
 import { ClinicalActivitySection } from './ClinicalActivitySection';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
+import CalmLoader from '../../../components/CalmLoader';
+import '../styles/clinicalDashboard.css';
 
 
 export const ClinicalDashboard = ({ onNavigate }) => {
@@ -149,147 +151,120 @@ export const ClinicalDashboard = ({ onNavigate }) => {
 
   return (
     <ClinicalLayout currentPath="/clinical/dashboard">
-      <div className="space-y-6">
-        {isInitialLoading && (
-          <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="text-center">
-              <div className="relative">
-                <Stethoscope className="h-16 w-16 text-blue-600 animate-pulse mx-auto mb-4" />
-                <div className="absolute inset-0 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading Medical Dashboard</h2>
-              <p className="text-gray-600">Preparing your clinical workspace...</p>
-            </div>
-          </div>
-        )}
+      <div className="cd-layout-section" aria-live="polite" aria-busy={isInitialLoading}>
+        <div className="space-y-6">
+          {isInitialLoading && (
+            <CalmLoader fullscreen title="Loading Clinical Dashboard" note="Please wait..." />
+          )}
 
-        {/* Medical Dashboard Header */}
-        <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-emerald-600 rounded-2xl shadow-2xl border border-blue-200 overflow-hidden">
-          {/* Medical Pattern Background */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-4 left-4">
-              <Stethoscope className="h-32 w-32 text-white" />
-            </div>
-            <div className="absolute bottom-4 right-4">
-              <Heart className="h-24 w-24 text-white" />
-            </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <Activity className="h-20 w-20 text-white" />
-            </div>
-          </div>
-          
-          <div className="relative p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-4 mb-3 ">
-                  <div className="p-3 bg-black bg-opacity-20 rounded-2xl backdrop-blur-sm">
-                    <Stethoscope className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl font-bold text-white mb-1">Clinical Dashboard</h1>
-                    <div className="flex items-center gap-2">
-                      {getSystemStatusIcon()}
-                      <span className="text-emerald-100 text-sm font-medium">Clinical Systems Online</span>
+          {/* Medical Dashboard Header - simplified for a professional look */}
+          <div className="relative bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-start gap-4 mb-2">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Stethoscope className="h-7 w-7 text-gray-700" />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-semibold text-gray-900 mb-0">Clinical Dashboard</h1>
+                      <div className="flex items-center gap-2 mt-1">
+                        {getSystemStatusIcon()}
+                        <span className="text-gray-600 text-sm">Clinical systems online</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <p className="text-blue-100 text-lg font-medium">
-                  Comprehensive patient care and clinical workflow management
-                </p>
-                <div className="flex items-center gap-6 mt-3 text-sm text-blue-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+                  <p className="text-gray-600 text-sm">
+                    Patient care overview and clinical workflow management
+                  </p>
+                  <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+                    </div>
+                    <span className="opacity-60">•</span>
+                    <span>Real-time monitoring</span>
+                    <span className="opacity-60">•</span>
+                    <span>Secure data</span>
                   </div>
-                  <span>•</span>
-                  <span>Real-time patient monitoring</span>
-                  <span>•</span>
-                  <span>Secure medical data</span>
                 </div>
-              </div>
 
-              <div className="hidden lg:flex items-center space-x-6">
-                <div className="text-right text-white">
-                  <p className="text-sm font-medium text-blue-100">Today's Date</p>
-                  <p className="text-xl font-bold">
-                    {new Date().toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-sm text-blue-100">
-                    {new Date().toLocaleDateString('en-US', { year: 'numeric' })}
-                  </p>
+                <div className="hidden lg:flex items-start space-x-4">
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Today's Date</p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {new Date().toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date().toLocaleDateString('en-US', { year: 'numeric' })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRefreshDashboard}
+                    disabled={isRefreshing}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+                    title="Refresh clinical data"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span className="text-sm">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleRefreshDashboard}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-3 px-6 py-3 bg-white bg-opacity-20 text-white rounded-xl hover:bg-opacity-30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm border border-white border-opacity-20"
-                  title="Refresh clinical data"
-                >
-                  <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  <span className="font-semibold">{isRefreshing ? 'Refreshing...' : 'Refresh Data'}</span>
-                </button>
               </div>
             </div>
           </div>
-        </div>
 
-      {/* Clinical KPI Cards */}
-      <ClinicalKPICards 
-        dashboardData={dashboardData} 
-        isLoading={isInitialLoading || isRefreshing} 
-        error={apiError} 
-      />
+        {/* Clinical KPI Cards */}
+        <ClinicalKPICards 
+          dashboardData={dashboardData} 
+          isLoading={isInitialLoading || isRefreshing} 
+          error={apiError} 
+        />
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column */}
-          <div className="space-y-8">
-            <ClinicalAppointmentsSection
-              appointments={appointments}
-              isLoading={isInitialLoading || isRefreshing}
-              onUpdateAppointment={handleUpdateAppointment}
-            />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            <ClinicalTasksSection
-              tasks={urgentTasks}
-              isLoading={isInitialLoading || isRefreshing}
-              onCompleteTask={handleCompleteTask}
-            />
-          </div>
-        </div>
-
-      {/* Recent Activity Section */}
-      <ClinicalActivitySection
-        activities={recentActivities}
-        isLoading={isInitialLoading || isRefreshing}
-      />
-
-        {/* Medical Error Display */}
-        {apiError && (
-          <div className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-red-100 rounded-xl">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <p className="text-red-800 font-bold text-lg">Clinical System Alert</p>
-                <p className="text-red-700">{apiError}</p>
-              </div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-8">
+              <ClinicalAppointmentsSection
+                appointments={appointments}
+                isLoading={isInitialLoading || isRefreshing}
+                onUpdateAppointment={handleUpdateAppointment}
+              />
             </div>
-            <button
-              onClick={handleRefreshDashboard}
-              className="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-medium"
-            >
-              Retry Connection
-            </button>
+
+            {/* Right Column */}
+            <div className="space-y-8">
+              <ClinicalTasksSection
+                tasks={urgentTasks}
+                isLoading={isInitialLoading || isRefreshing}
+                onCompleteTask={handleCompleteTask}
+              />
+            </div>
           </div>
-        )}
+
+        {/* Recent Activity Section */}
+        <ClinicalActivitySection
+          activities={recentActivities}
+          isLoading={isInitialLoading || isRefreshing}
+        />
+
+          {/* Medical Error Display */}
+          {apiError && (
+            <div className="bg-white border border-red-200 rounded-md p-4">
+              <div className="flex items-center gap-3 mb-1">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <p className="text-sm font-medium text-red-600">{apiError}</p>
+              </div>
+              <button
+                onClick={handleRefreshDashboard}
+                className="mt-1 inline-flex px-3 py-1.5 text-xs border border-red-300 rounded text-red-600 hover:bg-red-50"
+              >Retry</button>
+            </div>
+          )}
+        </div>
       </div>
     </ClinicalLayout>
   );

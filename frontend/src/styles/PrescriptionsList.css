@@ -319,6 +319,8 @@
   flex: 1;
   padding: 25px;
   overflow-y: auto;
+  /* Avoid horizontal scroll caused by wide inner cards */
+  overflow-x: hidden;
 }
 
 .patient-info, .medications-section {
@@ -361,7 +363,9 @@
   padding: 15px;
   margin-bottom: 12px;
   border-left: 4px solid #3b82f6;
-  width: 800px;
+  /* Make the card responsive inside the modal */
+  width: 100%;
+  max-width: 100%;
 }
 
 .medication-name {
@@ -373,7 +377,8 @@
 
 .medication-details {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  /* Let items wrap to fit modal width while keeping up to three columns */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 15px;
 }
 

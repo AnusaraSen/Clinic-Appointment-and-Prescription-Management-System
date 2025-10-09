@@ -22,27 +22,9 @@ export const ClinicalActivitySection = ({ activities = [], isLoading }) => {
     }
   };
 
-  const getActivityColor = (type) => {
-    switch (type) {
-      case 'appointment': return 'bg-blue-100 text-blue-600';
-      case 'prescription': return 'bg-green-100 text-green-600';
-      case 'diagnosis': return 'bg-purple-100 text-purple-600';
-      case 'lab_order': return 'bg-orange-100 text-orange-600';
-      case 'follow_up': return 'bg-yellow-100 text-yellow-600';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
+  const getActivityColor = () => 'bg-gray-100 text-gray-600';
 
-  const getActivityBadgeColor = (type) => {
-    switch (type) {
-      case 'appointment': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'prescription': return 'bg-green-50 text-green-700 border-green-200';
-      case 'diagnosis': return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'lab_order': return 'bg-orange-50 text-orange-700 border-orange-200';
-      case 'follow_up': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
+  const getActivityBadgeColor = () => 'bg-gray-100 text-gray-600 border-gray-300';
 
   const formatActivityTime = (date) => {
     const activityDate = new Date(date);
@@ -59,6 +41,14 @@ export const ClinicalActivitySection = ({ activities = [], isLoading }) => {
     } else {
       return activityDate.toLocaleDateString();
     }
+  };
+
+  const typeMeta = {
+    appointment: 'bg-blue-500',
+    prescription: 'bg-emerald-500',
+    diagnosis: 'bg-indigo-500',
+    lab_order: 'bg-amber-500',
+    follow_up: 'bg-purple-500'
   };
 
   // Mock data fallback if no activities provided
@@ -106,20 +96,18 @@ export const ClinicalActivitySection = ({ activities = [], isLoading }) => {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-50">
-            <Activity className="h-5 w-5 text-purple-600" />
+          <div className="p-2 rounded-lg bg-gray-100">
+            <Activity className="h-5 w-5 text-gray-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-            <p className="text-sm text-gray-600">
-              Latest {displayActivities.length} activities
-            </p>
+            <h2 className="text-lg font-semibold text-gray-800">Recent Activity</h2>
+            <p className="text-xs text-gray-500">Latest {displayActivities.length}</p>
           </div>
         </div>
-        <button className="px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+        <button className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
           View All
         </button>
       </div>
@@ -144,10 +132,10 @@ export const ClinicalActivitySection = ({ activities = [], isLoading }) => {
           {displayActivities.map((activity, index) => (
             <div
               key={activity._id}
-              className="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              className="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-md transition-colors duration-150 cd-fade-in"
             >
               {/* Activity Icon */}
-              <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
+              <div className={`p-2 rounded-md ${getActivityColor(activity.type)}`}>
                 {getActivityIcon(activity.type)}
               </div>
 
@@ -178,7 +166,8 @@ export const ClinicalActivitySection = ({ activities = [], isLoading }) => {
                     )}
 
                     {/* Activity Type Badge */}
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-md border ${getActivityBadgeColor(activity.type)}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border bg-gray-50 text-gray-700 ${getActivityBadgeColor(activity.type)}`}>
+                      <span className={`w-2 h-2 rounded-full ${typeMeta[activity.type] || 'bg-gray-400'}`}></span>
                       {activity.type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                   </div>

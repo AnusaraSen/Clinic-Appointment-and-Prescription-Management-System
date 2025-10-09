@@ -18,7 +18,14 @@ function AllPrescriptions({ search = '' }) {
     function getPrescriptions() {
       axios.get('http://localhost:5000/prescription/get')
         .then((res) => {
-          setPrescriptions(res.data);
+          const data = Array.isArray(res.data) ? res.data : [];
+          // Sort newest first: use Date field; if missing use ObjectId timestamp
+          const sorted = [...data].sort((a,b) => {
+            const da = a.Date ? new Date(a.Date).getTime() : (a._id ? parseInt(a._id.substring(0,8),16)*1000 : 0);
+            const db = b.Date ? new Date(b.Date).getTime() : (b._id ? parseInt(b._id.substring(0,8),16)*1000 : 0);
+            return db - da; // descending
+          });
+          setPrescriptions(sorted);
         })
         .catch((err) => {
           pushAlert(err.message || 'Failed to load prescriptions','error');

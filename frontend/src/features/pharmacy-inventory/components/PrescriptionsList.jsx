@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import prescriptionsApi from '../../../api/prescriptionsApi';
+import { getAllStatusOverrides, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 import '../../../styles/PrescriptionsList.css';
 
 const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
@@ -11,109 +13,8 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
 
   const filters = ['All', 'New', 'Dispensed'];
 
-  // Mock prescription data matching your screenshot
-  const mockPrescriptions = [
-    {
-      _id: 'P-001',
-      prescriptionId: 'P-001',
-      patient: { 
-        name: 'John Smith', 
-        age: 45, 
-        gender: 'Male',
-        phone: '+1-555-0123',
-        address: '123 Main St, City',
-        email: 'john.smith@email.com'
-      },
-      doctor: { name: 'Dr. Robert Chen' },
-      dateIssued: '2023-09-10',
-      status: 'New',
-      priority: 'Normal',
-      medications: [
-        { 
-          name: 'Lisinopril', 
-          dosage: '10mg',
-          quantity: 30,
-          frequency: 'Once daily',
-          duration: '30 days'
-        }
-      ]
-    },
-    {
-      _id: 'P-002',
-      prescriptionId: 'P-002',
-      patient: { 
-        name: 'Sarah Johnson', 
-        age: 32, 
-        gender: 'Female',
-        phone: '+1-555-0124',
-        address: '456 Oak Ave, City',
-        email: 'sarah.j@email.com'
-      },
-      doctor: { name: 'Dr. Emily Wilson' },
-      dateIssued: '2023-09-08',
-      status: 'New',
-      priority: 'Normal',
-      medications: [
-        { 
-          name: 'Metformin', 
-          dosage: '850mg',
-          quantity: 60,
-          frequency: 'Twice daily',
-          duration: '30 days'
-        }
-      ]
-    },
-    {
-      _id: 'P-003',
-      prescriptionId: 'P-003',
-      patient: { 
-        name: 'Michael Brown', 
-        age: 28, 
-        gender: 'Male',
-        phone: '+1-555-0125',
-        address: '789 Pine St, City',
-        email: 'michael.b@email.com'
-      },
-      doctor: { name: 'Dr. James Lee' },
-      dateIssued: '2023-09-06',
-      status: 'Dispensed',
-      priority: 'Normal',
-      medications: [
-        { 
-          name: 'Atorvastatin', 
-          dosage: '20mg',
-          quantity: 30,
-          frequency: 'Once daily',
-          duration: '30 days'
-        }
-      ]
-    },
-    {
-      _id: 'P-004',
-      prescriptionId: 'P-004',
-      patient: { 
-        name: 'Lisa Davis', 
-        age: 55, 
-        gender: 'Female',
-        phone: '+1-555-0126',
-        address: '321 Elm St, City',
-        email: 'lisa.davis@email.com'
-      },
-      doctor: { name: 'Dr. Robert Chen' },
-      dateIssued: '2023-09-07',
-      status: 'New',
-      priority: 'Normal',
-      medications: [
-        { 
-          name: 'Omeprazole', 
-          dosage: '20mg',
-          quantity: 30,
-          frequency: 'Once daily',
-          duration: '30 days'
-        }
-      ]
-    }
-  ];
+  // Source array from backend
+  const [allPrescriptions, setAllPrescriptions] = useState([]);
 
   useEffect(() => {
     fetchPrescriptions();
@@ -156,35 +57,79 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
     };
 
     window.addEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+    // If external changes occur (delete/update), refetch list
+    const handleChanged = () => fetchPrescriptions();
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handleChanged);
     
     return () => {
       window.removeEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+      window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handleChanged);
     };
   }, []);
 
   const fetchPrescriptions = async () => {
-    setLoading(true);
-    
-    // Filter prescriptions based on active filter
-    let filteredPrescriptions = mockPrescriptions;
-    
-    if (activeFilter !== 'All') {
-      filteredPrescriptions = mockPrescriptions.filter(
-        prescription => prescription.status === activeFilter
-      );
+    try {
+      setLoading(true);
+      // Fetch from clinical workflow endpoint: GET /prescription/get
+      const res = await prescriptionsApi.list();
+  const raw = Array.isArray(res.data) ? res.data : (res.data?.items || res.data?.data || []);
+      // Normalize to UI shape
+      const overrides = getAllStatusOverrides();
+      const mapped = raw.map((d) => {
+        const id = d._id || d.id;
+        const dateRaw = d.Date || d.date || d.created_at;
+  const patientName = d.patient_name || d.patientName || d.patient?.name || '';
+  const patientId = d.patient_ID || d.patientId || d.patient?.id || d.patient?.code || '';
+        const doctorName = d.doctor_Name || d.doctorName || d.doctor?.name || '';
+        const meds = Array.isArray(d.Medicines)
+          ? d.Medicines.map((m) => ({
+              name: m.Medicine_Name || m.name || '',
+              dosage: m.Dosage || m.dosage || '',
+              quantity: m.Quantity || m.quantity,
+              frequency: m.Frequency || m.frequency || '',
+              duration: m.Duration || m.duration || '',
+            }))
+          : Array.isArray(d.medicines)
+          ? d.medicines
+          : [];
+  const status = overrides?.[(typeof id === 'object' && id?.toString) ? id.toString() : String(id)] || d.status || 'New';
+        return {
+          _id: typeof id === 'object' && id?.toString ? id.toString() : String(id),
+          prescriptionId: d.prescriptionId || (typeof id === 'object' && id?.toString ? id.toString() : String(id)),
+          patient: { name: patientName },
+          patientId,
+          doctor: { name: doctorName },
+          dateIssued: dateRaw ? new Date(dateRaw).toISOString().slice(0, 10) : '',
+          status,
+          medications: meds,
+        };
+      });
+      // Sort newest first (use Date; fallback to ObjectId timestamp if present)
+      const sorted = [...mapped].sort((a, b) => {
+        const da = a.dateIssued ? new Date(a.dateIssued).getTime() : (a._id ? parseInt(a._id.substring(0,8),16)*1000 : 0);
+        const db = b.dateIssued ? new Date(b.dateIssued).getTime() : (b._id ? parseInt(b._id.substring(0,8),16)*1000 : 0);
+        return db - da;
+      });
+      setAllPrescriptions(sorted);
+
+      // Then apply UI filters/search on the sorted array
+      let filtered = sorted;
+      if (activeFilter !== 'All') {
+        filtered = filtered.filter((p) => (p.status || 'New') === activeFilter);
+      }
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        filtered = filtered.filter(
+          (p) => p.patient.name.toLowerCase().includes(q) || p.prescriptionId.toLowerCase().includes(q)
+        );
+      }
+      setPrescriptions(filtered);
+    } catch (err) {
+      console.error('Failed to fetch prescriptions:', err);
+      setPrescriptions([]);
+    } finally {
+      setLoading(false);
     }
-    
-    // Filter by search term
-    if (searchTerm) {
-      filteredPrescriptions = filteredPrescriptions.filter(
-        prescription => 
-          prescription.patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          prescription.prescriptionId.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    setPrescriptions(filteredPrescriptions);
-    setLoading(false);
   };
 
   const handleFilterChange = (filter) => {
@@ -264,7 +209,7 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
                   data-prescription-id={prescription.prescriptionId}
                 >
                   <span className="patient-name">{prescription.patient.name}</span>
-                  <span className="patient-id">{prescription.prescriptionId}</span>
+                  <span className="patient-id">{prescription.patientId || '-'}</span>
                   <span className="doctor-name">{prescription.doctor.name}</span>
                   <span className="date">{prescription.dateIssued}</span>
                   <span className={`status status-${prescription.status.toLowerCase()}`}>
@@ -313,7 +258,7 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
                 </div>
                 <div className="info-row">
                   <span className="label">Patient ID</span>
-                  <span className="value">{selectedPrescription.prescriptionId}</span>
+                  <span className="value">{selectedPrescription.patientId || '-'}</span>
                 </div>
                 <div className="info-row">
                   <span className="label">Prescribed By</span>
@@ -341,7 +286,7 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Duration:</span>
-                        <span className="detail-value">{medication.duration}</span>
+                        <span className="detail-value">{medication.duration || '-'}</span>
                       </div>
                     </div>
                   </div>

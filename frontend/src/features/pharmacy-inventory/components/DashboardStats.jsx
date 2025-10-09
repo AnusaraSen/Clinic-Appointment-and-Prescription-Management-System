@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../../../styles/DashboardStats.css';
 
-const DashboardStats = ({ data, onRefresh, onPrescriptionClick, onNavigateToPrescriptions, onNavigateToMedicineInventory, onNavigateToLowStockMedicines }) => {
+const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescriptionClick, onNavigateToPrescriptions, onNavigateToMedicineInventory, onNavigateToLowStockMedicines }) => {
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [showMedicineDetails, setShowMedicineDetails] = useState(false);
   if (!data) {
@@ -12,46 +12,15 @@ const DashboardStats = ({ data, onRefresh, onPrescriptionClick, onNavigateToPres
     );
   }
 
-  const { statistics, lowStockMedicines } = data;
+  const { statistics, lowStockMedicines, inventoryKPIs } = data;
+  const kpis = inventoryKPIs || {
+    medicines: { total: 0, expired: 0, lowStock: 0, outOfStock: 0 },
+    chemicals: { total: 0, expired: 0, lowStock: 0 },
+    equipment: { total: 0, lowStock: 0, needsMaintenance: 0, outOfService: 0 },
+    orders: { monthCount: 0, pending: 0 },
+  };
 
-  // Mock data for recent prescriptions and low stock
-  const recentPrescriptions = [
-    {
-      id: 'P-001',
-      patient: 'John Smith',
-      time: '10:25 AM',
-      status: 'Pending',
-      action: 'Process'
-    },
-    {
-      id: 'P-002', 
-      patient: 'Sarah Johnson',
-      time: '09:45 AM',
-      status: 'Pending',
-      action: 'Process'
-    },
-    {
-      id: 'P-003',
-      patient: 'Michael Brown',
-      time: '08:15 AM',
-      status: 'Dispensed',
-      action: 'View'
-    },
-    {
-      id: 'P-004',
-      patient: 'Emily Davis',
-      time: '08:30 AM',
-      status: 'Pending',
-      action: 'Process'
-    },
-    {
-      id: 'P-005',
-      patient: 'Robert Wilson',
-      time: 'Yesterday',
-      status: 'Dispensed',
-      action: 'View'
-    }
-  ];
+  // If no real recentPrescriptions provided, keep empty array to show no items
 
   // Use real low stock medications from API data
   const lowStockMedications = lowStockMedicines || [];
@@ -119,6 +88,31 @@ const DashboardStats = ({ data, onRefresh, onPrescriptionClick, onNavigateToPres
                 <div className="stat-label">New Patients</div>
                 <div className="stat-value">156</div>
                 <div className="stat-detail"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Inventory KPI Cards - Chemicals & Equipment */}
+          <div className="stats-row inventory">
+            <div className="stat-card chemicals">
+              <div className="stat-icon">
+                <i className="fas fa-flask"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Chemicals Low Stock</div>
+                <div className="stat-value">{kpis.chemicals.lowStock ?? 0}</div>
+                <div className="stat-detail">Expired: {kpis.chemicals.expired ?? 0}</div>
+              </div>
+            </div>
+
+            <div className="stat-card equipment">
+              <div className="stat-icon">
+                <i className="fas fa-tools"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Equipment Low Stock</div>
+                <div className="stat-value">{kpis.equipment.lowStock ?? 0}</div>
+                <div className="stat-detail">Out of Service: {kpis.equipment.outOfService ?? 0} • Needs Maint: {kpis.equipment.needsMaintenance ?? 0}</div>
               </div>
             </div>
           </div>

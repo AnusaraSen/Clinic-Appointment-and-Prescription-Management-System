@@ -11,6 +11,14 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // New: store patient's NIC (national ID) alongside internal patient_id for prescription linkage
+    patient_nic: {
+      type: String,
+      required: false, // allow legacy appointments without NIC
+      trim: true,
+      minlength: 5,
+      maxlength: 25,
+    },
     doctor_id: {
       type: String, // Changed to String to be more flexible
       required: false,
@@ -26,12 +34,7 @@ const appointmentSchema = new mongoose.Schema(
     appointment_date: {
       type: Date,
       required: true,
-      validate: {
-        validator: function (value) {
-          return value >= new Date(); // Ensure the date is not in the past
-        },
-        message: "Appointment date must be in the future.",
-      },
+      // Custom validation moved to a schema-level pre('validate') hook below to allow time-aware logic.
     },
     appointment_time: {
       type: String,
@@ -83,18 +86,78 @@ const appointmentSchema = new mongoose.Schema(
         },
       },
     },
+    cancelled_by: {
+      type: String, // 'doctor' | 'patient' | user id etc.
+      required: false,
+    },
+    cancelled_at: {
+      type: Date,
+      required: false,
+    },
+    cancellation_reason: {
+      type: String,
+      maxlength: 500,
+      required: false,
+    },
+    // Timing deviation fields: allow doctor to communicate being early or late
+    // timing_offset_minutes: positive => late (minutes behind), negative => early (minutes ahead)
+    timing_offset_minutes: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: -720, // safety bounds (-12h .. +12h)
+      max: 720,
+    },
+    timing_status: {
+      type: String,
+      required: false,
+      enum: ['on-time', 'early', 'late'],
+      default: 'on-time'
+    },
+    timing_updated_at: {
+      type: Date,
+      required: false,
+    },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
+
+// Compound unique index for doctor, date, and time
+appointmentSchema.index({ doctor_id: 1, appointment_date: 1, appointment_time: 1 }, { unique: true, sparse: true, name: 'uniq_doctor_datetime' });
 
 // Virtual field to get a formatted date and time
 appointmentSchema.virtual("formattedDateTime").get(function () {
   return `${this.date.toLocaleDateString()} ${this.time}`;
 });
 
-// Pre-save hook to log changes
-appointmentSchema.pre("save", function (next) {
-  console.log("Appointment is being saved:", this);
+// Pre-validate hook to enforce full date+time future validation
+appointmentSchema.pre('validate', function(next) {
+  try {
+    if (this.appointment_date && this.appointment_time) {
+      // Build a Date object representing the intended start moment in local time
+      const dateOnly = new Date(this.appointment_date); // already a Date stripped of time (00:00 local or UTC depending on driver)
+      const [hh, mm] = this.appointment_time.split(':').map(n => parseInt(n, 10));
+      if (!Number.isFinite(hh) || !Number.isFinite(mm)) {
+        return next(new Error('Invalid appointment_time format'));
+      }
+      // Clone to avoid mutating original
+      const apptDateTime = new Date(dateOnly);
+      apptDateTime.setHours(hh, mm, 0, 0);
+
+      const now = new Date();
+      if (apptDateTime <= now) {
+        return next(new Error('Appointment date/time must be in the future.'));
+      }
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Pre-save hook to log changes (kept separate for clarity)
+appointmentSchema.pre('save', function(next) {
+  console.log('Appointment is being saved:', this.patient_id, this.appointment_date, this.appointment_time);
   next();
 });
 

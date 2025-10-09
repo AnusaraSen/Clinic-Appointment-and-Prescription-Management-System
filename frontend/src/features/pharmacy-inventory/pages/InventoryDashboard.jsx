@@ -80,47 +80,7 @@ const InventoryDashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-6">
-          <h1 className="text-xl font-bold text-gray-800">Inventory Manager Dashboard</h1>
-        </div>
-        
-        <nav className="mt-8">
-          <div className="px-6">
-            <div className="flex items-center p-3 bg-blue-50 text-blue-600 rounded-lg mb-2">
-              <Package className="w-5 h-5 mr-3" />
-              <span className="font-medium">Dashboard</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/lab/list')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Lab Inventory</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/medicine/list')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Medicine Inventory</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/order-management')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Order Management</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/profile')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Profile</span>
-            </div>
-          </div>
-        </nav>
-      </div>
-
+    <div className="flex flex-col bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}

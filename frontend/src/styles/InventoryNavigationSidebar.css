@@ -2,18 +2,21 @@
 .inventory-nav-sidebar {
   position: fixed;
   left: 0;
-  top: 0;
-  height: 100vh;
+  top: 80px; /* always sit below fixed NavBar */
+  height: calc(100vh - 80px);
   width: 320px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
+  z-index: 900; /* keep below navbar (z-index:1000) */
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+
+/* When the global fixed navbar is present, values are the same; rule kept for clarity */
+body.has-fixed-navbar .inventory-nav-sidebar { top: 80px; height: calc(100vh - 80px); }
 
 .inventory-nav-sidebar.collapsed {
   width: 80px;
@@ -333,9 +336,23 @@
 }
 
 .inventory-nav-content {
-  padding: 0;
-  min-height: 100vh;
+  padding: 16px 20px 24px 20px; /* comfortable default spacing */
+  min-height: calc(100vh - 80px); /* account for fixed navbar */
 }
+
+/* Root wrapper for inventory pages to guard against body class race */
+.inventory-with-navbar {
+  /* If anything shifts before body.has-fixed-navbar attaches, we still avoid underlap */
+  padding-top: 80px; /* matches NavBar height */
+}
+
+/* Once the body flag is present, no extra padding needed here */
+body.has-fixed-navbar .inventory-with-navbar {
+  padding-top: 0;
+}
+
+/* When navbar is fixed, full page height is already reduced; ensure content height fits */
+body.has-fixed-navbar .inventory-nav-content { min-height: calc(100vh - 80px); }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -466,3 +483,164 @@
 .inventory-nav-sidebar.collapsed .nav-sidebar-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.4);
 }
+
+/* Ensure sidebar starts below fixed navbar and content never sits under it */
+body.has-fixed-navbar .inventory-nav-sidebar {
+  top: 80px; /* navbar height */
+  height: calc(100vh - 80px);
+}
+
+/* Responsive adjustment with navbar offset */
+@media (max-width: 1024px) {
+  body.has-fixed-navbar .inventory-nav-sidebar {
+    top: 80px;
+    height: calc(100vh - 80px);
+  }
+}
+
+/* =============================================
+   Neutral Theme Overrides (less colorful, calmer)
+   ============================================= */
+.inventory-nav-sidebar {
+  background: #111827; /* neutral dark */
+  color: #e5e7eb; /* gray-200 */
+  box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+}
+.inventory-nav-sidebar-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.nav-logo-icon {
+  background: #1f2937; /* gray-800 */
+  border: 1px solid #374151; /* gray-700 */
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+.nav-sidebar-toggle-btn {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  box-shadow: none;
+  backdrop-filter: none;
+  animation: none;
+  font-size: 18px;
+}
+.nav-sidebar-toggle-btn:hover {
+  background: #111827;
+  border-color: #4b5563; /* gray-600 */
+  transform: none;
+  box-shadow: none;
+}
+.nav-menu-link {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  color: #cbd5e1; /* slate-300 */
+  padding: 14px 16px;
+  border-radius: 10px;
+}
+.nav-menu-link:hover {
+  background: rgba(255,255,255,0.06);
+  color: #f1f5f9; /* slate-50 */
+  transform: none;
+  box-shadow: none;
+}
+.nav-menu-link.active {
+  background: rgba(255,255,255,0.1);
+  color: #f8fafc;
+  border-color: transparent;
+  box-shadow: none;
+}
+.nav-menu-link::before {
+  background: #4b5563; /* subtle accent */
+}
+.nav-menu-link:hover::before { width: 3px; }
+.nav-menu-link.active::before {
+  width: 3px;
+  background: #6b7280;
+}
+.nav-menu-tooltip {
+  background: #0f172a; /* slate-900 */
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.nav-stat-icon {
+  background: rgba(148,163,184,0.15);
+  color: #94a3b8; /* slate-400 */
+}
+.nav-footer-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+.nav-footer-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* =============================================
+   Light Theme Overrides (white, minimal)
+   ============================================= */
+.inventory-nav-sidebar {
+  background: #ffffff;
+  color: #111827; /* gray-900 text */
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+.inventory-nav-sidebar-header {
+  background: transparent;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+.nav-logo-icon {
+  background: #f3f4f6; /* gray-100 */
+  border: 1px solid #e5e7eb; /* gray-200 */
+  color: #111827;
+}
+.nav-sidebar-toggle-btn {
+  background: #f3f4f6; /* gray-100 */
+  border: 1px solid #e5e7eb; /* gray-200 */
+  color: #374151; /* gray-700 */
+}
+.nav-sidebar-toggle-btn:hover {
+  background: #e5e7eb; /* gray-200 */
+  border-color: #d1d5db; /* gray-300 */
+}
+.nav-menu-link {
+  color: #374151; /* gray-700 */
+  padding: 12px 14px;
+}
+.nav-menu-link:hover {
+  background: #f3f4f6; /* gray-100 */
+  color: #111827;
+}
+.nav-menu-link.active {
+  background: #e5e7eb; /* gray-200 */
+  color: #111827;
+}
+.nav-menu-link::before {
+  background: #e5e7eb; /* subtle accent on white */
+}
+.nav-menu-description { color: #6b7280; }
+.nav-menu-tooltip {
+  background: #111827; /* keep tooltip dark for contrast */
+  color: #f9fafb;
+  border-color: #1f2937;
+}
+.nav-stat-item { background: #f9fafb; }
+.nav-stat-icon {
+  background: #eef2f7;
+  color: #64748b; /* slate-500 */
+}
+.inventory-nav-sidebar-footer { background: #ffffff; border-top: 1px solid #e5e7eb; }
+.nav-footer-btn {
+  background: #f9fafb; /* gray-50 */
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+.nav-footer-btn:hover { background: #f3f4f6; }

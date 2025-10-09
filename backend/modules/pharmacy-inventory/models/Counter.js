@@ -7,4 +7,6 @@ const counterSchema = new mongoose.Schema({
   seq: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.model('Counter', counterSchema, 'counters');
+// Reuse existing compiled model if present to avoid overwrite errors when
+// different modules load their own Counter model file.
+module.exports = mongoose.models.Counter || mongoose.model('Counter', counterSchema, 'counters');

@@ -128,57 +128,7 @@ const MedicineList = () => {
   const resetFilters = () => setFilters({ lowStock: false, expired: false });
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-6">
-          <div className="flex items-center space-x-2">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-blue-600">Family Health Care</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wide">CLINIC MANAGEMENT SYSTEM</div>
-            </div>
-          </div>
-        </div>
-        
-        <nav className="mt-8">
-          <div className="px-6">
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/inventory-dashboard')}>
-              <Package className="w-5 h-5 mr-3" />
-              <span>Dashboard</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/lab/list')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Lab Inventory</span>
-            </div>
-            
-            <div className="flex items-center p-3 bg-blue-50 text-blue-600 rounded-lg mb-2">
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span className="font-medium">Medicine Inventory</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/order-management')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Order Management</span>
-            </div>
-            
-            <div className="flex items-center p-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2 cursor-pointer"
-                 onClick={() => navigate('/profile')}>
-              <div className="w-5 h-5 mr-3 bg-gray-300 rounded"></div>
-              <span>Profile</span>
-            </div>
-          </div>
-        </nav>
-      </div>
-
+    <div className="flex flex-col bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
