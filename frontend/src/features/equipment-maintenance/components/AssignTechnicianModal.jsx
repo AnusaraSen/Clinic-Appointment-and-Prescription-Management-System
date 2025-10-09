@@ -37,15 +37,17 @@ export const AssignTechnicianModal = ({
   };
 
   // Get technician workload
-  const getTechnicianWorkload = (technicianId) => {
-    // Mock workload calculation - in real app, fetch from API
-    const workloads = {
-      1: { current: 3, max: 5, percentage: 60 },
-      2: { current: 2, max: 4, percentage: 50 },
-      3: { current: 4, max: 6, percentage: 67 },
-      4: { current: 1, max: 3, percentage: 33 }
+  const getTechnicianWorkload = (technician) => {
+    // Calculate real workload from technician's assigned requests
+    const current = technician.assignedRequests?.length || 0;
+    const max = technician.maxConcurrentRequests || 5; // Default max capacity
+    const percentage = max > 0 ? Math.round((current / max) * 100) : 0;
+    
+    return { 
+      current, 
+      max, 
+      percentage 
     };
-    return workloads[technicianId] || { current: 0, max: 5, percentage: 0 };
   };
 
   // Get technician specialization match
@@ -169,7 +171,7 @@ export const AssignTechnicianModal = ({
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <span className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
-              Due: {new Date(workRequest.dueDate).toLocaleDateString()}
+              Due: {workRequest.date ? new Date(workRequest.date).toLocaleDateString() : 'Invalid Date'}
             </span>
             <span className="flex items-center">
               <Clock className="h-4 w-4 mr-1" />
@@ -208,7 +210,7 @@ export const AssignTechnicianModal = ({
             ) : (
               <div className="space-y-3">
                 {availableTechnicians.map((technician) => {
-                  const workload = getTechnicianWorkload(technician._id);
+                  const workload = getTechnicianWorkload(technician);
                   const workloadIndicator = getWorkloadIndicator(workload.percentage);
                   const specializationMatch = getSpecializationMatch(technician);
                   const specializationIndicator = getSpecializationIndicator(specializationMatch);

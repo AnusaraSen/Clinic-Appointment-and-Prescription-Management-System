@@ -40,7 +40,8 @@ patientSchema.set("toJSON", {
   },
 });
 
-patientSchema.index({ patient_id: 1 }, { unique: true });
+// Note: patient_id index is already created by { unique: true } in schema definition
+// patientSchema.index({ patient_id: 1 }, { unique: true }); // Removed - duplicate index
 
 const Patient = mongoose.models.Patient || mongoose.model("Patient", patientSchema);
 module.exports = Patient;

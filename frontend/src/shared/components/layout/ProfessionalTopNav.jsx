@@ -22,11 +22,11 @@ const ProfessionalTopNav = ({
   return (
     <header className="bg-white border-b border-gray-200 z-20">
       <div className="flex items-center justify-between h-16 px-4">
-        {/* Mobile menu button */}
-        <div className="flex items-center md:hidden">
+        {/* Sidebar toggle button - visible on all screen sizes */}
+        <div className="flex items-center">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200"
+            className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all duration-200"
             aria-label="Toggle sidebar"
             title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >

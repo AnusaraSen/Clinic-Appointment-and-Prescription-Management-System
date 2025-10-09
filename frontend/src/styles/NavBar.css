@@ -81,6 +81,11 @@ body.has-fixed-navbar .pharmacist-dashboard .main-content {
   box-shadow: var(--shadow-sm);
 }
 
+/* Hide navbar when modal is open */
+body.modal-open .modern-navbar {
+  display: none;
+}
+
 .modern-navbar.scrolled {
   background: rgba(255, 255, 255, 0.98);
   box-shadow: var(--shadow-lg);

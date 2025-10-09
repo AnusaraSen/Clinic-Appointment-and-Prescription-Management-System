@@ -111,7 +111,7 @@ patientSchema.virtual('age').get(function() {
 });
 
 /* Indexes */
-patientSchema.index({ patient_id: 1 }, { unique: true });
+// Note: patient_id index is already created by { unique: true } in schema definition
 patientSchema.index({ user: 1 }, { unique: true });
 patientSchema.index({ isActive: 1 });
 patientSchema.index({ registrationDate: 1 });

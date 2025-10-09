@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Wrench } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 
 export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSuccess }) => {
+  useHideNavbar(isOpen);
+  
   // 📝 Form state with current request data
   const [formData, setFormData] = useState({
     title: '',

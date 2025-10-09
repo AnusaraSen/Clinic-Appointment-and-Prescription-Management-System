@@ -1,11 +1,14 @@
 import React from 'react';
 import { X, User, Phone, Mail, MapPin, Clock, Calendar, Wrench, Award, Star, Users, FileText } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Technician Details Modal
  * Shows comprehensive information about a selected technician
  */
 export const TechnicianDetailsModal = ({ isOpen, onClose, technician }) => {
+  useHideNavbar(isOpen);
+  
   if (!isOpen || !technician) return null;
 
   // Get availability status styling

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, MapPin, Clock, Wrench, Save, AlertCircle } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Add Technician Modal
  * Modal for creating new technician records
  */
 export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
+  useHideNavbar(isOpen);
   console.log('🎯 AddTechnicianModal render - isOpen:', isOpen);
   
   const [formData, setFormData] = useState({

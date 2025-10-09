@@ -7,8 +7,16 @@ const {
   updateRequest, 
   completeRequest,
   deleteRequest,
-  getStats
+  getStats,
+  exportFilteredMaintenanceRequests
 } = require('../controllers/MaintenanceRequestController');
+
+// Import reports controller
+const {
+  getReportMetrics,
+  getStatusDistribution,
+  getRequestsTrend
+} = require('../controllers/ReportsController');
 
 // Import middleware
 const { 
@@ -44,6 +52,28 @@ router.use(responseFormatting.addPaginationMeta());
 router.get('/stats', 
   responseFormatting.asyncHandler(getStats)
 );
+
+// ============= REPORTS ROUTES (must come before /:id) =============
+// Get report metrics (KPIs)
+router.get('/reports/metrics',
+  responseFormatting.asyncHandler(getReportMetrics)
+);
+
+// Get status distribution
+router.get('/reports/status-distribution',
+  responseFormatting.asyncHandler(getStatusDistribution)
+);
+
+// Get requests trend (monthly)
+router.get('/reports/trend',
+  responseFormatting.asyncHandler(getRequestsTrend)
+);
+
+// Export filtered maintenance requests to Excel
+router.post('/reports/export-filtered',
+  responseFormatting.asyncHandler(exportFilteredMaintenanceRequests)
+);
+// ==================================================================
 
 // List all maintenance requests with filtering, pagination, and sorting
 router.get('/', 

@@ -1,7 +1,10 @@
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 export const DeleteUserModal = ({ isOpen, onClose, user, onConfirm, isDeleting }) => {
+  useHideNavbar(isOpen);
+  
   if (!isOpen || !user) return null;
 
   const handleConfirm = () => {

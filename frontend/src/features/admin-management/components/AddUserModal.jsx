@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, User, Mail, Lock, AlertCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * AddUserModal - Create new user accounts
  * Professional user creation form with validation and role management
  */
 export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
+  useHideNavbar(isOpen);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
