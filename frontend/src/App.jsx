@@ -122,6 +122,7 @@ import MedicalRecords from "./features/patient-interaction/pages/MedicalRecords"
 import LabReports from "./features/patient-interaction/pages/LabReports";
 import Support from "./features/patient-interaction/pages/Support";
 import "./App.css";
+import AppointmentPrescriptions from './features/patient-interaction/pages/AppointmentPrescriptions';
 
 
 // Simple ProtectedRoute replacement for now
@@ -709,6 +710,7 @@ function App() {
           {/* Patient Profile and Details */}
           <Route path="/patient/:id" element={<PatientProfile />} />
           <Route path="/appointment/:id" element={<AppointmentDetails />} />
+          <Route path="/appointment/:appointmentId/prescriptions" element={<AppointmentPrescriptions />} />
           
           {/* Dashboard Sub-routes */}
           <Route path="/dashboard/patient" element={<PatientDashboard />} />

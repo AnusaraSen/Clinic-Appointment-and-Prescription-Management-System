@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import '../../../../styles/clinical-workflow/AddPrescription.css';
 import axios from "axios";
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAlert } from './AlertProvider.jsx';
 import { validatePrescriptionForm, formatValidationErrors } from '../../../../utils/validation';
 import { useAuth } from '../../../../features/authentication/context/AuthContext.jsx';
@@ -12,6 +12,7 @@ function AddPrescription() {
   const [pName, setPName] = useState("");
   const [pId, setPId] = useState("");
   const [dName, setDName] = useState("");
+  const [appointmentId, setAppointmentId] = useState(""); // new field for explicit display
   const [diagnosis, setDiagnosis] = useState("");
   const [date, setDate] = useState(today);
   const [symptoms, setSymptoms] = useState("");
@@ -23,8 +24,11 @@ function AddPrescription() {
     { Medicine_Name: "", Dosage: "", Frequency: "", Duration: "" }
   ]);
   const [errors, setErrors] = useState({});
+  const [recordChecked, setRecordChecked] = useState(false); // prevent duplicate alerts
+  const [recordMissing, setRecordMissing] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { pushAlert } = useAlert();
   const { user } = useAuth();
 
@@ -42,18 +46,99 @@ function AddPrescription() {
     }
   }, [user]);
 
-  // Fetch patients for dropdown
+  // Detect navigation from Diagnose (appointment context)
+  const appointmentIdFromState = location.state?.appointmentId;
+  const nicFromState = location.state?.patientNic;
+  const patientNameFromState = location.state?.patientName;
+
+  // Fetch patients for dropdown unless NIC already provided (still fetch to allow name auto-fill if missing)
+  useEffect(() => {
+    // If we don't have state but have a query param (?appointmentId=...), capture it
+    if (!appointmentIdFromState) {
+      const sp = new URLSearchParams(location.search);
+      const qAppt = sp.get('appointmentId');
+      if (qAppt && !appointmentId) {
+        setAppointmentId(qAppt);
+      }
+    }
+  }, [appointmentIdFromState, location.search, appointmentId]);
+
+  // Fetch appointment details if we have an appointmentId but no NIC yet
+  useEffect(() => {
+    const effectiveId = appointmentIdFromState || appointmentId;
+    if (!effectiveId) return;
+    if (nicFromState) return; // already have NIC from state
+    if (pId) return; // already resolved
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/appointment/get/${effectiveId}`);
+        const appt = res.data?.appointment;
+        if (!appt) return;
+        if (cancelled) return;
+        // prefer patient_nic if present, else patient_id
+        const nic = appt.patient_nic || appt.patient_id;
+        if (nic) setPId(nic);
+        if (appt.patient_name) setPName(appt.patient_name);
+        if (!appointmentId) setAppointmentId(effectiveId);
+      } catch (e) {
+        console.warn('Failed to fetch appointment for prescription prefill', e.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [appointmentIdFromState, appointmentId, nicFromState, pId]);
+
+  // Early medical record existence check once we know NIC (pId) and haven't already checked
+  useEffect(() => {
+    if (!pId) return; // no NIC yet
+    if (recordChecked) return; // already checked
+    const nic = pId.trim();
+    if (!nic) return;
+    let cancelled = false;
+    (async () => {
+      try {
+  console.debug('[AddPrescription] Checking medical record history for NIC:', nic);
+  await axios.get(`http://localhost:5000/patient/history/${encodeURIComponent(nic)}`);
+        if (!cancelled) {
+          setRecordChecked(true);
+          setRecordMissing(false);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (err?.response?.status === 404) {
+          setRecordMissing(true);
+          setRecordChecked(true);
+          window.alert('No medical record exists for this patient NIC. Please create a medical record before adding a prescription. Redirecting to Add Medical Record form.');
+          const encodedName = encodeURIComponent(pName || '');
+          navigate(`/addPatient?prefillPatientId=${encodeURIComponent(nic)}&prefillPatientName=${encodedName}`);
+        } else {
+          console.warn('Medical record check failed (non-404):', err.message);
+          setRecordChecked(true);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pId, recordChecked, navigate, pName]);
+  // Patient list fetch (separate effect to avoid mixing with appointment fetch logic)
   useEffect(() => {
     setLoadingPatients(true);
     axios.get('http://localhost:5000/patient/get')
       .then(res => {
-        setPatients(Array.isArray(res.data) ? res.data : []);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setPatients(list);
+        if (nicFromState) {
+          setPId(nicFromState);
+          const match = list.find(p => p.patient_ID === nicFromState);
+            if (match) setPName(match.patient_name || patientNameFromState || '');
+            else if (patientNameFromState) setPName(patientNameFromState);
+        }
+        if (appointmentIdFromState) setAppointmentId(appointmentIdFromState);
       })
       .catch(err => {
         pushAlert(err?.message || 'Failed to load patients list','error');
       })
       .finally(()=> setLoadingPatients(false));
-  }, [pushAlert]);
+  }, [pushAlert, nicFromState, patientNameFromState, appointmentIdFromState]);
 
   const handleMedicineChange = (index, field, value) => {
     const newMedicines = [...medicines];
@@ -71,8 +156,22 @@ function AddPrescription() {
     setMedicines(updated);
   };
 
-  function sendData(e) {
+  async function sendData(e) {
     e.preventDefault();
+    // If came from Diagnose, ensure medical record exists for NIC before allowing creation
+    if (location.state?.patientNic) {
+      try {
+  await axios.get(`http://localhost:5000/patient/history/${encodeURIComponent(location.state.patientNic.trim())}`);
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          pushAlert('No medical record found for this NIC. Please create the medical record before prescribing.','error');
+          return; // block submission
+        }
+        // Other errors are treated as blocking to avoid orphan prescriptions
+        pushAlert('Failed to verify medical record: ' + (err?.response?.data?.message || err.message),'error');
+        return;
+      }
+    }
     const vErrors = validatePrescriptionForm({
       patient_ID: pId,
       patient_name: pName,
@@ -91,7 +190,7 @@ function AddPrescription() {
     }
 
     const newPrescription = {
-      patient_ID: pId,
+      patient_ID: pId, // stores NIC in new workflow
       patient_name: pName,
       doctor_Name: dName,
       Medicines: medicines,
@@ -99,6 +198,7 @@ function AddPrescription() {
       Diagnosis: diagnosis,
       Symptoms: symptoms,
       Instructions: instructions,
+      appointment_id: appointmentId || appointmentIdFromState || undefined
     };
 
     axios.post("http://localhost:5000/prescription/add", newPrescription)
@@ -140,26 +240,50 @@ function AddPrescription() {
         <div className="ap-form-grid">
           <div className="ap-form-row">
             <div className="ap-form-group">
-              <label>Patient ID</label>
-              <select
-                className="form-select"
-                value={pId}
-                required
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setPId(val);
-                  const match = patients.find(p => p.patient_ID === val);
-                  if (match) setPName(match.patient_name || '');
-                }}
-              >
-                <option value="">{loadingPatients ? 'Loading patients...' : 'Select Patient ID'}</option>
-                {patients.map(p => (
-                  <option key={p._id || p.patient_ID} value={p.patient_ID}>{p.patient_ID}</option>
-                ))}
-              </select>
+              <label>Patient ID / NIC</label>
+              {nicFromState ? (
+                <input
+                  type="text"
+                  value={pId}
+                  readOnly
+                  className="form-control"
+                  style={{ background:'#eef3f6', fontWeight:600, cursor:'not-allowed' }}
+                  title="Prefilled from appointment"
+                />
+              ) : (
+                <select
+                  className="form-select"
+                  value={pId}
+                  required
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPId(val);
+                    const match = patients.find(p => p.patient_ID === val);
+                    if (match) setPName(match.patient_name || '');
+                  }}
+                >
+                  <option value="">{loadingPatients ? 'Loading patients...' : 'Select Patient ID'}</option>
+                  {patients.map(p => (
+                    <option key={p._id || p.patient_ID} value={p.patient_ID}>{p.patient_ID}</option>
+                  ))}
+                </select>
+              )}
               {errors.patient_ID && <div className="text-danger">{errors.patient_ID}</div>}
               {!loadingPatients && !patients.length && <div className="text-warning" style={{fontSize:'0.8rem'}}>No patients found. Add a patient first.</div>}
             </div>
+
+            {appointmentId && (
+              <div className="ap-form-group">
+                <label>Appointment ID</label>
+                <input
+                  type="text"
+                  value={appointmentId}
+                  readOnly
+                  className="form-control"
+                  style={{ background:'#f3f6f8', fontWeight:600, cursor:'not-allowed' }}
+                />
+              </div>
+            )}
 
             <div className="ap-form-group">
               <label>Patient Name</label>
@@ -177,7 +301,7 @@ function AddPrescription() {
           </div>
 
           <div className="ap-form-row">
-            <div className="ap-form-group">
+            <div className="ap-form-group" style={{ position:'relative' }}>
               <label>Doctor Name</label>
               <input
                 type="text"
@@ -190,6 +314,11 @@ function AddPrescription() {
               />
               {errors.doctor_Name && <div className="text-danger">{errors.doctor_Name}</div>}
               {!dName && <div style={{fontSize:'0.7rem', color:'#666'}}>Doctor name will appear after login.</div>}
+              {appointmentIdFromState && (
+                <div style={{ position:'absolute', top:-10, right:0, fontSize:'0.65rem', background:'#e0f2fe', padding:'2px 6px', borderRadius:4 }} title="Linked appointment ID">
+                  Appt: {appointmentIdFromState.slice(-6)}
+                </div>
+              )}
             </div>
 
             <div className="ap-form-group">

@@ -611,7 +611,23 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => navigate(`/appointment/${encodeURIComponent(app._id)}/prescriptions?patientId=${encodeURIComponent(app.patient_id || app.patient_ID || '')}`)}
+                        style={{
+                          background:'#075985',
+                          color:'white',
+                          border:'none',
+                          borderRadius:6,
+                          padding:'6px 10px',
+                          fontSize:'0.65rem',
+                          fontWeight:600,
+                          letterSpacing:'.05em',
+                          cursor:'pointer',
+                          boxShadow:'0 2px 4px rgba(0,0,0,0.15)',
+                          transition:'background .2s ease'
+                        }}
+                      >RX</button>
                       <div 
                         className="action-icon" 
                         style={{ 

@@ -128,7 +128,9 @@ router.delete('/deletePhoto/:id', async (req, res) => {
 router.route('/add').post(upload.single('photo'), validatePatient, (req, res) => {
 
 
-        const patient_ID = req.body.patient_ID;
+    // Normalize patient_ID (NIC) to avoid duplicates differing only by case/whitespace
+    const rawPatientId = req.body.patient_ID || '';
+    const patient_ID = rawPatientId.trim();
         const patient_name = req.body.patient_name;
         const patient_age = Number(req.body.patient_age);
         const Gender = req.body.Gender;
@@ -278,9 +280,17 @@ router.get('/history/:patientId', async (req, res) => {
     try {
         const { patientId } = req.params;
         if (!patientId) return res.status(400).json({ message: 'patientId is required' });
-        const patient = await Patient.findOne({ patient_ID: patientId });
+        // Normalize inbound patientId (trim + case-insensitive search)
+        const normalized = patientId.trim();
+        // First attempt exact match (trimmed)
+        let patient = await Patient.findOne({ patient_ID: normalized });
+        if (!patient) {
+            // Fallback: case-insensitive match (regex anchored)
+            const regex = new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+            patient = await Patient.findOne({ patient_ID: regex });
+        }
         if (!patient) return res.status(404).json({ message: 'Patient not found' });
-        const prescriptions = await Prescription.find({ patient_ID: patientId }).sort({ Date: -1 });
+        const prescriptions = await Prescription.find({ patient_ID: patient.patient_ID }).sort({ Date: -1 });
         return res.json({ patient, prescriptions, prescriptionCount: prescriptions.length });
     } catch (error) {
         console.error('Error fetching patient history', error);

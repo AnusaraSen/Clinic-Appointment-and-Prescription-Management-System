@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import '../../../../styles/clinical-workflow/AddPatient.css';
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAlert } from '../prescriptions/AlertProvider.jsx';
 import { validatePatientForm, formatValidationErrors } from '../../../../utils/validation';
 
@@ -76,7 +75,13 @@ function AddPatient() {
   };
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { pushAlert } = useAlert();
+
+  // Compute prefill flags once (avoid recreating URLSearchParams repeatedly in JSX)
+  const searchParams = new URLSearchParams(location.search);
+  const hasPrefillId = searchParams.has('prefillPatientId');
+  const hasPrefillName = searchParams.has('prefillPatientName');
 
 
   const handlePhotoChange = (e) => {
@@ -84,6 +89,19 @@ function AddPatient() {
     setPhoto(file);
     setPreview(file ? URL.createObjectURL(file) : null);
   };
+
+  // Prefill patient_ID if query parameter present (e.g., ?prefillPatientId=NIC123)
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    const prefill = sp.get('prefillPatientId');
+    const prefillName = sp.get('prefillPatientName');
+    if (prefill) {
+      setFormData(prev => ({ ...prev, patient_ID: prefill }));
+    }
+    if (prefillName) {
+      setFormData(prev => ({ ...prev, patient_name: prefillName }));
+    }
+  }, [location.search]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -152,9 +170,17 @@ function AddPatient() {
             value={formData.patient_ID}
             onChange={handleChange}
             required
-            maxLength={12}
+            maxLength={24}
+            readOnly={hasPrefillId}
+            style={hasPrefillId ? { background:'#f1f5f9', fontWeight:600, cursor:'not-allowed', border:'1px solid #93c5fd' } : undefined}
+            placeholder="Enter Patient NIC / ID"
           />
           {errors.patient_ID && <div className="text-danger small mt-1">{errors.patient_ID}</div>}
+          {hasPrefillId && !errors.patient_ID && (
+            <div className="form-text small" style={{ color:'#2563eb', fontWeight:500 }}>
+              Prefilled from appointment context
+            </div>
+          )}
         </div>
 
         <div className="mb-3">
@@ -166,8 +192,16 @@ function AddPatient() {
             value={formData.patient_name}
             onChange={handleChange}
             required
+            readOnly={hasPrefillName}
+            style={hasPrefillName ? { background:'#f1f5f9', fontWeight:600, cursor:'not-allowed', border:'1px solid #93c5fd' } : undefined}
+            placeholder="Enter Patient Name"
           />
           {errors.patient_name && <div className="text-danger small mt-1">{errors.patient_name}</div>}
+          {hasPrefillName && !errors.patient_name && (
+            <div className="form-text small" style={{ color:'#2563eb', fontWeight:500 }}>
+              Prefilled from appointment context
+            </div>
+          )}
         </div>
 
         <div className="mb-3">
