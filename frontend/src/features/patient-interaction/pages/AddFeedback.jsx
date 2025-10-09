@@ -55,9 +55,10 @@ function AddFeedback() {
     };
 
     try {
-      await axios.post("http://localhost:5000/feedback/add", feedback, { timeout: 5000 });
-      window.alert("Feedback added successfully!");
-              navigate("/feedback");
+  await axios.post("http://localhost:5000/feedback/add", feedback, { timeout: 5000 });
+  window.alert("Feedback added successfully!");
+  // Redirect to the new feedback reading page and highlight the entry for this appointment
+  navigate(`/feedback?justAdded=1&appointmentId=${encodeURIComponent(form.appointment_id)}`);
     } catch (err) {
       const serverMsg = err?.response?.data || err?.message || JSON.stringify(err);
       window.alert("Error adding feedback: " + serverMsg);

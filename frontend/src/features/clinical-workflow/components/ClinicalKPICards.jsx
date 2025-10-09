@@ -56,6 +56,10 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       total: 7,
       breakdown: { due: 3, overdue: 2, completed: 2 },
       loading: false
+    },
+    completedPast: {
+      total: 0,
+      loading: true
     }
   });
 
@@ -240,6 +244,21 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
         }));
       }
 
+      // Compute doctor's completed (past) appointments count (all appointments before today)
+      try {
+        const count = await fetchDoctorCompletedPastCount(base);
+        setClinicalStats(prev => ({
+          ...prev,
+          completedPast: { total: count, loading: false }
+        }));
+      } catch (_e) {
+        // Keep fallback 0 but stop loading
+        setClinicalStats(prev => ({
+          ...prev,
+          completedPast: { total: prev.completedPast.total || 0, loading: false }
+        }));
+      }
+
     } catch (error) {
       console.error('Error fetching clinical data:', error);
       // Set loading to false and use fallback data
@@ -268,9 +287,107 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
           total: 7,
           breakdown: { due: 3, overdue: 2, completed: 2 },
           loading: false
+        },
+        completedPast: {
+          total: 0,
+          loading: false
         }
       });
     }
+  };
+
+  // Helper to format YYYY-MM-DD
+  const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  // Fetch count of completed past appointments for current doctor
+  const fetchDoctorCompletedPastCount = async (base) => {
+    // Get doctor identity from localStorage user
+  let user = null;
+  try { const s = localStorage.getItem('user'); if (s) user = JSON.parse(s); } catch {}
+  const docIds = [];
+  let docNames = [];
+    if (user) {
+      if (user._id) docIds.push(String(user._id));
+      if (user.doctorId) docIds.push(String(user.doctorId));
+      if (user.id) docIds.push(String(user.id));
+      if (user.name) docNames.push(String(user.name));
+      if (user.fullName) docNames.push(String(user.fullName));
+      if (user.username) docNames.push(String(user.username));
+    }
+    // Normalize name variants: add/remove 'Dr.' prefix and trim
+    const nameVariants = new Set();
+    for (const n of docNames) {
+      const trimmed = n.replace(/^Dr\.?\s+/i, '').trim();
+      nameVariants.add(trimmed);
+      nameVariants.add(`Dr. ${trimmed}`);
+      nameVariants.add(`Dr ${trimmed}`);
+      nameVariants.add(n.trim());
+    }
+    docNames = Array.from(nameVariants);
+
+    // Build date range: from epoch to yesterday
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    const start = '1970-01-01';
+    const end = toYMD(yesterday);
+
+    // Try by doctorId first
+    for (const id of docIds) {
+      const url = `${base}/appointments/by-doctor/${encodeURIComponent(id)}?start=${start}&end=${end}`;
+      try {
+        const r = await fetch(url);
+        if (r.ok) { const arr = await r.json(); if (Array.isArray(arr)) return arr.length; }
+      } catch (_) {}
+    }
+
+    // Try by doctor name
+    for (const name of docNames) {
+      const url = `${base}/appointments/by-doctor-name/${encodeURIComponent(name)}?start=${start}&end=${end}&loose=true`;
+      try {
+        const r = await fetch(url);
+        if (r.ok) { const arr = await r.json(); if (Array.isArray(arr)) return arr.length; }
+      } catch (_) {}
+    }
+
+    // Fallback: fetch all appointments and filter
+    try {
+      const allUrls = [`${base}/appointment/`, `${base}/appointments/`];
+      for (const url of allUrls) {
+        try {
+          const r = await fetch(url);
+          if (r.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              const cutoff = today.getTime();
+              const matchesIdentity = (a) => {
+                // If we cannot determine doctor identity, do not count to avoid inflating KPI
+                if (docIds.length === 0 && docNames.length === 0) return false;
+                const did = a.doctor_id ? String(a.doctor_id) : '';
+                const dname = (a.doctor_name || (a.doctor && a.doctor.name) || '').toLowerCase();
+                const idMatch = docIds.includes(did);
+                const nameMatch = docNames.some(n => {
+                  const nn = String(n).toLowerCase();
+                  return dname === nn || dname.includes(nn) || nn.includes(dname);
+                });
+                return idMatch || nameMatch;
+              };
+              const cnt = data.filter(a => {
+                const d = new Date(a.appointment_date || a.date);
+                d.setHours(0,0,0,0);
+                return d.getTime() < cutoff && matchesIdentity(a);
+              }).length;
+              return cnt;
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+    return 0;
   };
 
   const calculatePercentage = (value, total) => {
@@ -396,43 +513,15 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       ]
     },
     {
-      title: 'Patients Seen',
-      total: clinicalStats.followUps.total,
-      icon: <UserCheck className="h-7 w-7" />,
-      color: 'medical-orange',
-      bgGradient: 'from-orange-500 to-red-600',
-      trend: 'Excellent care provided',
+      title: 'Completed Appointments',
+      total: clinicalStats.completedPast.total,
+      icon: <CheckCircle className="h-7 w-7" />,
+      color: 'medical-emerald',
+      bgGradient: 'from-emerald-500 to-teal-600',
+      trend: 'Before today',
       trendDirection: 'up',
-      loading: clinicalStats.followUps.loading,
-      breakdown: [
-        {
-          label: 'Due Today',
-          value: clinicalStats.followUps.breakdown.due,
-          percentage: calculatePercentage(
-            clinicalStats.followUps.breakdown.due,
-            clinicalStats.followUps.total
-          ),
-          color: 'bg-amber-500'
-        },
-        {
-          label: 'Critical',
-          value: clinicalStats.followUps.breakdown.overdue,
-          percentage: calculatePercentage(
-            clinicalStats.followUps.breakdown.overdue,
-            clinicalStats.followUps.total
-          ),
-          color: 'bg-rose-500'
-        },
-        {
-          label: 'Completed',
-          value: clinicalStats.followUps.breakdown.completed,
-          percentage: calculatePercentage(
-            clinicalStats.followUps.breakdown.completed,
-            clinicalStats.followUps.total
-          ),
-          color: 'bg-emerald-500'
-        }
-      ]
+      loading: clinicalStats.completedPast.loading,
+      breakdown: []
     }
   ];
 

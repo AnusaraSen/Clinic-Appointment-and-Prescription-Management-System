@@ -109,7 +109,7 @@ import DeleteAppointments from "./features/patient-interaction/pages/DeleteAppoi
 import PatientProfile from "./features/patient-interaction/pages/PatientProfile";
 import AppointmentDetails from "./features/patient-interaction/pages/AppointmentDetails";
 import AddFeedback from "./features/patient-interaction/pages/AddFeedback";
-import AllFeedback from "./features/patient-interaction/pages/AllFeedback";
+import MyFeedback from "./features/patient-interaction/pages/MyFeedback";
 import TestFeedback from "./features/patient-interaction/pages/TestFeedback";
 import SimpleFeedback from "./features/patient-interaction/pages/SimpleFeedback";
 import UpdateFeedback from "./features/patient-interaction/pages/UpdateFeedback";
@@ -699,11 +699,9 @@ function App() {
           <Route path="/delete" element={<DeleteAppointments />} />
           
           {/* Feedback Routes */}
-          <Route path="/feedback" element={<AllFeedback />} />
+          <Route path="/feedback" element={<MyFeedback />} />
           <Route path="/feedback/test" element={<TestFeedback />} />
           <Route path="/feedback/simple" element={<SimpleFeedback />} />
-          <Route path="/feedback/add" element={<AddFeedback />} />
-          <Route path="/add-feedback" element={<AddFeedback />} />
           <Route path="/feedback/update" element={<UpdateFeedback />} />
           <Route path="/feedback/delete" element={<DeleteFeedback />} />
           
