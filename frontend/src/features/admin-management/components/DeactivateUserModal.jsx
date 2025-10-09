@@ -1,7 +1,10 @@
 import React from 'react';
 import { X, UserX, AlertTriangle } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 const DeactivateUserModal = ({ isOpen, onClose, user, onConfirm, isLoading = false }) => {
+  useHideNavbar(isOpen);
+  
   if (!isOpen || !user) return null;
 
   const handleBackdropClick = (e) => {

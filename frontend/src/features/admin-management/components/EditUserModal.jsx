@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar, Shield, Key, Eye, EyeOff } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
+  useHideNavbar(isOpen);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',

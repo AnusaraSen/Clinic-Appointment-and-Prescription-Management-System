@@ -4,6 +4,7 @@ import { useAuth } from './features/authentication/context/AuthContext';
 import { Dashboard } from './features/admin-management/components/Dashboard';
 import ProfessionalLayout from './shared/components/layout/ProfessionalLayout';
 import MaintenanceManagementPage from './features/equipment-maintenance/pages/MaintenanceManagementPage';
+import MaintenanceReportsPage from './features/equipment-maintenance/pages/MaintenanceReportsPage';
 import UsersPage from './features/admin-management/pages/UsersPage';
 import TechnicianDashboard from './features/equipment-maintenance/pages/TechnicianDashboard';
 import AuthPage from './features/authentication/pages/AuthPage';
@@ -297,6 +298,17 @@ function App() {
             <ProtectedRoute>
               <ProfessionalLayout>
                 <MaintenanceManagementPage />
+              </ProfessionalLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute>
+              <ProfessionalLayout>
+                <MaintenanceReportsPage />
               </ProfessionalLayout>
             </ProtectedRoute>
           } 

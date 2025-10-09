@@ -70,12 +70,14 @@ const ProfessionalLayout = ({ children }) => {
         setSidebarOpen={setSidebarOpen}
         currentPage={getCurrentPage()}
       />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${
+        sidebarOpen ? 'ml-64' : 'ml-20'
+      }`}>
         <ProfessionalTopNav 
           sidebarOpen={sidebarOpen} 
           setSidebarOpen={setSidebarOpen} 
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 mt-0">
           {children}
         </main>
       </div>

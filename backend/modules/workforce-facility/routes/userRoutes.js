@@ -9,7 +9,19 @@
 const express = require('express');
 const User = require('../models/User');
 const UserCreationService = require('../../../services/UserCreationService');
+const UserReportsController = require('../controllers/UserReportsController');
 const router = express.Router();
+
+/**
+ * REPORTS ROUTES - User Analytics 📊
+ */
+router.get('/reports/metrics', UserReportsController.getReportMetrics);
+router.get('/reports/role-distribution', UserReportsController.getRoleDistribution);
+router.get('/reports/registration-trend', UserReportsController.getRegistrationTrend);
+router.get('/reports/activity', UserReportsController.getActivityData);
+router.get('/reports/login-events', UserReportsController.getLoginEvents);
+router.post('/reports/export-filtered', UserReportsController.exportFilteredUsers);
+router.get('/:userId/export', UserReportsController.exportUserData);
 
 /**
  * GET /api/users - Get all users 📋
@@ -20,7 +32,7 @@ router.get('/', async (req, res) => {
     console.log('📋 Getting all users for dropdown...');
     
     const users = await User.find()
-      .select('user_id name email role lockUntil isActive') // Include lockUntil so virtual isLocked is available
+      .select('user_id name email role lockUntil isActive lastLogin') // Include lockUntil so virtual isLocked is available and lastLogin for reports table
       .sort({ name: 1 }); // Sort alphabetically by name
     
     console.log(`✅ Found ${users.length} users`);

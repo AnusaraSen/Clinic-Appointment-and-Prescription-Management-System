@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 const PatientSearchModal = ({ isOpen, onClose, onSelectPatient }) => {
+  useHideNavbar(isOpen);
+  
   const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, AlertCircle, Activity, Calendar, MapPin, Package } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Add Equipment Modal Component
  * Modal form for creating new equipment entries
  */
 export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
+  useHideNavbar(isOpen);
+  
   // Form state
   const [formData, setFormData] = useState({
     equipment_id: '',

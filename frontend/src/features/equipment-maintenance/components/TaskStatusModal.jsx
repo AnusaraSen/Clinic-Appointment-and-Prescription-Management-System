@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { X, Save, Clock, FileText, AlertTriangle, Check, Wrench } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Task Status Modal - Update task status with notes
  * Matches the modal styling used throughout the application
  */
 export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
+  useHideNavbar(isOpen);
+  
   const [status, setStatus] = useState(task?.status || 'Open');
   const [notes, setNotes] = useState(task?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);

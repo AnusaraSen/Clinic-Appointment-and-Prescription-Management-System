@@ -344,4 +344,22 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/technicians/reports/workload - Get technician workload report 📊
+ * Returns the number of assigned requests per technician
+ */
+router.get('/reports/workload', async (req, res) => {
+  try {
+    const { getTechnicianWorkload } = require('../controllers/ReportsController');
+    await getTechnicianWorkload(req, res);
+  } catch (error) {
+    console.error('❌ Error fetching technician workload:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch technician workload',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
