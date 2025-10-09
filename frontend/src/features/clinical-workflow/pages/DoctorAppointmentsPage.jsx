@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { getDoctorAppointments, getDoctorAppointmentsByName, getAllAppointments, cancelAppointment, updateAppointmentTiming } from '../../../api/appointmentsApi.js';
 // Adjusted relative path: this file is at src/features/clinical-workflow/pages
 // AuthContext lives at src/features/authentication/context/AuthContext.jsx
@@ -13,6 +14,7 @@ export default function DoctorAppointmentsPage() {
   const { user } = useAuth() || {}; // user may contain _id, name, role
   const doctorId = user?._id;
   const doctorName = user?.name;
+  const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -233,13 +235,25 @@ export default function DoctorAppointmentsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 space-x-2">
                       {a.status?.toLowerCase()?.startsWith('cancel') ? (
                         <span className="text-xs text-red-500 font-semibold">Cancelled</span>
                       ) : (
-                        <button disabled={cancellingId===a.id} onClick={()=>handleCancel(a)} className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                          {cancellingId===a.id ? 'Cancelling...' : 'Cancel'}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              const apptId = a.id;
+                              navigate(`/prescription/add?appointmentId=${encodeURIComponent(apptId)}`, { state: { appointmentId: apptId, patientNic: a.raw?.patient_nic || a.raw?.patient_id, patientName: a.raw?.patient_name } });
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                            title="Create a prescription for this appointment"
+                          >
+                            Diagnose
+                          </button>
+                          <button disabled={cancellingId===a.id} onClick={()=>handleCancel(a)} className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {cancellingId===a.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>

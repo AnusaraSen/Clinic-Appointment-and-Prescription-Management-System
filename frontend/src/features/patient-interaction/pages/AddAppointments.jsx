@@ -47,6 +47,7 @@ function AddAppointments() {
   const [form, setForm] = useState({
     patient_id: "", // will be auto-filled from auth
     patient_name: "", // will be auto-filled from auth
+    patient_nic: "", // NEW: capture patient's NIC for downstream prescription linkage
     doctor_id: "",
     doctor_name: "",
     appointment_date: "",
@@ -314,6 +315,7 @@ function AddAppointments() {
     e.preventDefault();
     if (!form.patient_id) { alert("Patient ID is required."); return; }
     if (!form.patient_name) { alert("Patient name is required."); return; }
+    if (!form.patient_nic) { alert("Patient NIC is required."); return; }
     if (!form.doctor_name || !doctor) { alert("Please select a doctor from the Doctors page first."); return; }
     if (form.appointment_date) {
       const d = new Date(form.appointment_date);
@@ -331,9 +333,11 @@ function AddAppointments() {
       window.alert('That slot was just booked. Please choose another.');
       return;
     }
+    const trimmedNic = form.patient_nic.trim();
     const appointment = {
       patient_id: form.patient_id,
       patient_name: form.patient_name,
+      patient_nic: trimmedNic,
       // Critical: include doctor_id for backend uniqueness & validation
       doctor_id: doctor?._id || form.doctor_id,
       appointment_date: form.appointment_date,
@@ -347,7 +351,7 @@ function AddAppointments() {
       follow_up: form.follow_up_date || form.follow_up_time ? { date: form.follow_up_date || undefined, time: form.follow_up_time || undefined } : undefined
     };
     try {
-      await axios.post("http://localhost:5000/appointment/add", appointment, { timeout: 5000 });
+  await axios.post("http://localhost:5000/appointment/add", appointment, { timeout: 5000 });
       window.alert("Appointment added successfully!");
       navigate("/patient-dashboard");
     } catch (err) {
@@ -494,6 +498,11 @@ function AddAppointments() {
                 <div style={{ marginBottom: 8 }}>
                   <label htmlFor="patient_name">Patient Name</label>
                   <input id="patient_name" name="patient_name" value={form.patient_name} onChange={handleChange} placeholder="Patient Name" required readOnly style={{ background:'#f1f5f9', fontWeight:600 }} />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label htmlFor="patient_nic">Patient NIC</label>
+                  <input id="patient_nic" name="patient_nic" value={form.patient_nic} onChange={handleChange} placeholder="Enter Patient NIC" required />
+                  <div style={{ fontSize:'0.65rem', color:'#555' }}>This NIC will be used later to prefill prescriptions via Diagnose.</div>
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <label htmlFor="doctor_name">Selected Doctor</label>
