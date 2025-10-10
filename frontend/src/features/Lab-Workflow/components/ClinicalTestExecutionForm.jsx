@@ -30,6 +30,7 @@ const ClinicalTestExecutionForm = ({ taskId, onClose, isModal = false }) => {
     processedBy: '',
     instrumentUsed: '',
     methodUsed: '',
+    chemicalUsed: '', // New field for chemical used
     qualityControlPassed: false,
     processingNotes: ''
   });
@@ -271,6 +272,7 @@ const ClinicalTestExecutionForm = ({ taskId, onClose, isModal = false }) => {
           processedBy: formData.processedBy,
           instrumentUsed: formData.instrumentUsed,
           methodUsed: formData.methodUsed,
+          chemicalUsed: formData.chemicalUsed, // Include chemical used in submission
           qualityControlPassed: formData.qualityControlPassed,
           processingNotes: formData.processingNotes
         },
@@ -320,6 +322,7 @@ const ClinicalTestExecutionForm = ({ taskId, onClose, isModal = false }) => {
       processedBy: '',
       instrumentUsed: '',
       methodUsed: '',
+      chemicalUsed: '', // Include chemical used in reset
       qualityControlPassed: false,
       processingNotes: ''
     });
@@ -501,6 +504,18 @@ const ClinicalTestExecutionForm = ({ taskId, onClose, isModal = false }) => {
                   value={formData.methodUsed}
                   onChange={(e) => setFormData({...formData, methodUsed: e.target.value})}
                   placeholder="e.g., Enzymatic, Immunoturbidimetric"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Chemical Used
+                </label>
+                <input
+                  type="text"
+                  value={formData.chemicalUsed}
+                  onChange={(e) => setFormData({...formData, chemicalUsed: e.target.value})}
+                  placeholder="e.g., Reagent A, Buffer Solution, Enzyme Mix"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
               </div>

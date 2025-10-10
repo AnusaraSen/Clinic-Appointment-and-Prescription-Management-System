@@ -40,6 +40,17 @@ const login = async (req, res) => {
     console.log('📊 User isActive:', user.isActive);
     console.log('📊 User status:', user.status);
 
+    // Check if account is locked due to too many failed attempts
+    if (user.isLocked) {
+      console.log('🔒 Account is locked until:', user.lockUntil);
+      return res.status(423).json({
+        success: false,
+        message: 'Account is locked due to too many failed login attempts. Please try again later.',
+        error: 'ACCOUNT_LOCKED',
+        lockUntil: user.lockUntil
+      });
+    }
+
     // Check if user is active (handle both isActive boolean and status string)
     const isUserActive = user.isActive === true || user.isActive === 1 || 
                          user.status === 'active' || user.status === 'Active' || user.status === 'ACTIVE';
@@ -58,6 +69,10 @@ const login = async (req, res) => {
     console.log('🔑 Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {
+      // Increment failed login attempts
+      await user.incLoginAttempts();
+      console.log('❌ Failed login attempt for user:', user.email, '- Attempts:', user.loginAttempts + 1);
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
@@ -82,9 +97,27 @@ const login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    // Reset login attempts and update last login timestamp
+    await user.resetLoginAttempts();
+    console.log('✅ Login attempts reset for user:', user.email);
+
+    // Record login event for analytics
+    try {
+      const LoginEvent = require('../models/LoginEvent');
+      const loginEvent = await LoginEvent.create({
+        user: user._id,
+        user_id: user.user_id,
+        timestamp: new Date(),
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      console.log('✅ Login event recorded for:', user.user_id, 'at', loginEvent.timestamp);
+    } catch (err) {
+      console.error('❌ Failed to record login event for', user.user_id, ':', err.message);
+      console.error('   User ID:', user.user_id);
+      console.error('   User _id:', user._id);
+      console.error('   Full error:', err);
+    }
 
     console.log('✅ Login successful for user:', user.email);
 

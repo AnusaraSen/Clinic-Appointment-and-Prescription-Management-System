@@ -88,7 +88,11 @@ const maintenanceRequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Equipment' 
     // What equipment is involved? Could be multiple items
-  }]
+  }],
+  completedAt: {
+    type: Date,
+    default: null  // Set this when status changes to 'Completed'
+  }
 }, {
   timestamps: true,  // Tracks when created and last modified
   versionKey: false,  // Don't need the __v field

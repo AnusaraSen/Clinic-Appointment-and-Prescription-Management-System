@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Wrench, AlertTriangle, Eye, Edit3 } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 // Helper functions for styling
 const getStatusColor = (status) => {
@@ -337,6 +338,8 @@ export const TechnicianScheduleView = ({ schedule, loading, onRefresh }) => {
  * Schedule Details Modal Component
  */
 const ScheduleDetailsModal = ({ task, isOpen, onClose }) => {
+  useHideNavbar(isOpen);
+  
   if (!isOpen || !task) return null;
 
   const formatDateTime = (date, time) => {
@@ -481,6 +484,8 @@ const ScheduleDetailsModal = ({ task, isOpen, onClose }) => {
  * Update Status Modal Component
  */
 const UpdateStatusModal = ({ task, isOpen, onClose, onStatusUpdate }) => {
+  useHideNavbar(isOpen);
+  
   const [selectedStatus, setSelectedStatus] = useState(task?.status || '');
   const [notes, setNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);

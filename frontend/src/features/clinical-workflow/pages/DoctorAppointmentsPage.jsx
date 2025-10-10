@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Stethoscope, XCircle } from 'lucide-react';
 import { getDoctorAppointments, getDoctorAppointmentsByName, getAllAppointments, cancelAppointment, updateAppointmentTiming } from '../../../api/appointmentsApi.js';
 // Adjusted relative path: this file is at src/features/clinical-workflow/pages
 // AuthContext lives at src/features/authentication/context/AuthContext.jsx
@@ -13,6 +15,7 @@ export default function DoctorAppointmentsPage() {
   const { user } = useAuth() || {}; // user may contain _id, name, role
   const doctorId = user?._id;
   const doctorName = user?.name;
+  const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,8 +89,49 @@ export default function DoctorAppointmentsPage() {
       if (!fetchPath && (!data || data.length === 0)) {
         setFetchPath(doctorId ? 'attempted: id > name > all' : 'attempted: name > all');
       }
+      // helper to parse common time formats like "14:30", "2:30 PM", "14.30"
+      const parseTime = (t) => {
+        if (!t || typeof t !== 'string') return null;
+        const s = t.trim();
+        const ampmMatch = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (ampmMatch) {
+          let hh = parseInt(ampmMatch[1], 10);
+          const mm = parseInt(ampmMatch[2], 10);
+          const ap = ampmMatch[3].toUpperCase();
+          if (ap === 'AM') { if (hh === 12) hh = 0; }
+          else { if (hh !== 12) hh += 12; }
+          return { h: hh, m: mm };
+        }
+        const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/);
+        if (colonMatch) {
+          return { h: parseInt(colonMatch[1],10), m: parseInt(colonMatch[2],10) };
+        }
+        const dotMatch = s.match(/^(\d{1,2})\.(\d{2})$/);
+        if (dotMatch) {
+          return { h: parseInt(dotMatch[1],10), m: parseInt(dotMatch[2],10) };
+        }
+        return null;
+      };
+
+      const now = new Date();
+      now.setSeconds(0,0);
+
       const normalized = (data||[]).map(a => {
         const d = new Date(a.appointment_date);
+        const tm = parseTime(a.appointment_time);
+        const dateTime = new Date(d);
+        if (tm) { dateTime.setHours(tm.h, tm.m, 0, 0); } else { dateTime.setHours(23,59,59,999); }
+        const baseStatus = a.status;
+        let displayStatus = baseStatus;
+        const isCancelled = baseStatus?.toLowerCase()?.startsWith('cancel');
+        const isCompleted = baseStatus === 'completed';
+        if (!isCancelled && !isCompleted && (baseStatus === 'upcoming' || !baseStatus)) {
+          if (dateTime.getTime() < now.getTime()) {
+            displayStatus = 'past';
+          } else {
+            displayStatus = baseStatus || 'upcoming';
+          }
+        }
         return {
           id: a._id,
           patient: a.patient_name || 'Unknown',
@@ -95,12 +139,15 @@ export default function DoctorAppointmentsPage() {
           date: d.toISOString().split('T')[0],
           time: a.appointment_time,
           type: a.appointment_type,
-          status: a.status,
+          status: baseStatus,
+          displayStatus,
           timing_offset_minutes: a.timing_offset_minutes ?? 0,
           timing_status: a.timing_status || 'on-time',
           raw: a
         };
-      }).sort((a,b)=> a.dateObj - b.dateObj || a.time.localeCompare(b.time));
+      })
+      // Sort newest first: by date descending, then time descending
+      .sort((a,b)=> (b.dateObj - a.dateObj) || b.time.localeCompare(a.time));
       setAppointments(normalized);
       setLastLoadedAt(new Date());
     } catch (err) {
@@ -156,7 +203,7 @@ export default function DoctorAppointmentsPage() {
         <div className="p-6 text-center text-gray-500 border border-dashed rounded bg-gray-50">No appointments found.</div>
       )}
       <div className="space-y-6">
-        {Object.keys(grouped).sort().map(date => (
+        {Object.keys(grouped).sort((a,b)=> b.localeCompare(a)).map(date => (
           <div key={date} className="border rounded-lg shadow-sm overflow-hidden">
             <div className="bg-gray-100 px-4 py-2 text-sm font-semibold flex items-center justify-between">
               <span>{date}</span>
@@ -174,13 +221,16 @@ export default function DoctorAppointmentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {grouped[date].map(a => (
+                {grouped[date]
+                  .slice()
+                  .sort((a,b)=> b.time.localeCompare(a.time))
+                  .map(a => (
                   <tr key={a.id} className="odd:bg-white even:bg-gray-50 hover:bg-blue-50/50">
                     <td className="px-4 py-2 font-mono text-xs">{a.time}</td>
                     <td className="px-4 py-2">{a.patient}</td>
                     <td className="px-4 py-2">{a.type}</td>
                     <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${a.status==='upcoming' ? 'bg-blue-100 text-blue-700' : a.status==='completed' ? 'bg-green-100 text-green-700' : a.status?.toLowerCase()?.startsWith('cancel') ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>{a.status || '—'}</span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${a.displayStatus==='upcoming' ? 'bg-blue-100 text-blue-700' : a.displayStatus==='completed' ? 'bg-green-100 text-green-700' : a.displayStatus==='past' ? 'bg-amber-100 text-amber-700' : a.status?.toLowerCase()?.startsWith('cancel') ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>{a.displayStatus || a.status || '—'}</span>
                     </td>
                     <td className="px-4 py-2 align-top">
                       {editingTimingId === a.id ? (
@@ -233,13 +283,42 @@ export default function DoctorAppointmentsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 space-x-2">
                       {a.status?.toLowerCase()?.startsWith('cancel') ? (
                         <span className="text-xs text-red-500 font-semibold">Cancelled</span>
                       ) : (
-                        <button disabled={cancellingId===a.id} onClick={()=>handleCancel(a)} className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                          {cancellingId===a.id ? 'Cancelling...' : 'Cancel'}
-                        </button>
+                        <>
+                          <button
+                            disabled={a.displayStatus === 'past'}
+                            onClick={() => {
+                              const apptId = a.id;
+                              navigate(`/prescription/add?appointmentId=${encodeURIComponent(apptId)}`, { state: { appointmentId: apptId, patientNic: a.raw?.patient_nic || a.raw?.patient_id, patientName: a.raw?.patient_name } });
+                            }}
+                            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-gradient-to-br from-emerald-600/80 to-emerald-500/80 text-white hover:from-emerald-600 hover:to-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:ring-offset-1 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow transition-colors duration-200 ${a.displayStatus==='past' ? 'opacity-50 cursor-not-allowed hover:from-emerald-600/80 hover:to-emerald-500/80' : ''}`}
+                            title={a.displayStatus==='past' ? 'Action disabled for past appointment' : 'Create a prescription for this appointment'}
+                          >
+                            <Stethoscope className="w-3.5 h-3.5" />
+                            <span>Diagnose</span>
+                          </button>
+                          <button
+                            disabled={cancellingId===a.id || a.displayStatus==='past'}
+                            onClick={()=>handleCancel(a)}
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-gradient-to-br from-red-600/80 to-red-500/80 text-white hover:from-red-600 hover:to-red-500 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-400/50 focus:ring-offset-1 backdrop-blur-sm border border-white/10 shadow-sm hover:shadow transition-colors duration-200"
+                            title={a.displayStatus==='past' ? 'Action disabled for past appointment' : 'Cancel this appointment'}
+                          >
+                            {cancellingId===a.id ? (
+                              <>
+                                <XCircle className="w-3.5 h-3.5 animate-pulse" />
+                                <span>Cancelling...</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>Cancel</span>
+                              </>
+                            )}
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>

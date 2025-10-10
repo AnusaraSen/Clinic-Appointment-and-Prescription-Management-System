@@ -23,11 +23,12 @@ router.get("/ping", (_req, res) => {
 // ✅ Add appointment
 //http://localhost:5000/appointments/add
 router.post("/add", async (req, res) => {
-  const { patient_id, patient_name, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
+  const { patient_id, patient_name, patient_nic, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
 
   const appointmentData = {
     patient_id,
     patient_name,
+    patient_nic,
     doctor_id,
     doctor_name,
     doctor_specialty,
@@ -49,6 +50,7 @@ router.post("/add", async (req, res) => {
   const data = {
     patient_id,
     patient_name,
+    patient_nic,
     doctor_id,
     doctor_name,
     doctor_specialty,
@@ -84,7 +86,7 @@ router.post("/add", async (req, res) => {
       }
       throw err;
     });
-    res.json({ message: 'Appointment added successfully' });
+  res.json({ message: 'Appointment added successfully', appointment_id: newAppointment._id, patient_nic: newAppointment.patient_nic });
   } catch (err) {
     const status = err.statusCode || (err.message.includes('duplicate key') ? 409 : 400);
     res.status(status).json({ error: err.message });
@@ -198,11 +200,12 @@ router.get("/by-patient/:id", async (req, res) => {
 
 // ✅ Update appointment
 router.put("/update/:id", async (req, res) => {
-  const { patient_id, patient_name, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
+  const { patient_id, patient_name, patient_nic, doctor_id, doctor_name, doctor_specialty, appointment_date, appointment_time, appointment_type, status, reason, notes, follow_up } = req.body;
 
   const updateData = {
     patient_id,
     patient_name,
+    patient_nic,
     doctor_id,
     doctor_name,
     doctor_specialty,
@@ -345,6 +348,7 @@ router.get('/by-doctor/:doctorId', async (req, res) => {
       appointment_type: d.appointment_type,
       status: d.status,
       patient_name: d.patient_name,
+      patient_nic: d.patient_nic,
       doctor_id: d.doctor_id,
       timing_offset_minutes: d.timing_offset_minutes,
       timing_status: d.timing_status,
@@ -379,6 +383,7 @@ router.get('/by-doctor-name/:name', async (req, res) => {
       appointment_type: d.appointment_type,
       status: d.status,
       patient_name: d.patient_name,
+      patient_nic: d.patient_nic,
       doctor_id: d.doctor_id,
       doctor_name: d.doctor_name,
       timing_offset_minutes: d.timing_offset_minutes,

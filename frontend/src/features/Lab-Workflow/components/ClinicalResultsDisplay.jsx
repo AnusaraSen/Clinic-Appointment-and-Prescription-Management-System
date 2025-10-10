@@ -29,11 +29,14 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`);
+      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}`);
       const data = await response.json();
       
-      if (data.success) {
-        setResults(data.data);
+      if (response.ok) {
+        console.log('Clinical results response:', data); // Debug log
+        // Handle both formats: direct task response or wrapped response
+        const taskData = data.success ? data.task : data;
+        setResults(taskData);
       } else {
         setError('Failed to fetch results');
       }
@@ -106,7 +109,7 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
       <body>
         <div class="header">
           <h1>Clinical Laboratory Test Results</h1>
-          <h2>${taskData?.testType || 'Laboratory Test'}</h2>
+          <h2>${taskData?.testInformation?.testType || taskData?.taskTitle || 'Laboratory Test'}</h2>
           <p>Task ID: ${taskData?.task_id || 'Unknown'}</p>
         </div>
         
@@ -114,7 +117,7 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
           <h3>Patient Information</h3>
           <p><strong>Name:</strong> ${taskData?.patient?.name || 'N/A'}</p>
           <p><strong>Patient ID:</strong> ${taskData?.patient?.patient_id || 'N/A'}</p>
-          <p><strong>Test Requested:</strong> ${taskData?.testType || 'N/A'}</p>
+          <p><strong>Test Requested:</strong> ${taskData?.testInformation?.testType || taskData?.taskTitle || 'N/A'}</p>
           <p><strong>Collection Date:</strong> ${results?.sampleCollection?.collectionDateTime ? formatDate(results.sampleCollection.collectionDateTime) : 'N/A'}</p>
           <p><strong>Processed Date:</strong> ${results?.processing?.receivedDateTime ? formatDate(results.processing.receivedDateTime) : 'N/A'}</p>
         </div>
@@ -174,6 +177,233 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
     printWindow.print();
   };
 
+  const generatePDFReport = () => {
+    const currentDate = new Date().toLocaleString();
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleString();
+    };
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Lab Test Results - ${taskData?.task_id || 'Unknown'}</title>
+        <meta charset="UTF-8">
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            line-height: 1.6; 
+            color: #333;
+            background: white;
+          }
+          .header { 
+            text-align: center; 
+            border-bottom: 3px solid #007cba; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+          }
+          .header h1 { 
+            color: #007cba; 
+            margin: 0; 
+            font-size: 24px; 
+          }
+          .header h2 { 
+            color: #666; 
+            margin: 10px 0; 
+            font-size: 18px; 
+          }
+          .patient-info { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            margin-bottom: 25px; 
+            border-radius: 8px; 
+            border-left: 4px solid #007cba;
+          }
+          .patient-info h3 {
+            margin-top: 0;
+            color: #007cba;
+          }
+          .results-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 25px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .results-table th { 
+            background-color: #007cba; 
+            color: white;
+            padding: 12px 8px; 
+            text-align: left; 
+            font-weight: bold;
+          }
+          .results-table td { 
+            border: 1px solid #ddd; 
+            padding: 10px 8px; 
+            text-align: left; 
+          }
+          .results-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+          }
+          .abnormal { 
+            background-color: #fee; 
+            color: #dc2626; 
+            font-weight: bold; 
+          }
+          .critical { 
+            background-color: #fcc; 
+            color: #991b1b; 
+            font-weight: bold; 
+          }
+          .normal { 
+            color: #059669; 
+            font-weight: 500;
+          }
+          .interpretation { 
+            background: #f0f9ff; 
+            padding: 20px; 
+            margin: 25px 0; 
+            border-left: 4px solid #007cba; 
+            border-radius: 4px;
+          }
+          .interpretation h3 {
+            color: #007cba;
+            margin-top: 0;
+          }
+          .footer { 
+            margin-top: 40px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #666; 
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+          }
+          .info-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #007cba;
+          }
+          .info-section h4 {
+            margin: 0 0 10px 0;
+            color: #007cba;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Clinical Laboratory Test Results</h1>
+          <h2>${taskData?.testInformation?.testType || taskData?.taskTitle || 'Laboratory Test'}</h2>
+          <p><strong>Task ID:</strong> ${taskData?.task_id || 'Unknown'}</p>
+        </div>
+        
+        <div class="patient-info">
+          <h3>Patient Information</h3>
+          <p><strong>Name:</strong> ${taskData?.patient?.name || 'N/A'}</p>
+          <p><strong>Patient ID:</strong> ${taskData?.patient?.patient_id || 'N/A'}</p>
+          <p><strong>Test Requested:</strong> ${taskData?.testInformation?.testType || taskData?.taskTitle || 'N/A'}</p>
+          <p><strong>Collection Date:</strong> ${results?.sampleCollection?.collectionDateTime ? formatDate(results.sampleCollection.collectionDateTime) : 'N/A'}</p>
+          <p><strong>Processed Date:</strong> ${results?.processing?.receivedDateTime ? formatDate(results.processing.receivedDateTime) : 'N/A'}</p>
+        </div>
+        
+        ${results?.results?.testResults?.length > 0 ? `
+          <div class="results-section">
+            <h3 style="color: #007cba; margin-bottom: 15px;">Test Results</h3>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Result</th>
+                  <th>Reference Range</th>
+                  <th>Unit</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${results.results.testResults.map(test => `
+                  <tr>
+                    <td><strong>${test.parameter}</strong></td>
+                    <td class="${test.abnormalFlag && test.abnormalFlag !== '' ? (test.abnormalFlag.includes('Critical') ? 'critical' : 'abnormal') : 'normal'}">${test.value}</td>
+                    <td>${test.referenceRange || 'N/A'}</td>
+                    <td>${test.unit || '-'}</td>
+                    <td class="${test.abnormalFlag && test.abnormalFlag !== '' ? (test.abnormalFlag.includes('Critical') ? 'critical' : 'abnormal') : 'normal'}">${test.abnormalFlag || 'Normal'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p>No test results available.</p>'}
+        
+        <div class="info-grid">
+          <div class="info-section">
+            <h4>Sample & Processing Information</h4>
+            <p><strong>Collected By:</strong> ${results?.sampleCollection?.collectedBy || 'N/A'}</p>
+            <p><strong>Collection Site:</strong> ${results?.sampleCollection?.collectionSite || 'N/A'}</p>
+            <p><strong>Processed By:</strong> ${results?.processing?.processedBy || 'N/A'}</p>
+            <p><strong>Instrument Used:</strong> ${results?.processing?.instrumentUsed || 'N/A'}</p>
+            <p><strong>Chemical Used:</strong> ${results?.processing?.chemicalUsed || 'N/A'}</p>
+          </div>
+          <div class="info-section">
+            <h4>Review Information</h4>
+            <p><strong>Reviewed By:</strong> ${results?.results?.reviewedBy || 'Pending Review'}</p>
+            <p><strong>Critical Values:</strong> ${results?.results?.criticalValues ? 'Yes' : 'No'}</p>
+            <p><strong>Physician Notified:</strong> ${results?.results?.physicianNotified ? 'Yes' : 'No'}</p>
+            <p><strong>Status:</strong> ${results?.status || 'Pending'}</p>
+          </div>
+        </div>
+        
+        ${results?.results?.overallInterpretation ? `
+          <div class="interpretation">
+            <h3>Clinical Interpretation</h3>
+            <p>${results.results.overallInterpretation}</p>
+          </div>
+        ` : ''}
+        
+        ${results?.results?.recommendations ? `
+          <div class="interpretation">
+            <h3>Recommendations</h3>
+            <p>${results.results.recommendations}</p>
+          </div>
+        ` : ''}
+        
+        <div class="footer">
+          <p><strong>Report Generated:</strong> ${currentDate}</p>
+          <p>This is an official laboratory report. For questions, please contact the laboratory.</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create a blob with the HTML content
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary link to download the file
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Lab_Report_${taskData?.task_id || 'Unknown'}_${new Date().toISOString().split('T')[0]}.html`;
+    link.style.display = 'none';
+    
+    // Trigger the download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL
+    URL.revokeObjectURL(url);
+    
+    // Show success message
+    alert('Lab report downloaded successfully! You can open the HTML file in any browser and print it as PDF.');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -199,9 +429,12 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
   }
 
   // Check if any results are available
-  const hasResults = results?.hasResults && results?.results?.testResults?.length > 0;
-  const hasSampleCollection = results?.hasSampleCollection;
-  const hasProcessing = results?.hasProcessing;
+  const hasResults = results?.results?.testResults?.length > 0;
+  const hasSampleCollection = results?.sampleCollection && 
+    results?.sampleCollection?.collectedBy && 
+    results?.sampleCollection?.collectionDateTime;
+  const hasProcessing = results?.processing && 
+    (results?.processing?.processedBy || results?.processing?.receivedDateTime);
 
   if (!hasResults) {
     return (
@@ -247,7 +480,14 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
           <div>
             <h3 className="text-lg font-medium text-gray-900">Clinical Test Results</h3>
             <p className="text-sm text-gray-500">
-              Results completed on {formatDate(results.lastUpdated)}
+              Results completed on {formatDate(
+                results.results?.approvalDateTime || 
+                results.lastUpdated || 
+                results.updatedAt || 
+                results.createdAt ||
+                taskData?.updatedAt ||
+                taskData?.lastUpdated
+              )}
             </p>
           </div>
         </div>
@@ -258,6 +498,12 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
           >
             <Printer className="h-4 w-4 mr-1" />
             Print Report
+          </button>
+          <button
+            onClick={generatePDFReport}
+            className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm"
+          >
+            <Download className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -348,6 +594,10 @@ const ClinicalResultsDisplay = ({ taskId, taskData }) => {
             <div className="flex justify-between">
               <span className="text-gray-500">Instrument Used:</span>
               <span className="text-gray-900">{results.processing?.instrumentUsed || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Chemical Used:</span>
+              <span className="text-gray-900">{results.processing?.chemicalUsed || 'N/A'}</span>
             </div>
           </div>
         </div>

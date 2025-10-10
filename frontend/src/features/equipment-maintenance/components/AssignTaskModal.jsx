@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserCheck, Calendar, AlertCircle, Clock, Wrench } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Assign Task Modal
  * Modal for assigning new tasks directly to a technician
  */
 export const AssignTaskModal = ({ isOpen, onClose, onSuccess, technician }) => {
+  useHideNavbar(isOpen);
+  
   // Form state
   const [taskData, setTaskData] = useState({
     title: '',

@@ -13,7 +13,6 @@ import { SimplifiedMaintenanceSchedule } from '../components/SimplifiedMaintenan
 import { TechnicianCard } from '../components/TechnicianCard';
 import { TechnicianFilters } from '../components/TechnicianFilters';
 import { TechnicianDetailsModal } from '../components/TechnicianDetailsModal';
-import { AddTechnicianModal } from '../components/AddTechnicianModal';
 import { EditTechnicianModal } from '../components/EditTechnicianModal';
 import { AssignTaskModal } from '../components/AssignTaskModal';
 
@@ -124,11 +123,14 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
    */
   const loadWorkRequests = async () => {
     try {
+      console.log('Loading work requests...');
       const response = await fetch('http://localhost:5000/api/maintenance-requests');
       if (response.ok) {
         const result = await response.json();
+        console.log('Work requests loaded:', result);
         const requests = result.success && result.data ? result.data : [];
         setWorkRequests(requests);
+        setFilteredRequests(requests); // Update filtered list immediately
       }
     } catch (error) {
       console.error('Error loading work requests:', error);
@@ -211,6 +213,8 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
    */
   const handleCreateWorkRequest = async (requestData) => {
     try {
+      console.log('Creating work request with data:', requestData);
+      
       const response = await fetch('http://localhost:5000/api/maintenance-requests', {
         method: 'POST',
         headers: {
@@ -220,12 +224,26 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
       });
 
       if (response.ok) {
-        const newRequest = await response.json();
-        setWorkRequests(prev => [newRequest, ...prev]);
+        const result = await response.json();
+        console.log('Create response:', result);
+        
+        // Backend returns { success: true, data: {...} }
+        const newRequest = result.success && result.data ? result.data : result;
+        
+        // Refresh the entire list to get properly populated data
+        await loadWorkRequests();
         setShowCreateModal(false);
+        
+        // Show success message
+        alert('Maintenance request created successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Failed to create request: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error creating work request:', error);
+      alert('Failed to create maintenance request. Please try again.');
     }
   };
 
@@ -300,6 +318,8 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
    */
   const handleAssignTechnician = async (requestId, assignmentData) => {
     try {
+      console.log('Assigning technician:', { requestId, assignmentData });
+      
       const response = await fetch(`http://localhost:5000/api/maintenance-requests/${requestId}/assign`, {
         method: 'PUT',
         headers: {
@@ -309,19 +329,23 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
       });
 
       const result = await response.json();
+      console.log('Assign response:', result);
+      
       if (response.ok && result && result.success) {
-        const updatedRequest = result.data;
-        updatedRequest.equipmentName = (Array.isArray(updatedRequest.equipment) && updatedRequest.equipment.length > 0)
-          ? updatedRequest.equipment.map(eq => eq && (eq.name || eq.equipment_name || eq.modelNumber || eq.model_number) ? (eq.name || eq.equipment_name || eq.modelNumber || eq.model_number) : String(eq)).join(', ')
-          : '';
-
-        setWorkRequests(prev => prev.map(req => (req._id === requestId || req.id === requestId) ? updatedRequest : req));
+        // Reload the entire list to get properly populated data
+        await loadWorkRequests();
         setShowAssignModal(false);
+        setSelectedWorkRequest(null);
+        
+        // Show success message
+        alert('Technician assigned successfully!');
       } else {
         console.error('Assignment failed:', result);
+        alert(`Failed to assign technician: ${result.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error assigning technician:', error);
+      alert('Failed to assign technician. Please try again.');
     }
   };
 
@@ -341,22 +365,6 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
   const handleAssignTaskToTechnician = (technician) => {
     setSelectedTechnician(technician);
     setShowTechnicianAssignModal(true);
-  };
-
-  /**
-   * Handle add new technician
-   */
-  const handleAddTechnician = () => {
-    setShowTechnicianAddModal(true);
-  };
-
-  /**
-   * Handle add technician success
-   */
-  const handleAddTechnicianSuccess = (newTechnician) => {
-    // Refresh technicians list
-    loadTechniciansData();
-    setShowTechnicianAddModal(false);
   };
 
   /**
@@ -784,13 +792,6 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                     <span>Refresh</span>
                   </button>
-                  <button 
-                    onClick={handleAddTechnician}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add Technician</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -1028,14 +1029,6 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
           }}
           technician={selectedTechnician}
           onAssignSuccess={handleAssignTaskSuccess}
-        />
-      )}
-
-      {showTechnicianAddModal && (
-        <AddTechnicianModal
-          isOpen={showTechnicianAddModal}
-          onClose={() => setShowTechnicianAddModal(false)}
-          onAddSuccess={handleAddTechnicianSuccess}
         />
       )}
 

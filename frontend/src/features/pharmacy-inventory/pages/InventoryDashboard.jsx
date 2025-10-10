@@ -160,6 +160,10 @@ const InventoryDashboard = () => {
                 View Summary Report
               </button>
               <Bell className="w-6 h-6 text-gray-600" />
+              <div className="relative">
+                <Bell className="w-6 h-6 text-gray-600" />
+                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+              </div>
               <div className="flex items-center space-x-2">
                 <User className="w-8 h-8 text-gray-600" />
                 <span className="text-gray-700">Inventory Manager</span>

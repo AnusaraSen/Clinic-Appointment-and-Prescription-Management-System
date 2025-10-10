@@ -21,6 +21,7 @@ import {
   Package
 } from 'lucide-react';
 import { useAuth } from "../../../features/authentication/context/AuthContext";
+import '../../../styles/ProfessionalSidebar.css';
 
 /**
  * Professional Sidebar Component (Converted from reference Sidebar.tsx)
@@ -89,12 +90,6 @@ const ProfessionalSidebar = ({
           path: '/maintenance'
         },
         {
-          name: 'Equipment',
-          icon: <Activity size={20} />,
-          page: 'equipment',
-          path: '/equipment'
-        },
-        {
           name: 'Reports',
           icon: <BarChart2 size={20} />,
           page: 'reports',
@@ -121,8 +116,8 @@ const ProfessionalSidebar = ({
       ];
     }
 
-    // For Lab Supervisors, show lab-specific navigation
-    if (user?.role === 'LabSupervisor') {
+    // For Lab Supervisors and Lab Managers, show lab-specific navigation
+    if (user?.role === 'LabSupervisor' || user?.role === 'Lab Supervisor' || user?.role === 'Lab Manager') {
       return [
         {
           name: 'Lab Dashboard',
@@ -146,19 +141,13 @@ const ProfessionalSidebar = ({
           name: 'My Tasks',
           icon: <ClipboardList size={20} />,
           page: 'my-tasks',
-          path: '/lab-workflow/tasks'
+          path: '/lab-workflow/dashboard'
         },
         {
           name: 'Lab Results',
           icon: <FileBarChart size={20} />,
           page: 'lab-results',
           path: '/lab-workflow/test-results'
-        },
-        {
-          name: 'Equipment',
-          icon: <Activity size={20} />,
-          page: 'equipment',
-          path: '/equipment'
         }
       ];
     }
@@ -263,9 +252,9 @@ const ProfessionalSidebar = ({
   return (
     <aside className={`bg-white border-r border-gray-200 transition-all duration-300 ease-in-out ${
       sidebarOpen ? 'w-64' : 'w-20'
-    } relative flex-shrink-0 min-h-screen z-10 flex flex-col ${
+    } fixed top-[80px] left-0 bottom-0 z-10 flex flex-col ${
       // On mobile, overlay the content when open
-      sidebarOpen ? 'md:relative absolute inset-y-0 left-0' : ''
+      sidebarOpen ? 'md:fixed' : ''
     }`}>
       {/* Backdrop for mobile */}
       {sidebarOpen && (
@@ -274,78 +263,45 @@ const ProfessionalSidebar = ({
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      
-      {/* Toggle button - positioned outside the sidebar when collapsed */}
-      {!sidebarOpen && (
-        <button
-          onClick={handleToggle}
-          className="absolute -right-4 top-4 p-2 rounded-full bg-white hover:bg-gray-50 transition-all duration-200 shadow-lg border border-gray-300 z-50"
-          aria-label="Expand sidebar"
-        >
-          <ChevronRight size={16} />
-        </button>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        {sidebarOpen ? (
-          <>
-            <div className="flex items-center">
-              <Stethoscope className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-lg font-semibold text-gray-800">
-                {user?.role === 'Pharmacist' ? 'Pharmacist Dashboard' :
-                 user?.role === 'Admin' ? 'Admin Panel' :
-                 user?.role === 'InventoryManager' ? 'Inventory Manager Dashboard' :
-                 user?.role === 'LabSupervisor' ? 'Lab Supervisor' : 
-                 user?.role === 'LabStaff' ? 'Lab Assistant' : 'Clinic Admin'}
-              </h1>
-            </div>
-            
-            {/* Collapse button - only shown when sidebar is open */}
-            <button
-              onClick={handleToggle}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200"
-              aria-label="Collapse sidebar"
-            >
-              <ChevronLeft size={16} />
-            </button>
-          </>
-        ) : (
-          <div className="mx-auto">
-            <Stethoscope className="h-8 w-8 text-blue-600" />
-          </div>
-        )}
-      </div>
 
       {/* Navigation */}
-      <nav className="mt-6 flex-1">
+      <nav className="mt-6 flex-1 overflow-y-auto">
         <ul className="space-y-1">
-          {navItems.map((item) => (
-            <li key={item.name} className={`relative ${sidebarOpen ? 'px-3' : 'px-2'}`}>
+          {navItems.map((item, index) => (
+            <li 
+              key={item.name} 
+              className={`relative ${sidebarOpen ? 'px-3' : 'px-2'} transition-all duration-200`}
+              style={{
+                animation: sidebarOpen ? `slideIn 0.3s ease-out ${index * 0.05}s both` : 'none'
+              }}
+            >
               <button
                 onClick={() => handleNavClick(item.path)}
-                className={`w-full flex items-center py-3 rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center py-3 rounded-lg transition-all duration-200 group ${
                   sidebarOpen ? 'px-3' : 'px-0 justify-center'
                 } ${
                   currentPage === item.page
-                    ? 'bg-blue-50 text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-blue-50 text-blue-600 shadow-sm border-l-4 border-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:border-l-4 hover:border-blue-200'
                 }`}
                 onMouseEnter={() => !sidebarOpen && setHoveredItem(item.name)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <span className={`flex-shrink-0 ${sidebarOpen ? '' : 'mx-auto'}`}>
+                <span className={`flex-shrink-0 ${sidebarOpen ? '' : 'mx-auto'} transition-transform duration-200 group-hover:scale-110`}>
                   {item.icon}
                 </span>
                 {sidebarOpen && (
-                  <span className="ml-3 font-medium">{item.name}</span>
+                  <span className="ml-3 font-medium transition-all duration-200 opacity-0 animate-fadeIn"
+                    style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
+                    {item.name}
+                  </span>
                 )}
                 <span className="sr-only">{item.name}</span>
               </button>
               
-              {/* Improved tooltip positioning */}
+              {/* Enhanced tooltip with animation */}
               {!sidebarOpen && hoveredItem === item.name && (
-                <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 bg-gray-900 text-white text-sm py-2 px-3 rounded-md z-50 whitespace-nowrap shadow-lg">
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 bg-gray-900 text-white text-sm py-2 px-3 rounded-md z-50 whitespace-nowrap shadow-lg animate-slideInRight">
                   {item.name}
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
                 </div>
@@ -359,11 +315,14 @@ const ProfessionalSidebar = ({
       <div className="border-t border-gray-200 p-3">
         {/* User info - only show when sidebar is open */}
         {sidebarOpen && user && (
-          <div className="mb-3 px-3">
-            <div className="flex items-center">
-              <UserCircle className="h-8 w-8 text-gray-400" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">
+          <div className="mb-3 px-3 animate-fadeIn">
+            <div className="flex items-center p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200">
+              <div className="relative">
+                <UserCircle className="h-10 w-10 text-blue-600" />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+              </div>
+              <div className="ml-3 min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-800 truncate">
                   {user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">{user.role}</p>
@@ -372,28 +331,41 @@ const ProfessionalSidebar = ({
           </div>
         )}
         
+        {/* User avatar in collapsed state */}
+        {!sidebarOpen && user && (
+          <div className="mb-3 flex justify-center">
+            <div className="relative">
+              <UserCircle className="h-10 w-10 text-blue-600 animate-pulse" />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+            </div>
+          </div>
+        )}
+        
         {/* Logout button */}
         <div className="relative">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 ${
+            className={`w-full flex items-center py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group ${
               sidebarOpen ? 'px-3' : 'px-0 justify-center'
             }`}
             onMouseEnter={() => !sidebarOpen && setHoveredItem('Logout')}
             onMouseLeave={() => setHoveredItem(null)}
           >
-            <span className={`flex-shrink-0 ${sidebarOpen ? '' : 'mx-auto'}`}>
+            <span className={`flex-shrink-0 ${sidebarOpen ? '' : 'mx-auto'} transition-transform duration-200 group-hover:scale-110`}>
               <LogOut size={20} />
             </span>
             {sidebarOpen && (
-              <span className="ml-3 font-medium">Logout</span>
+              <span className="ml-3 font-medium transition-all duration-200 opacity-0 animate-fadeIn"
+                style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
+                Logout
+              </span>
             )}
             <span className="sr-only">Logout</span>
           </button>
           
-          {/* Improved logout tooltip */}
+          {/* Enhanced logout tooltip */}
           {!sidebarOpen && hoveredItem === 'Logout' && (
-            <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 bg-gray-900 text-white text-sm py-2 px-3 rounded-md z-50 whitespace-nowrap shadow-lg">
+            <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 bg-gray-900 text-white text-sm py-2 px-3 rounded-md z-50 whitespace-nowrap shadow-lg animate-slideInRight">
               Logout
               <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
             </div>

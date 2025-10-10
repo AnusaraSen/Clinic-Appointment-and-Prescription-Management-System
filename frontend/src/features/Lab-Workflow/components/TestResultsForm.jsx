@@ -9,13 +9,17 @@ import {
   CheckCircle,
   User
 } from 'lucide-react';
+import { useAuth } from '../../authentication/context/AuthContext';
 
 const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
+  // Get current user from authentication context
+  const { user } = useAuth();
+  
   // Current user - should match the logged-in user from dashboard
   const currentUser = {
-    name: 'Kasun',
-    id: 'LAB-0001',
-    role: 'Lab Supervisor'
+    name: user?.name || user?.firstName || user?.username || 'Unknown User',
+    id: user?.lab_staff_id || user?.id || 'N/A',
+    role: user?.role || user?.specialization || 'Lab Supervisor'
   };
 
   const [testResults, setTestResults] = useState([
@@ -25,7 +29,7 @@ const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
   const [formData, setFormData] = useState({
     overallInterpretation: '',
     recommendations: '',
-    reviewedBy: currentUser.name // Auto-populate with current user
+    reviewedBy: currentUser.name // Auto-populate with current user name only
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,11 +46,11 @@ const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
 
   const fetchExistingData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`);
+      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}`);
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data.results) {
-          const existing = result.data.results;
+        if (result.results) {
+          const existing = result.results;
           
           if (existing.testResults && existing.testResults.length > 0) {
             setTestResults(existing.testResults.map((result, index) => ({
@@ -58,7 +62,7 @@ const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
           setFormData({
             overallInterpretation: existing.overallInterpretation || '',
             recommendations: existing.recommendations || '',
-            reviewedBy: existing.reviewedBy || currentUser.name // Preserve current user if no existing data
+            reviewedBy: existing.reviewedBy || currentUser.name // Preserve existing or use current user name only
           });
         }
       }
@@ -173,13 +177,15 @@ const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
       });
 
       const result = await response.json();
+      console.log('Backend response:', result); // Debug log
 
-      if (response.ok && result.success) {
-        console.log('✅ Test results recorded:', result.data);
-        onSuccess && onSuccess(`Test results recorded successfully! ${hasCriticalValues ? 'Critical values detected.' : ''}`);
+      if (response.ok && (result.success || result.message)) {
+        console.log('✅ Test results recorded:', result.task || result.data);
+        onSuccess && onSuccess(result.message || `Test results recorded successfully! ${hasCriticalValues ? 'Critical values detected.' : ''}`);
         onClose();
       } else {
-        setError(result.error || 'Failed to save test results');
+        console.error('Backend error:', result);
+        setError(result.error || result.message || 'Failed to save test results');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -360,7 +366,6 @@ const TestResultsForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 flex items-center">
                     <User className="h-4 w-4 text-gray-500 mr-2" />
                     <span className="text-gray-900 font-medium">{currentUser.name}</span>
-                    <span className="text-gray-500 ml-2">({currentUser.id})</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">Results reviewed by current logged-in user</p>
                   {/* Hidden input to maintain form data */}

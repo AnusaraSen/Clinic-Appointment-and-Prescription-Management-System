@@ -41,7 +41,9 @@ const prescriptionSchema = new schema({
     }
   ],
   
-  Instructions: { type: String }
+  Instructions: { type: String },
+  // Optional linkage back to an appointment. Not required for legacy prescriptions.
+  appointment_id: { type: String, index: true }
 });
 
 

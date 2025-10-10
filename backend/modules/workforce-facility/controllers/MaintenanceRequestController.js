@@ -472,7 +472,10 @@ exports.completeRequest = async (req, res) => {
     }
 
     // Update request status and optional fields
-    const update = { status: 'Completed' };
+    const update = { 
+      status: 'Completed',
+      completedAt: new Date()  // Record the exact completion timestamp
+    };
     if (cost !== undefined) update.cost = cost;
     if (notes !== undefined) update.notes = notes;
 
@@ -607,6 +610,173 @@ exports.getStats = async (req, res) => {
       success: false, 
       message: 'Failed to fetch statistics',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Export filtered maintenance requests to Excel
+ * POST /api/maintenance-requests/export-filtered
+ */
+exports.exportFilteredMaintenanceRequests = async (req, res) => {
+  try {
+    const { startDate, endDate, status, priority, technician } = req.body;
+
+    // Build query filters
+    const query = {};
+
+    // Date filter for request creation
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = endOfDay;
+      }
+    }
+
+    // Status filter
+    if (status) {
+      query.status = status;
+    }
+
+    // Priority filter
+    if (priority) {
+      query.priority = priority;
+    }
+
+    // Technician filter (search by name or ID - will handle via populate)
+    // Note: We'll filter after population since we need to search populated fields
+    const technicianFilter = technician;
+
+    // Fetch maintenance requests with filters
+    let requests = await MaintenanceRequest.find(query)
+      .populate('equipment', 'equipmentId name location')
+      .populate('assignedTo', 'name user_id')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Apply technician filter after population (if specified)
+    if (technicianFilter) {
+      requests = requests.filter(request => {
+        if (!request.assignedTo) return false;
+        const techName = request.assignedTo.name || '';
+        const techId = request.assignedTo.user_id || '';
+        const searchTerm = technicianFilter.toLowerCase();
+        return techName.toLowerCase().includes(searchTerm) || techId.toLowerCase().includes(searchTerm);
+      });
+    }
+
+    // Import ExcelJS
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Maintenance Requests');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'Request ID', key: 'requestId', width: 15 },
+      { header: 'Equipment ID', key: 'equipmentId', width: 15 },
+      { header: 'Equipment Name', key: 'equipmentName', width: 25 },
+      { header: 'Location', key: 'location', width: 20 },
+      { header: 'Issue Description', key: 'issueDescription', width: 35 },
+      { header: 'Priority', key: 'priority', width: 12 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Assigned Technician', key: 'technician', width: 25 },
+      { header: 'Request Date', key: 'requestDate', width: 20 },
+      { header: 'Completed Date', key: 'completedDate', width: 20 },
+      { header: 'Duration (days)', key: 'duration', width: 15 }
+    ];
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' } // Blue color
+    };
+
+    // Add data rows
+    for (const request of requests) {
+      // Calculate duration and completed date
+      let duration = 'N/A';
+      let completedDate = 'N/A';
+      
+      if (request.status === 'Completed') {
+        // Use completedAt if available, otherwise fall back to updatedAt for old records
+        const endDate = request.completedAt || request.updatedAt;
+        completedDate = new Date(endDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        const days = Math.ceil((new Date(endDate) - new Date(request.createdAt)) / (1000 * 60 * 60 * 24));
+        duration = `${days} day${days !== 1 ? 's' : ''}`;
+      } else if (request.status !== 'Cancelled') {
+        const days = Math.ceil((new Date() - new Date(request.createdAt)) / (1000 * 60 * 60 * 24));
+        duration = `${days} day${days !== 1 ? 's' : ''} (ongoing)`;
+      }
+
+      // Handle equipment array - can have multiple equipment items
+      const equipmentList = request.equipment || [];
+      const equipmentIds = equipmentList.map(e => e?.equipmentId).filter(Boolean).join(', ') || 'N/A';
+      const equipmentNames = equipmentList.map(e => e?.name).filter(Boolean).join(', ') || 'N/A';
+      const locations = equipmentList.map(e => e?.location).filter(Boolean).join(', ') || 'N/A';
+
+      worksheet.addRow({
+        requestId: request.request_id || 'N/A',
+        equipmentId: equipmentIds,
+        equipmentName: equipmentNames,
+        location: locations,
+        issueDescription: request.description || 'No description',
+        priority: request.priority || 'Medium',
+        status: request.status || 'Open',
+        technician: request.assignedTo?.name || 'Unassigned',
+        requestDate: request.createdAt ? new Date(request.createdAt).toLocaleString() : 'N/A',
+        completedDate: completedDate,
+        duration: duration
+      });
+    }
+
+    // Add summary section at the bottom
+    worksheet.addRow([]);
+    worksheet.addRow([]);
+    const summaryRow = worksheet.addRow(['SUMMARY', '', '', '', '', '', '', '', '', '', '']);
+    summaryRow.font = { bold: true, size: 12 };
+    summaryRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE7E6E6' }
+    };
+
+    worksheet.addRow(['Total Requests', requests.length]);
+    worksheet.addRow(['Open', requests.filter(r => r.status === 'Open').length]);
+    worksheet.addRow(['In Progress', requests.filter(r => r.status === 'In Progress').length]);
+    worksheet.addRow(['Completed', requests.filter(r => r.status === 'Completed').length]);
+    worksheet.addRow(['Cancelled', requests.filter(r => r.status === 'Cancelled').length]);
+    
+    // Add filter information
+    worksheet.addRow([]);
+    worksheet.addRow(['FILTERS APPLIED', '', '', '', '', '', '', '', '', '', '']);
+    if (startDate) worksheet.addRow(['Start Date', new Date(startDate).toLocaleDateString()]);
+    if (endDate) worksheet.addRow(['End Date', new Date(endDate).toLocaleDateString()]);
+    if (status) worksheet.addRow(['Status', status]);
+    if (priority) worksheet.addRow(['Priority', priority]);
+    if (technician) worksheet.addRow(['Technician', technician]);
+
+    // Generate Excel file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=maintenance_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Error exporting maintenance requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export maintenance report',
+      error: error.message
     });
   }
 };

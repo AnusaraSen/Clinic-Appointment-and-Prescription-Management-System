@@ -11,6 +11,14 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // New: store patient's NIC (national ID) alongside internal patient_id for prescription linkage
+    patient_nic: {
+      type: String,
+      required: false, // allow legacy appointments without NIC
+      trim: true,
+      minlength: 5,
+      maxlength: 25,
+    },
     doctor_id: {
       type: String, // Changed to String to be more flexible
       required: false,

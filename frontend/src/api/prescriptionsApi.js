@@ -14,4 +14,6 @@ export default {
   listByPatient: (patientId) => api.get(`/by-patient/${encodeURIComponent(patientId)}`),
   // DELETE /prescription/delete/:id
   delete: (id) => api.delete(`/delete/${id}`),
+  // GET /prescription/by-appointment/:appointmentId
+  listByAppointment: (appointmentId) => api.get(`/by-appointment/${encodeURIComponent(appointmentId)}`),
 };

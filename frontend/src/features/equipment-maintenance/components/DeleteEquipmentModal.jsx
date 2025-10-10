@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { X, Trash2, AlertTriangle, Shield, Clock } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Delete Equipment Confirmation Dialog
  * Safety-focused confirmation dialog for equipment deletion
  */
 export const DeleteEquipmentModal = ({ isOpen, onClose, onConfirm, equipment }) => {
+  useHideNavbar(isOpen);
+  
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [confirmationText, setConfirmationText] = useState('');

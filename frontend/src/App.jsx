@@ -4,6 +4,7 @@ import { useAuth } from './features/authentication/context/AuthContext';
 import { Dashboard } from './features/admin-management/components/Dashboard';
 import ProfessionalLayout from './shared/components/layout/ProfessionalLayout';
 import MaintenanceManagementPage from './features/equipment-maintenance/pages/MaintenanceManagementPage';
+import MaintenanceReportsPage from './features/equipment-maintenance/pages/MaintenanceReportsPage';
 import UsersPage from './features/admin-management/pages/UsersPage';
 import TechnicianDashboard from './features/equipment-maintenance/pages/TechnicianDashboard';
 import AuthPage from './features/authentication/pages/AuthPage';
@@ -111,7 +112,7 @@ import DeleteAppointments from "./features/patient-interaction/pages/DeleteAppoi
 import PatientProfile from "./features/patient-interaction/pages/PatientProfile";
 import AppointmentDetails from "./features/patient-interaction/pages/AppointmentDetails";
 import AddFeedback from "./features/patient-interaction/pages/AddFeedback";
-import AllFeedback from "./features/patient-interaction/pages/AllFeedback";
+import MyFeedback from "./features/patient-interaction/pages/MyFeedback";
 import TestFeedback from "./features/patient-interaction/pages/TestFeedback";
 import SimpleFeedback from "./features/patient-interaction/pages/SimpleFeedback";
 import UpdateFeedback from "./features/patient-interaction/pages/UpdateFeedback";
@@ -124,6 +125,7 @@ import MedicalRecords from "./features/patient-interaction/pages/MedicalRecords"
 import LabReports from "./features/patient-interaction/pages/LabReports";
 import Support from "./features/patient-interaction/pages/Support";
 import "./App.css";
+import AppointmentPrescriptions from './features/patient-interaction/pages/AppointmentPrescriptions';
 
 
 // Simple ProtectedRoute replacement for now
@@ -316,6 +318,17 @@ function App() {
         />
         
         <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute>
+              <ProfessionalLayout>
+                <MaintenanceReportsPage />
+              </ProfessionalLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
           path="/technician-dashboard" 
           element={
             <ProtectedRoute>
@@ -389,9 +402,13 @@ function App() {
         <Route 
           path="/lab/supervisor/dashboard" 
           element={
-            <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
-              <LabSupervisorDashboardPage />
-            </RoleProtectedRoute>
+            <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
+                <ProfessionalLayout>
+                  <LabSupervisorDashboardPage />
+                </ProfessionalLayout>
+              </RoleProtectedRoute>
+            </ProtectedRoute>
           } 
         />
         
@@ -702,17 +719,16 @@ function App() {
           <Route path="/delete" element={<DeleteAppointments />} />
           
           {/* Feedback Routes */}
-          <Route path="/feedback" element={<AllFeedback />} />
+          <Route path="/feedback" element={<MyFeedback />} />
           <Route path="/feedback/test" element={<TestFeedback />} />
           <Route path="/feedback/simple" element={<SimpleFeedback />} />
-          <Route path="/feedback/add" element={<AddFeedback />} />
-          <Route path="/add-feedback" element={<AddFeedback />} />
           <Route path="/feedback/update" element={<UpdateFeedback />} />
           <Route path="/feedback/delete" element={<DeleteFeedback />} />
           
           {/* Patient Profile and Details */}
           <Route path="/patient/:id" element={<PatientProfile />} />
           <Route path="/appointment/:id" element={<AppointmentDetails />} />
+          <Route path="/appointment/:appointmentId/prescriptions" element={<AppointmentPrescriptions />} />
           
           {/* Dashboard Sub-routes */}
           <Route path="/dashboard/patient" element={<PatientDashboard />} />

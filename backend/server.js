@@ -45,6 +45,9 @@ app.use(corsMiddleware);
 app.use(parsers);
 app.use(logger);
 
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
+
 /**
  * Our API Routes - This is where the real work happens! 🚀
  * 

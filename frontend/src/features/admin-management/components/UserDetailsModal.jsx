@@ -3,8 +3,11 @@ import {
   X, Mail, User, Shield, Clock, Phone, MapPin, Calendar, 
   UserCheck, Key, Activity, CheckCircle, XCircle 
 } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 export const UserDetailsModal = ({ isOpen, onClose, user }) => {
+  useHideNavbar(isOpen);
+  
   if (!isOpen || !user) return null;
 
   const formatDateTime = (dateString) => {
