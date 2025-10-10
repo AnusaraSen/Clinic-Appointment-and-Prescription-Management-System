@@ -521,7 +521,11 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       trend: 'Before today',
       trendDirection: 'up',
       loading: clinicalStats.completedPast.loading,
-      breakdown: []
+      breakdown: [],
+      onClick: () => {
+        const el = document.getElementById('past-appointments');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   ];
 
@@ -552,7 +556,12 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       {clinicalKPICards.map((card, index) => {
         const scheme = palette[index % palette.length];
         return (
-          <div key={index} className="cd-card cd-fade-in" aria-live="polite">
+          <div
+            key={index}
+            className={`cd-card cd-fade-in ${card.onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+            aria-live="polite"
+            onClick={card.onClick}
+          >
             <span className={scheme.bar} aria-hidden="true"></span>
             <div className="cd-card-header">
               <div className={scheme.icon}>{card.icon}</div>

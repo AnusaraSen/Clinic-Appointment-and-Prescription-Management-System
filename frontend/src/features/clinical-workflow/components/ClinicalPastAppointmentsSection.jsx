@@ -81,7 +81,7 @@ export const ClinicalPastAppointmentsSection = () => {
   const sortedDatesDesc = useMemo(()=> Object.keys(grouped).sort((a,b)=> b.localeCompare(a)), [grouped]);
 
   return (
-    <div className="cd-card" role="region" aria-label="Past Appointments">
+    <div id="past-appointments" className="cd-card" role="region" aria-label="Past Appointments">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-gray-100"><Calendar className="h-5 w-5 text-gray-600"/></div>
