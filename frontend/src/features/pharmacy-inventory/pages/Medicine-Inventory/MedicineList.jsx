@@ -12,8 +12,10 @@ import {
   Search,
   Bell
 } from 'lucide-react';
+import "../../../../styles/Medicine/MedicineList.css";
 
-const LOW_STOCK_THRESHOLD = 20; // Medicines threshold
+// Use reorderLevel from each medicine instead of fixed threshold
+// const LOW_STOCK_THRESHOLD = 20; // Old fixed threshold - now using dynamic reorder levels
 
 const MedicineList = () => {
   const location = useLocation();
@@ -34,6 +36,7 @@ const MedicineList = () => {
   };
   
   const [filters, setFilters] = useState(getInitialFilters);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchMedicines = useCallback(async () => {
     try {
@@ -53,6 +56,15 @@ const MedicineList = () => {
       if (!res.ok) throw new Error("Failed to fetch medicines");
       const data = await res.json();
       console.log('Medicine API response:', data);
+      console.log('Sample medicine from API:', data.data && data.data[0]);
+      if (data.data && data.data.length > 0) {
+        console.log('First medicine reorderLevel:', data.data[0].reorderLevel);
+        console.log('First medicine full object:', JSON.stringify(data.data[0], null, 2));
+        // Check all medicines for reorderLevel
+        data.data.forEach((med, idx) => {
+          console.log(`Medicine ${idx}: ${med.medicineName}, reorderLevel:`, med.reorderLevel, typeof med.reorderLevel);
+        });
+      }
       
       let medicinesList = data.data || [];
       
@@ -60,7 +72,7 @@ const MedicineList = () => {
       if (filters.lowStock || filters.expired) {
         medicinesList = medicinesList.filter(medicine => {
           const isExpired = medicine.expiryDate && new Date(medicine.expiryDate) < new Date();
-          const isLowStock = medicine.quantity <= LOW_STOCK_THRESHOLD;
+          const isLowStock = (medicine.quantity || 0) <= (medicine.reorderLevel || 5);
           
           if (filters.lowStock && filters.expired) {
             return isLowStock || isExpired;
@@ -91,7 +103,7 @@ const MedicineList = () => {
         const medicinesList = data.data || [];
         
         const total = medicinesList.length;
-        const lowStock = medicinesList.filter(med => (med.quantity || 0) <= LOW_STOCK_THRESHOLD).length;
+        const lowStock = medicinesList.filter(med => (med.quantity || 0) <= (med.reorderLevel || 5)).length;
         const expired = medicinesList.filter(med => 
           med.expiryDate && new Date(med.expiryDate) < new Date()
         ).length;
@@ -154,18 +166,82 @@ const MedicineList = () => {
         {/* Content */}
         <div className="flex-1 p-6">
           <div className="bg-white rounded-lg shadow-sm h-full">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">Medicine Inventory Items</h3>
-                <Link to="/medicine/add" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#1f2937',
+                  margin: 0
+                }}>Medicine Inventory Items</h3>
+                <Link 
+                  to="/medicine/add" 
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    textDecoration: 'none',
+                    display: 'inline-block',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
+                >
                   + Add Medicine
                 </Link>
               </div>
             </div>
             
             <div className="p-6">
+          {/* Search Bar */}
           <div style={{
-            ...filtersBar,
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              position: 'relative',
+              maxWidth: '400px'
+            }}>
+              <Search style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '20px',
+                height: '20px',
+                color: '#9ca3af'
+              }} />
+              <input
+                type="text"
+                placeholder="Search medicines by name or category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 40px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#374151',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+            </div>
+          </div>
+
+          <div style={{
             backgroundColor: '#f8fafc',
             padding: '16px',
             borderRadius: '8px',
@@ -175,110 +251,126 @@ const MedicineList = () => {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '20px',
-              marginBottom: '12px'
+              gap: '20px'
             }}>
               <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#374151' }}>
                 Filter Options:
               </h4>
               <label style={{
-                ...checkLabel,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
                 backgroundColor: '#ffffff',
-                padding: '8px 12px',
+                padding: '8px 16px',
                 borderRadius: '6px',
-                border: '1px solid #d1d5db'
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                cursor: 'pointer'
               }}>
                 <input
                   type="checkbox"
                   name="lowStock"
                   checked={filters.lowStock}
                   onChange={handleFilterChange}
-                />{" "}
-                Low Stock (≤ {LOW_STOCK_THRESHOLD} items)
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    margin: '0',
+                    cursor: 'pointer'
+                  }}
+                />
+                Low Stock
               </label>
               <label style={{
-                ...checkLabel,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
                 backgroundColor: '#ffffff',
-                padding: '8px 12px',
+                padding: '8px 16px',
                 borderRadius: '6px',
-                border: '1px solid #d1d5db'
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                cursor: 'pointer'
               }}>
                 <input
                   type="checkbox"
                   name="expired"
                   checked={filters.expired}
                   onChange={handleFilterChange}
-                />{" "}
-                Expired Items
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    margin: '0',
+                    cursor: 'pointer'
+                  }}
+                />
+                Expired
               </label>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button
                 type="button"
-                className="medicine-item-btn"
-                style={{ 
-                  background: "#3b82f6",
-                  color: 'white',
-                  padding: '8px 16px',
-                  fontSize: '14px'
-                }}
-                onClick={() => fetchMedicines()}
-                disabled={loading}
-              >
-                {loading ? "Applying..." : "Apply Filters"}
-              </button>
-              <button
-                type="button"
-                className="medicine-item-btn"
-                style={{ 
-                  background: "#6b7280",
-                  color: 'white',
-                  padding: '8px 16px',
-                  fontSize: '14px'
-                }}
                 onClick={() => {
                   setFilters({ lowStock: false, expired: false });
                 }}
                 disabled={loading}
+                style={{
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  marginLeft: '12px'
+                }}
               >
                 Reset Filters
               </button>
-              {(filters.lowStock || filters.expired) && (
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  alignItems: 'center',
-                  marginLeft: '20px'
-                }}>
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>Active:</span>
-                  {filters.lowStock && (
-                    <span style={{
-                      backgroundColor: '#fbbf24',
-                      color: '#92400e',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      Low Stock
-                    </span>
-                  )}
-                  {filters.expired && (
-                    <span style={{
-                      backgroundColor: '#f87171',
-                      color: '#991b1b',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      Expired
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
+
+          {(filters.lowStock || filters.expired) && (
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              marginBottom: '20px',
+              padding: '12px',
+              backgroundColor: '#f3f4f6',
+              borderRadius: '6px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Active Filters:</span>
+              {filters.lowStock && (
+                <span style={{
+                  backgroundColor: '#fbbf24',
+                  color: '#92400e',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  Low Stock
+                </span>
+              )}
+              {filters.expired && (
+                <span style={{
+                  backgroundColor: '#f87171',
+                  color: '#991b1b',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  Expired
+                </span>
+              )}
+            </div>
+          )}
 
           <div style={summaryBar}>
             {loadingSummary ? (
@@ -334,19 +426,38 @@ const MedicineList = () => {
                     <Th>Expiry</Th>
                     <Th>Batch Number</Th>
                     <Th>Dosage Form</Th>
+                    <Th>Reorder Level</Th>
                     <Th>Status</Th>
                     <Th>Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {medicines.length === 0 && (
+                  {medicines.filter((medicine) => {
+                      if (!searchTerm) return true;
+                      const search = searchTerm.toLowerCase();
+                      return (
+                        medicine.medicineName?.toLowerCase().includes(search) ||
+                        medicine.genericName?.toLowerCase().includes(search) ||
+                        medicine.category?.toLowerCase().includes(search) ||
+                        medicine.dosageForm?.toLowerCase().includes(search)
+                      );
+                    }).length === 0 && (
                     <tr>
                       <td
-                        colSpan={10}
+                        colSpan={11}
                         style={{ padding: "1.5rem", textAlign: "center" }}
                         className="text-muted"
                       >
-                        {filters.lowStock || filters.expired ? (
+                        {searchTerm ? (
+                          <div>
+                            <div style={{ marginBottom: '8px', fontSize: '16px' }}>
+                              No medicines found matching "{searchTerm}"
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                              Try a different search term
+                            </div>
+                          </div>
+                        ) : filters.lowStock || filters.expired ? (
                           <div>
                             <div style={{ marginBottom: '8px', fontSize: '16px' }}>
                               No medicines match your current filters
@@ -375,10 +486,21 @@ const MedicineList = () => {
                       </td>
                     </tr>
                   )}
-                  {medicines.map((medicine) => {
+                  {medicines
+                    .filter((medicine) => {
+                      if (!searchTerm) return true;
+                      const search = searchTerm.toLowerCase();
+                      return (
+                        medicine.medicineName?.toLowerCase().includes(search) ||
+                        medicine.genericName?.toLowerCase().includes(search) ||
+                        medicine.category?.toLowerCase().includes(search) ||
+                        medicine.dosageForm?.toLowerCase().includes(search)
+                      );
+                    })
+                    .map((medicine) => {
                     const expired =
                       medicine.expiryDate && new Date(medicine.expiryDate) < new Date();
-                    const low = (medicine.quantity || 0) <= LOW_STOCK_THRESHOLD;
+                    const low = (medicine.quantity || 0) <= (medicine.reorderLevel || 5);
                     return (
                       <tr key={medicine._id} style={row}>
                         <Td>{medicine.medicineName || 'N/A'}</Td>
@@ -388,7 +510,7 @@ const MedicineList = () => {
                         <Td>
                           <span 
                             className={`quantity-badge ${low ? 'low-stock' : 'normal-stock'}`}
-                            title={`Quantity: ${medicine.quantity || 0}${low ? ' (Low Stock - ≤20)' : ' (Normal Stock)'}`}
+                            title={`Quantity: ${medicine.quantity || 0}${low ? ` (Low Stock - ≤${medicine.reorderLevel || 5})` : ' (Normal Stock)'}`}
                           >
                             {medicine.quantity || 0}
                           </span>
@@ -400,50 +522,184 @@ const MedicineList = () => {
                         </Td>
                         <Td>{medicine.batchNumber || 'N/A'}</Td>
                         <Td>{medicine.dosageForm || 'N/A'}</Td>
+                        <Td>{medicine.reorderLevel || 0}</Td>
                         <Td>
-                          {expired ? (
-                            <span className="medicine-status-badge expired">
-                              Expired
-                            </span>
-                          ) : low ? (
-                            <span className="medicine-status-badge low">Low</span>
-                          ) : (
-                            <span className="medicine-status-badge ok">OK</span>
-                          )}
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            {expired ? (
+                              <span 
+                                className="medicine-status-badge expired"
+                                style={{
+                                  backgroundColor: '#fee2e2',
+                                  color: '#991b1b',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  border: '1px solid #fca5a5',
+                                  minWidth: '70px',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                EXPIRED
+                              </span>
+                            ) : low ? (
+                              <span 
+                                className="medicine-status-badge low"
+                                style={{
+                                  backgroundColor: '#fef3c7',
+                                  color: '#92400e',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  border: '1px solid #fbbf24',
+                                  minWidth: '70px',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                LOW
+                              </span>
+                            ) : (
+                              <span 
+                                className="medicine-status-badge ok"
+                                style={{
+                                  backgroundColor: '#dcfce7',
+                                  color: '#166534',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  border: '1px solid #86efac',
+                                  minWidth: '70px',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                OK
+                              </span>
+                            )}
+                          </div>
                         </Td>
                         <Td>
-                          <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                            <Link 
-                              to={`/medicine/edit/${medicine._id}`} 
-                              className="medicine-item-btn"
-                              style={{ 
-                                fontSize: "0.7rem", 
-                                padding: "4px 8px",
-                                textDecoration: "none",
-                                borderRadius: "4px",
-                                backgroundColor: "#3b82f6",
-                                color: "white",
-                                border: "none",
-                                cursor: "pointer"
-                              }}
-                            >
-                              Update
-                            </Link>
+                          <div style={{ 
+                            display: "flex", 
+                            gap: "4px", 
+                            justifyContent: "center", 
+                            alignItems: "center",
+                            flexWrap: "nowrap",
+                            minWidth: "180px"
+                          }}>
+                            {(expired || low) ? (
+                              <button 
+                                className="medicine-item-btn"
+                                onClick={() => navigate('/orders')}
+                                style={{ 
+                                  fontSize: "0.65rem", 
+                                  padding: "6px 10px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#10b981",
+                                  color: "white",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  minWidth: "55px",
+                                  textAlign: "center",
+                                  fontWeight: "600",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                ORDER
+                              </button>
+                            ) : (
+                              <button 
+                                disabled
+                                className="medicine-item-btn"
+                                style={{ 
+                                  fontSize: "0.65rem", 
+                                  padding: "6px 10px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#9ca3af",
+                                  color: "#d1d5db",
+                                  border: "none",
+                                  cursor: "not-allowed",
+                                  minWidth: "55px",
+                                  textAlign: "center",
+                                  fontWeight: "600",
+                                  whiteSpace: "nowrap",
+                                  opacity: 0.6
+                                }}
+                                title="Can only order low stock or expired medicines"
+                              >
+                                ORDER
+                              </button>
+                            )}
+                            {expired ? (
+                              <button 
+                                disabled
+                                className="medicine-item-btn"
+                                style={{ 
+                                  fontSize: "0.65rem", 
+                                  padding: "6px 10px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#9ca3af",
+                                  color: "#d1d5db",
+                                  border: "none",
+                                  cursor: "not-allowed",
+                                  minWidth: "55px",
+                                  textAlign: "center",
+                                  fontWeight: "600",
+                                  whiteSpace: "nowrap",
+                                  opacity: 0.6
+                                }}
+                                title="Cannot update expired medicine"
+                              >
+                                UPDATE
+                              </button>
+                            ) : (
+                              <Link 
+                                to={`/medicine/edit/${medicine._id}`} 
+                                className="medicine-item-btn"
+                                style={{ 
+                                  fontSize: "0.65rem", 
+                                  padding: "6px 10px",
+                                  textDecoration: "none",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#3b82f6",
+                                  color: "white",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  minWidth: "55px",
+                                  textAlign: "center",
+                                  fontWeight: "600",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                UPDATE
+                              </Link>
+                            )}
                             <Link 
                               to={`/medicine/delete/${medicine._id}`} 
                               className="medicine-item-btn"
                               style={{ 
-                                fontSize: "0.7rem", 
-                                padding: "4px 8px",
+                                fontSize: "0.65rem", 
+                                padding: "6px 10px",
                                 textDecoration: "none",
                                 borderRadius: "4px",
                                 backgroundColor: "#ef4444",
                                 color: "white",
                                 border: "none",
-                                cursor: "pointer"
+                                cursor: "pointer",
+                                minWidth: "55px",
+                                textAlign: "center",
+                                fontWeight: "600",
+                                whiteSpace: "nowrap"
                               }}
                             >
-                              Delete
+                              DELETE
                             </Link>
                           </div>
                         </Td>

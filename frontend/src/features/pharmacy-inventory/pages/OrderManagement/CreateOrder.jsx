@@ -25,6 +25,8 @@ const CreateOrder = () => {
 		itemsText: '',
 		date: todayStr(),
 		status: 'Pending',
+		category: '',
+		quantity: '',
 	});
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState('');
@@ -173,6 +175,34 @@ const CreateOrder = () => {
 									<option>Cancelled</option>
 								</select>
 							</div>
+
+							<div className="form-field">
+								<label htmlFor="category">Category</label>
+								<select 
+									id="category" 
+									value={order.category} 
+									onChange={(e) => setOrder({ ...order, category: e.target.value })}
+								>
+									<option value="">Select category</option>
+									<option value="Medicine">Medicine</option>
+									<option value="Chemical">Chemical</option>
+									<option value="Equipment">Equipment</option>
+								</select>
+							</div>
+
+							{order.category && (
+								<div className="form-field">
+									<label htmlFor="quantity">Quantity</label>
+									<input
+										id="quantity"
+										type="number"
+										min="1"
+										value={order.quantity}
+										onChange={(e) => setOrder({ ...order, quantity: e.target.value })}
+										placeholder="Enter quantity"
+									/>
+								</div>
+							)}
 
 							<div className="form-field col-span-2">
 								<label htmlFor="itemsText">Items (comma separated)</label>

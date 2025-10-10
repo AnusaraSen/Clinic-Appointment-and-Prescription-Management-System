@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import equipmentApi from "../../../../../api/equipmentApi";
 import "../../../../../styles/labInventory/LabItemList.css";
 
@@ -15,6 +16,7 @@ const EquipmentList = () => {
     needsMaintenance: false,
     outOfService: false,
   });
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   const fetchEquipment = useCallback(async () => {
@@ -172,18 +174,77 @@ const EquipmentList = () => {
   return (
     <div className="lab-item-details-page">
       <div className="lab-item-card">
-            <div className="lab-item-header">
-              <h2 className="lab-item-title">Equipment Inventory</h2>
-              <div className="lab-item-actions">
-                <Link to="/equipment-inventory/add" className="lab-item-btn primary">
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#1f2937',
+                  margin: 0
+                }}>Equipment Inventory Items</h3>
+                <Link 
+                  to="/equipment-inventory/add" 
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    textDecoration: 'none',
+                    display: 'inline-block',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
+                >
                   + Add Equipment
                 </Link>
               </div>
             </div>
 
             <div className="lab-item-body" style={{ paddingTop: 20 }}>
+              {/* Search Bar */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ position: 'relative', maxWidth: '400px' }}>
+                  <Search style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '20px',
+                    height: '20px',
+                    color: '#9ca3af'
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Search equipment by name or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px 10px 40px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      color: '#374151',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  />
+                </div>
+              </div>
+
               <div style={{
-                ...filtersBar,
                 backgroundColor: '#f8fafc',
                 padding: '16px',
                 borderRadius: '8px',
@@ -193,8 +254,7 @@ const EquipmentList = () => {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '20px',
-                  marginBottom: '12px'
+                  gap: '20px'
                 }}>
                   <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#374151' }}>
                     Filter Options:
@@ -202,7 +262,7 @@ const EquipmentList = () => {
                   <label style={{
                     ...checkLabel,
                     backgroundColor: '#ffffff',
-                    padding: '8px 12px',
+                    padding: '8px 16px',
                     borderRadius: '6px',
                     border: '1px solid #d1d5db'
                   }}>
@@ -211,14 +271,20 @@ const EquipmentList = () => {
                       name="lowStock"
                       checked={filters.lowStock}
                       onChange={handleFilterChange}
-                      style={{ marginRight: '6px' }}
+                      style={{ 
+                        width: '16px',
+                        height: '16px',
+                        margin: '0',
+                        marginRight: '8px',
+                        cursor: 'pointer'
+                      }}
                     />
                     Low Stock
                   </label>
                   <label style={{
                     ...checkLabel,
                     backgroundColor: '#ffffff',
-                    padding: '8px 12px',
+                    padding: '8px 16px',
                     borderRadius: '6px',
                     border: '1px solid #d1d5db'
                   }}>
@@ -227,14 +293,20 @@ const EquipmentList = () => {
                       name="needsMaintenance"
                       checked={filters.needsMaintenance}
                       onChange={handleFilterChange}
-                      style={{ marginRight: '6px' }}
+                      style={{ 
+                        width: '16px',
+                        height: '16px',
+                        margin: '0',
+                        marginRight: '8px',
+                        cursor: 'pointer'
+                      }}
                     />
                     Needs Maintenance
                   </label>
                   <label style={{
                     ...checkLabel,
                     backgroundColor: '#ffffff',
-                    padding: '8px 12px',
+                    padding: '8px 16px',
                     borderRadius: '6px',
                     border: '1px solid #d1d5db'
                   }}>
@@ -243,7 +315,13 @@ const EquipmentList = () => {
                       name="outOfService"
                       checked={filters.outOfService}
                       onChange={handleFilterChange}
-                      style={{ marginRight: '6px' }}
+                      style={{ 
+                        width: '16px',
+                        height: '16px',
+                        margin: '0',
+                        marginRight: '8px',
+                        cursor: 'pointer'
+                      }}
                     />
                     Out of Service
                   </label>
@@ -255,28 +333,103 @@ const EquipmentList = () => {
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      marginLeft: '12px'
                     }}
                   >
                     Reset Filters
                   </button>
                 </div>
-
-                {!loadingSummary && summary && (
-                  <div style={{
-                    display: 'flex',
-                    gap: '20px',
-                    fontSize: '13px',
-                    color: '#6b7280'
-                  }}>
-                    <span>Total: <strong style={{ color: '#374151' }}>{summary.total}</strong></span>
-                    <span>Low Stock: <strong style={{ color: '#dc2626' }}>{summary.lowStock}</strong></span>
-                    <span>Needs Maintenance: <strong style={{ color: '#f59e0b' }}>{summary.needsMaintenance}</strong></span>
-                    <span>Out of Service: <strong style={{ color: '#dc2626' }}>{summary.outOfService}</strong></span>
-                  </div>
-                )}
               </div>
+
+              {/* Summary Cards */}
+              {!loadingSummary && summary && (
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{
+                    backgroundColor: '#dbeafe',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    minWidth: '70px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      fontWeight: '600', 
+                      color: '#1e40af',
+                      marginBottom: '2px',
+                      opacity: 0.8
+                    }}>
+                      Total
+                    </div>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#1e3a8a',
+                      lineHeight: 1
+                    }}>
+                      {summary.total || 0}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    backgroundColor: '#fef3c7',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    minWidth: '70px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      fontWeight: '600', 
+                      color: '#92400e',
+                      marginBottom: '2px',
+                      opacity: 0.8
+                    }}>
+                      Low Stock
+                    </div>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#92400e',
+                      lineHeight: 1
+                    }}>
+                      {summary.lowStock || 0}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    backgroundColor: '#fecaca',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    minWidth: '70px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      fontWeight: '600', 
+                      color: '#991b1b',
+                      marginBottom: '2px',
+                      opacity: 0.8
+                    }}>
+                      Out of Service
+                    </div>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600', 
+                      color: '#991b1b',
+                      lineHeight: 1
+                    }}>
+                      {summary.outOfService || 0}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="lab-item-error" style={{ marginBottom: '20px' }}>
@@ -298,12 +451,33 @@ const EquipmentList = () => {
                 </div>
               )}
 
-              {equipment.length === 0 ? (
+              {equipment.filter((item) => {
+                if (!searchTerm) return true;
+                const search = searchTerm.toLowerCase();
+                return (
+                  item.itemName?.toLowerCase().includes(search) ||
+                  item.manufacturer?.toLowerCase().includes(search) ||
+                  item.modelNumber?.toLowerCase().includes(search) ||
+                  item.location?.toLowerCase().includes(search)
+                );
+              }).length === 0 ? (
+                <div className="lab-item-empty">
+                  {searchTerm ? (
+                    <div>
+                      No equipment found matching "{searchTerm}". Try a different search term.
+                    </div>
+                  ) : (
+                    <div>
+                      No equipment found. {(filters.lowStock || filters.needsMaintenance || filters.outOfService) && "Try adjusting your filters."}
+                    </div>
+                  )}
+                </div>
+              ) : equipment.length === 0 ? (
                 <div className="lab-item-empty">
                   No equipment found. {(filters.lowStock || filters.needsMaintenance || filters.outOfService) && "Try adjusting your filters."}
                 </div>
               ) : (
-                <div className="lab-item-table-wrapper">
+                <div style={{ overflowX: "auto" }}>
                   <table className="lab-item-table">
                     <thead>
                       <tr>
@@ -322,7 +496,18 @@ const EquipmentList = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {equipment.map((item) => {
+                      {equipment
+                        .filter((item) => {
+                          if (!searchTerm) return true;
+                          const search = searchTerm.toLowerCase();
+                          return (
+                            item.itemName?.toLowerCase().includes(search) ||
+                            item.manufacturer?.toLowerCase().includes(search) ||
+                            item.modelNumber?.toLowerCase().includes(search) ||
+                            item.location?.toLowerCase().includes(search)
+                          );
+                        })
+                        .map((item) => {
                         const status = getEquipmentStatus(item);
                         const needsMaintenance = item.nextMaintenanceDate && new Date(item.nextMaintenanceDate) <= new Date();
                         const isLowStock = (item.quantity || 0) <= item.reorderLevel;
@@ -361,26 +546,74 @@ const EquipmentList = () => {
                               </span>
                             </td>
                             <td>
-                              <div className="lab-item-actions" style={{ display: 'flex', gap: '8px' }}>
-                                <Link
-                                  to={`/equipment-inventory/edit/${item._id}`}
-                                  className="lab-item-btn secondary small"
-                                >
-                                  Update
-                                </Link>
+                              <div className="lab-item-actions" style={{ 
+                                display: 'flex', 
+                                gap: '4px', 
+                                justifyContent: 'center', 
+                                alignItems: 'center',
+                                flexWrap: 'nowrap',
+                                minWidth: '180px'
+                              }}>
                                 <button
-                                  className="lab-item-btn primary small"
+                                  className="lab-item-btn"
                                   disabled={!isLowStock}
                                   onClick={() => navigate('/orders')}
-                                  style={!isLowStock ? { backgroundColor: '#e5e7eb', color: '#6b7280', cursor: 'not-allowed' } : undefined}
+                                  style={{
+                                    fontSize: '0.65rem', 
+                                    padding: '6px 10px',
+                                    borderRadius: '4px',
+                                    backgroundColor: isLowStock ? '#10b981' : '#9ca3af',
+                                    color: isLowStock ? 'white' : '#d1d5db',
+                                    border: 'none',
+                                    cursor: isLowStock ? 'pointer' : 'not-allowed',
+                                    minWidth: '55px',
+                                    textAlign: 'center',
+                                    fontWeight: '600',
+                                    whiteSpace: 'nowrap',
+                                    opacity: isLowStock ? 1 : 0.6
+                                  }}
+                                  title={!isLowStock ? 'Can only order low stock items' : 'Order equipment'}
                                 >
-                                  Order
+                                  ORDER
                                 </button>
-                                <button
-                                  className="lab-item-btn danger small"
-                                  onClick={() => handleDeleteEquipment(item._id, item.itemName)}
+                                <Link
+                                  to={`/equipment-inventory/edit/${item._id}`}
+                                  className="lab-item-btn"
+                                  style={{ 
+                                    fontSize: '0.65rem', 
+                                    padding: '6px 10px',
+                                    textDecoration: 'none',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#3b82f6',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    minWidth: '55px',
+                                    textAlign: 'center',
+                                    fontWeight: '600',
+                                    whiteSpace: 'nowrap'
+                                  }}
                                 >
-                                  Delete
+                                  UPDATE
+                                </Link>
+                                <button
+                                  className="lab-item-btn"
+                                  onClick={() => handleDeleteEquipment(item._id, item.itemName)}
+                                  style={{ 
+                                    fontSize: '0.65rem', 
+                                    padding: '6px 10px',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    minWidth: '55px',
+                                    textAlign: 'center',
+                                    fontWeight: '600',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  DELETE
                                 </button>
                               </div>
                             </td>

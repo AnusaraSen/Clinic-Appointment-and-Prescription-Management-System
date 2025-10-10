@@ -80,6 +80,8 @@ import DoctorProfilePage from './features/clinical-workflow/pages/DoctorProfileP
 import PatientHistoryPage from './features/clinical-workflow/pages/PatientHistoryPage';
 import Home from './pages/Home'
 import InventoryDashboard from './features/pharmacy-inventory/pages/InventoryDashboard'
+import InventorySummary from './features/pharmacy-inventory/pages/InventorySummary'
+import PrescriptionSummary from './features/pharmacy-inventory/pages/PrescriptionSummary'
 import AllActivities from './features/pharmacy-inventory/pages/AllActivities'
 import LowStockItems from './features/pharmacy-inventory/pages/LowStockItems'
 import MedicineList from './features/pharmacy-inventory/pages/Medicine-Inventory/MedicineList'
@@ -663,6 +665,8 @@ function App() {
 
           {/* Pharmacy/Inventory Routes with persistent sidebar */}
           <Route path="/inventory-dashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
+          <Route path="/inventory-summary" element={<InventoryLayout><InventorySummary /></InventoryLayout>} />
+          <Route path="/prescription-summary" element={<PrescriptionSummary />} />
           <Route path="/lab/Pdashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
           <Route path="/activities" element={<InventoryLayout><AllActivities /></InventoryLayout>} />
           <Route path="/low-stock-items" element={<InventoryLayout><LowStockItems /></InventoryLayout>} />

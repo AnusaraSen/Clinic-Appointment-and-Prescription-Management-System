@@ -13,12 +13,14 @@ function normalize(d) {
   const dateRaw = d.Date || d.date || d.created_at;
   return {
     id: (typeof id === "object" && id?.toString) ? id.toString() : String(id),
+    _id: (typeof id === "object" && id?.toString) ? id.toString() : String(id),
     patientId: d.patient_ID ?? d.patientId ?? "",
     patientName: d.patient_name ?? d.patientName ?? "",
     doctorName: d.doctor_Name ?? d.doctorName ?? "",
     date: dateRaw ? new Date(dateRaw).toISOString() : null,
     diagnosis: d.Diagnosis ?? d.diagnosis ?? "",
     symptoms: d.Symptoms ?? d.symptoms ?? "",
+    status: d.status ?? d.Status ?? "New",
     medicines: Array.isArray(d.Medicines) ? d.Medicines.map(m => ({
       name: m.Medicine_Name ?? m.name ?? "",
       dosage: m.Dosage ?? m.dosage ?? "",
@@ -28,6 +30,17 @@ function normalize(d) {
     instructions: d.Instructions ?? d.instructions ?? "",
   };
 }
+
+// GET /prescriptions - Get all prescriptions
+router.get("/", async (req, res) => {
+  try {
+    const docs = await Prescription.find({}).sort({ Date: -1 }).limit(100);
+    const out = docs.map(d => normalize(d.toObject ? d.toObject() : d));
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /prescriptions/by-patient-code/:code
 router.get("/by-patient-code/:code", async (req, res) => {

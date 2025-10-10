@@ -29,9 +29,13 @@ const AllActivities = () => {
       const medicinesRes = await axios.get('http://localhost:5000/api/medicines');
       const medicines = medicinesRes.data.data || [];
       
-      // Fetch lab inventory data
-      const labRes = await axios.get('http://localhost:5000/api/lab-inventory');
-      const labItems = labRes.data.data || [];
+      // Fetch chemicals data
+      const chemicalsRes = await axios.get('http://localhost:5000/api/chemical-inventory');
+      const chemicals = chemicalsRes.data.data || [];
+      
+      // Fetch equipment data
+      const equipmentRes = await axios.get('http://localhost:5000/api/equipment-inventory');
+      const equipment = equipmentRes.data.data || [];
       
       // Generate comprehensive activity list
       const allActivities = [];
@@ -55,90 +59,225 @@ const AllActivities = () => {
         });
       });
 
-      // Add all lab item additions
-      labItems.forEach((labItem) => {
+      // Add all chemical additions
+      chemicals.forEach((chemical) => {
         allActivities.push({
           type: 'add',
-          item: labItem.itemName,
-          time: labItem.createdAt ? 
-            new Date(labItem.createdAt) : 
-            new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Random date within last 30 days
-          quantity: labItem.quantity,
-          category: 'lab',
-          id: labItem._id,
+          item: chemical.itemName,
+          time: chemical.createdAt ? 
+            new Date(chemical.createdAt) : 
+            new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          quantity: chemical.quantity,
+          category: 'chemical',
+          id: chemical._id,
           details: {
-            unit: labItem.unit,
-            location: labItem.location,
-            expiryDate: labItem.expiryDate
+            unit: chemical.unit,
+            location: chemical.location,
+            expiryDate: chemical.expiryDate,
+            hazardClass: chemical.hazardClass
           }
         });
       });
 
-      // Add updates for items with updatedAt different from createdAt
-      [...medicines, ...labItems].forEach((item) => {
-        if (item.updatedAt && item.updatedAt !== item.createdAt) {
+      // Add all equipment additions
+      equipment.forEach((equip) => {
+        allActivities.push({
+          type: 'add',
+          item: equip.itemName,
+          time: equip.createdAt ? 
+            new Date(equip.createdAt) : 
+            new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          quantity: equip.quantity,
+          category: 'equipment',
+          id: equip._id,
+          details: {
+            unit: equip.unit,
+            location: equip.location,
+            manufacturer: equip.manufacturer,
+            modelNumber: equip.modelNumber,
+            condition: equip.condition
+          }
+        });
+      });
+
+      // Add updates for medicines
+      medicines.forEach((medicine) => {
+        if (medicine.updatedAt && medicine.updatedAt !== medicine.createdAt) {
           allActivities.push({
             type: 'update',
-            item: item.medicineName || item.itemName,
-            time: new Date(item.updatedAt),
-            quantity: item.quantity,
-            category: item.medicineName ? 'medicine' : 'lab',
-            id: item._id,
-            details: item.medicineName ? {
-              manufacturer: item.manufacturer,
-              expiryDate: item.expiryDate,
-              batchNumber: item.batchNumber
-            } : {
-              unit: item.unit,
-              location: item.location,
-              expiryDate: item.expiryDate
+            item: `${medicine.medicineName} ${medicine.strength || ''}`.trim(),
+            time: new Date(medicine.updatedAt),
+            quantity: medicine.quantity,
+            category: 'medicine',
+            id: medicine._id,
+            details: {
+              manufacturer: medicine.manufacturer,
+              expiryDate: medicine.expiryDate,
+              batchNumber: medicine.batchNumber
             }
           });
         }
       });
 
-      // Add low stock alerts
-      [...medicines, ...labItems].forEach((item) => {
-        if ((item.quantity || 0) <= 10) {
+      // Add updates for chemicals
+      chemicals.forEach((chemical) => {
+        if (chemical.updatedAt && chemical.updatedAt !== chemical.createdAt) {
+          allActivities.push({
+            type: 'update',
+            item: chemical.itemName,
+            time: new Date(chemical.updatedAt),
+            quantity: chemical.quantity,
+            category: 'chemical',
+            id: chemical._id,
+            details: {
+              unit: chemical.unit,
+              location: chemical.location,
+              expiryDate: chemical.expiryDate,
+              hazardClass: chemical.hazardClass
+            }
+          });
+        }
+      });
+
+      // Add updates for equipment
+      equipment.forEach((equip) => {
+        if (equip.updatedAt && equip.updatedAt !== equip.createdAt) {
+          allActivities.push({
+            type: 'update',
+            item: equip.itemName,
+            time: new Date(equip.updatedAt),
+            quantity: equip.quantity,
+            category: 'equipment',
+            id: equip._id,
+            details: {
+              unit: equip.unit,
+              location: equip.location,
+              manufacturer: equip.manufacturer,
+              modelNumber: equip.modelNumber,
+              condition: equip.condition
+            }
+          });
+        }
+      });
+
+      // Add low stock alerts for medicines
+      medicines.forEach((medicine) => {
+        if ((medicine.quantity || 0) <= 10) {
           allActivities.push({
             type: 'alert',
-            item: item.medicineName || item.itemName,
-            time: new Date(), // Current time for alerts
-            quantity: item.quantity,
-            category: item.medicineName ? 'medicine' : 'lab',
-            id: item._id,
-            alertLevel: (item.quantity || 0) <= 5 ? 'critical' : 'warning',
-            details: item.medicineName ? {
-              manufacturer: item.manufacturer,
-              expiryDate: item.expiryDate,
-              batchNumber: item.batchNumber
-            } : {
-              unit: item.unit,
-              location: item.location,
-              expiryDate: item.expiryDate
+            item: `${medicine.medicineName} ${medicine.strength || ''}`.trim(),
+            time: new Date(),
+            quantity: medicine.quantity,
+            category: 'medicine',
+            id: medicine._id,
+            alertLevel: (medicine.quantity || 0) <= 5 ? 'critical' : 'warning',
+            details: {
+              manufacturer: medicine.manufacturer,
+              expiryDate: medicine.expiryDate,
+              batchNumber: medicine.batchNumber
             }
           });
         }
       });
 
-      // Add expired items alerts
-      [...medicines, ...labItems].forEach((item) => {
-        if (item.expiryDate && new Date(item.expiryDate) < new Date()) {
+      // Add low stock alerts for chemicals
+      chemicals.forEach((chemical) => {
+        if ((chemical.quantity || 0) <= 10) {
+          allActivities.push({
+            type: 'alert',
+            item: chemical.itemName,
+            time: new Date(),
+            quantity: chemical.quantity,
+            category: 'chemical',
+            id: chemical._id,
+            alertLevel: (chemical.quantity || 0) <= 5 ? 'critical' : 'warning',
+            details: {
+              unit: chemical.unit,
+              location: chemical.location,
+              expiryDate: chemical.expiryDate,
+              hazardClass: chemical.hazardClass
+            }
+          });
+        }
+      });
+
+      // Add low stock alerts for equipment
+      equipment.forEach((equip) => {
+        if ((equip.quantity || 0) <= 10) {
+          allActivities.push({
+            type: 'alert',
+            item: equip.itemName,
+            time: new Date(),
+            quantity: equip.quantity,
+            category: 'equipment',
+            id: equip._id,
+            alertLevel: (equip.quantity || 0) <= 5 ? 'critical' : 'warning',
+            details: {
+              unit: equip.unit,
+              location: equip.location,
+              manufacturer: equip.manufacturer,
+              modelNumber: equip.modelNumber,
+              condition: equip.condition
+            }
+          });
+        }
+      });
+
+      // Add expired items alerts for medicines
+      medicines.forEach((medicine) => {
+        if (medicine.expiryDate && new Date(medicine.expiryDate) < new Date()) {
           allActivities.push({
             type: 'expired',
-            item: item.medicineName || item.itemName,
-            time: new Date(item.expiryDate),
-            quantity: item.quantity,
-            category: item.medicineName ? 'medicine' : 'lab',
-            id: item._id,
-            details: item.medicineName ? {
-              manufacturer: item.manufacturer,
-              expiryDate: item.expiryDate,
-              batchNumber: item.batchNumber
-            } : {
-              unit: item.unit,
-              location: item.location,
-              expiryDate: item.expiryDate
+            item: `${medicine.medicineName} ${medicine.strength || ''}`.trim(),
+            time: new Date(medicine.expiryDate),
+            quantity: medicine.quantity,
+            category: 'medicine',
+            id: medicine._id,
+            details: {
+              manufacturer: medicine.manufacturer,
+              expiryDate: medicine.expiryDate,
+              batchNumber: medicine.batchNumber
+            }
+          });
+        }
+      });
+
+      // Add expired items alerts for chemicals
+      chemicals.forEach((chemical) => {
+        if (chemical.expiryDate && new Date(chemical.expiryDate) < new Date()) {
+          allActivities.push({
+            type: 'expired',
+            item: chemical.itemName,
+            time: new Date(chemical.expiryDate),
+            quantity: chemical.quantity,
+            category: 'chemical',
+            id: chemical._id,
+            details: {
+              unit: chemical.unit,
+              location: chemical.location,
+              expiryDate: chemical.expiryDate,
+              hazardClass: chemical.hazardClass
+            }
+          });
+        }
+      });
+
+      // Add expired items alerts for equipment (if applicable)
+      equipment.forEach((equip) => {
+        if (equip.expiryDate && new Date(equip.expiryDate) < new Date()) {
+          allActivities.push({
+            type: 'expired',
+            item: equip.itemName,
+            time: new Date(equip.expiryDate),
+            quantity: equip.quantity,
+            category: 'equipment',
+            id: equip._id,
+            details: {
+              unit: equip.unit,
+              location: equip.location,
+              manufacturer: equip.manufacturer,
+              modelNumber: equip.modelNumber,
+              condition: equip.condition
             }
           });
         }
@@ -200,15 +339,19 @@ const AllActivities = () => {
   };
 
   const getActivityText = (activity) => {
+    const categoryName = activity.category === 'medicine' ? 'medicine' : 
+                         activity.category === 'chemical' ? 'chemical' : 
+                         activity.category === 'equipment' ? 'equipment' : 'item';
+    
     switch (activity.type) {
       case 'add': 
-        return `Added new ${activity.category === 'medicine' ? 'medicine' : 'lab item'}`;
+        return `Added new ${categoryName}`;
       case 'update': 
-        return `Updated ${activity.category === 'medicine' ? 'medicine' : 'lab item'}`;
+        return `Updated ${categoryName}`;
       case 'alert': 
         return `${activity.alertLevel === 'critical' ? 'Critical' : 'Low'} stock alert`;
       case 'expired': 
-        return `Expired ${activity.category === 'medicine' ? 'medicine' : 'lab item'}`;
+        return `Expired ${categoryName}`;
       default: 
         return 'Activity';
     }
@@ -217,8 +360,10 @@ const AllActivities = () => {
   const handleActivityClick = (activity) => {
     if (activity.category === 'medicine') {
       navigate(`/medicine/edit/${activity.id}`);
-    } else if (activity.category === 'lab') {
-      navigate(`/lab/edit/${activity.id}`);
+    } else if (activity.category === 'chemical') {
+      navigate(`/chemical-inventory/edit/${activity.id}`);
+    } else if (activity.category === 'equipment') {
+      navigate(`/equipment-inventory/edit/${activity.id}`);
     }
   };
 
@@ -295,8 +440,9 @@ const AllActivities = () => {
                 className="filter-select"
               >
                 <option value="all">All Categories</option>
-                <option value="medicine">Medicines</option>
-                <option value="lab">Lab Items</option>
+                <option value="medicine">Medicine</option>
+                <option value="chemical">Chemical</option>
+                <option value="equipment">Equipment</option>
               </select>
             </div>
 
@@ -346,7 +492,9 @@ const AllActivities = () => {
                       
                       <div className="activity-meta">
                         <span className={`activity-category ${activity.category}`}>
-                          {activity.category === 'medicine' ? '💊 Medicine' : '🧪 Lab Item'}
+                          {activity.category === 'medicine' && '💊 Medicine'}
+                          {activity.category === 'chemical' && '🧪 Chemical'}
+                          {activity.category === 'equipment' && '🔧 Equipment'}
                         </span>
                         {activity.quantity && (
                           <span className="activity-quantity">
@@ -368,6 +516,15 @@ const AllActivities = () => {
                           )}
                           {activity.details.unit && (
                             <span>Unit: {activity.details.unit}</span>
+                          )}
+                          {activity.details.hazardClass && (
+                            <span>Hazard: {activity.details.hazardClass}</span>
+                          )}
+                          {activity.details.modelNumber && (
+                            <span>Model: {activity.details.modelNumber}</span>
+                          )}
+                          {activity.details.condition && (
+                            <span>Condition: {activity.details.condition}</span>
                           )}
                           {activity.details.expiryDate && (
                             <span>Expires: {new Date(activity.details.expiryDate).toLocaleDateString()}</span>

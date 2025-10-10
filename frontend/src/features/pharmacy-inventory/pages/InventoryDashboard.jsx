@@ -33,23 +33,83 @@ const InventoryDashboard = () => {
     try {
       setLoading(true);
       
-      // Mock recent activity data to match the design
-      const recentActivity = [
-        {
-          type: 'add',
-          item: 'Paracetamol 550mg',
-          time: '1 day ago',
-          quantity: 252,
+      // Fetch data from all three inventory types
+      const [medicinesRes, chemicalsRes, equipmentRes] = await Promise.all([
+        axios.get('http://localhost:5000/api/medicines'),
+        axios.get('http://localhost:5000/api/chemical-inventory'),
+        axios.get('http://localhost:5000/api/equipment-inventory')
+      ]);
+
+      const medicines = medicinesRes.data.data || [];
+      const chemicals = chemicalsRes.data.data || [];
+      const equipment = equipmentRes.data.data || [];
+
+      // Combine all items with their timestamps
+      const allItems = [];
+
+      // Add medicines
+      medicines.forEach((medicine) => {
+        allItems.push({
+          type: medicine.updatedAt && medicine.updatedAt !== medicine.createdAt ? 'update' : 'add',
+          item: `${medicine.medicineName} ${medicine.strength || ''}`.trim(),
+          time: medicine.updatedAt && medicine.updatedAt !== medicine.createdAt 
+            ? new Date(medicine.updatedAt) 
+            : new Date(medicine.createdAt),
+          quantity: medicine.quantity,
           category: 'Medicine'
-        },
-        {
-          type: 'add',
-          item: 'Microscope Slidess',
-          time: '1 day ago',
-          quantity: 100,
-          category: 'Lab Item'
+        });
+      });
+
+      // Add chemicals
+      chemicals.forEach((chemical) => {
+        allItems.push({
+          type: chemical.updatedAt && chemical.updatedAt !== chemical.createdAt ? 'update' : 'add',
+          item: chemical.itemName,
+          time: chemical.updatedAt && chemical.updatedAt !== chemical.createdAt 
+            ? new Date(chemical.updatedAt) 
+            : new Date(chemical.createdAt),
+          quantity: chemical.quantity,
+          category: 'Chemical'
+        });
+      });
+
+      // Add equipment
+      equipment.forEach((equip) => {
+        allItems.push({
+          type: equip.updatedAt && equip.updatedAt !== equip.createdAt ? 'update' : 'add',
+          item: equip.itemName,
+          time: equip.updatedAt && equip.updatedAt !== equip.createdAt 
+            ? new Date(equip.updatedAt) 
+            : new Date(equip.createdAt),
+          quantity: equip.quantity,
+          category: 'Equipment'
+        });
+      });
+
+      // Sort by most recent and take top 5
+      const sortedItems = allItems.sort((a, b) => b.time - a.time).slice(0, 5);
+
+      // Format time for display
+      const recentActivity = sortedItems.map(item => {
+        const now = new Date();
+        const diffInHours = (now - item.time) / (1000 * 60 * 60);
+        
+        let timeText;
+        if (diffInHours < 1) {
+          timeText = 'Just now';
+        } else if (diffInHours < 24) {
+          const hours = Math.floor(diffInHours);
+          timeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else {
+          const days = Math.floor(diffInHours / 24);
+          timeText = `${days} day${days > 1 ? 's' : ''} ago`;
         }
-      ];
+
+        return {
+          ...item,
+          time: timeText
+        };
+      });
 
       setDashboardData(prev => ({
         ...prev,
@@ -92,6 +152,14 @@ const InventoryDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/inventory-summary')}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2 font-medium"
+              >
+                <Activity className="w-5 h-5" />
+                View Summary Report
+              </button>
+              <Bell className="w-6 h-6 text-gray-600" />
               <div className="relative">
                 <Bell className="w-6 h-6 text-gray-600" />
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
@@ -173,30 +241,47 @@ const InventoryDashboard = () => {
                 </div>
                 
                 <div className="p-6 space-y-4">
-                  {dashboardData.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="bg-green-100 p-2 rounded-full">
-                        <Plus className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-800 font-medium">Added new {activity.category.toLowerCase()}</span>
+                  {dashboardData.recentActivity.length > 0 ? (
+                    dashboardData.recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                        <div className={`${activity.type === 'update' ? 'bg-yellow-100' : 'bg-green-100'} p-2 rounded-full`}>
+                          {activity.type === 'update' ? (
+                            <Activity className="w-4 h-4 text-yellow-600" />
+                          ) : (
+                            <Plus className="w-4 h-4 text-green-600" />
+                          )}
                         </div>
-                        <p className="text-gray-900 font-semibold mt-1">{activity.item}</p>
-                        <p className="text-gray-600 text-sm">Quantity: {activity.quantity}</p>
-                        <div className="flex items-center space-x-2 mt-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            activity.category === 'Medicine' 
-                              ? 'bg-blue-100 text-blue-700' 
-                              : 'bg-purple-100 text-purple-700'
-                          }`}>
-                            {activity.category === 'Medicine' ? '💊 Medicine' : '🧪 Lab Item'}
-                          </span>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-800 font-medium">
+                              {activity.type === 'update' ? 'Updated' : 'Added new'} {activity.category.toLowerCase()}
+                            </span>
+                          </div>
+                          <p className="text-gray-900 font-semibold mt-1">{activity.item}</p>
+                          <p className="text-gray-600 text-sm">Quantity: {activity.quantity}</p>
+                          <div className="flex items-center space-x-2 mt-2">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              activity.category === 'Medicine' 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : activity.category === 'Chemical'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {activity.category === 'Medicine' && '💊 Medicine'}
+                              {activity.category === 'Chemical' && '🧪 Chemical'}
+                              {activity.category === 'Equipment' && '🔧 Equipment'}
+                            </span>
+                          </div>
                         </div>
+                        <span className="text-gray-500 text-sm">{activity.time}</span>
                       </div>
-                      <span className="text-gray-500 text-sm">{activity.time}</span>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Activity className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                      <p>No recent activity</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -246,13 +331,6 @@ const InventoryDashboard = () => {
                             </p>
                           </div>
                         </div>
-                        <button className={`px-3 py-1 rounded text-sm font-medium ${
-                          item.status === 'expired'
-                            ? 'bg-red-600 text-white hover:bg-red-700'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}>
-                          {item.status === 'expired' ? 'Remove' : 'Update'}
-                        </button>
                       </div>
                       
                       {item.status !== 'expired' && (
