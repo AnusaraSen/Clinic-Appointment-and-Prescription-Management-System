@@ -83,7 +83,15 @@ const OrderList = () => {
 											<button className="btn-warning" onClick={openLowStock}>
 												⚠️ Order Low/Expired Items
 											</button>
-							<button className="btn-primary" onClick={() => navigate('/orders/new')}>
+							<button 
+								className="btn-primary" 
+								onClick={() => navigate('/orders/new')}
+								style={{
+									backgroundColor: '#10b981',
+									borderColor: '#10b981',
+									color: 'white'
+								}}
+							>
 								+ New Order
 							</button>
 						</div>
@@ -124,10 +132,45 @@ const OrderList = () => {
 											<td>{o.date ? new Date(o.date).toISOString().slice(0,10) : ''}</td>
 											<td><StatusBadge status={o.status} /></td>
 											<td>
-												<div className="orders-row-actions">
-													{o.status === 'Delivered' && <span title="Delivered">✔️</span>}
-													<Link to={`/orders/edit/${o._id}`} title="Edit">✏️</Link>
-													<button className="icon-btn danger" title="Delete" onClick={() => handleDelete(o._id)}>🗑️</button>
+												<div className="orders-row-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+													<button 
+														className="action-btn update-btn"
+														onClick={() => navigate(`/orders/edit/${o._id}`)}
+														disabled={o.status === 'Delivered'}
+														style={{
+															backgroundColor: o.status === 'Delivered' ? '#9ca3af' : '#3b82f6',
+															color: 'white',
+															border: 'none',
+															padding: '6px 12px',
+															borderRadius: '4px',
+															fontSize: '12px',
+															fontWeight: '600',
+															cursor: o.status === 'Delivered' ? 'not-allowed' : 'pointer',
+															minWidth: '60px',
+															opacity: o.status === 'Delivered' ? 0.6 : 1
+														}}
+														title={o.status === 'Delivered' ? 'Cannot update delivered order' : 'Update Order'}
+													>
+														UPDATE
+													</button>
+													<button 
+														className="action-btn delete-btn"
+														onClick={() => handleDelete(o._id)}
+														style={{
+															backgroundColor: '#ef4444',
+															color: 'white',
+															border: 'none',
+															padding: '6px 12px',
+															borderRadius: '4px',
+															fontSize: '12px',
+															fontWeight: '600',
+															cursor: 'pointer',
+															minWidth: '60px'
+														}}
+														title="Delete Order"
+													>
+														DELETE
+													</button>
 												</div>
 											</td>
 										</tr>
@@ -173,6 +216,11 @@ const OrderList = () => {
 																className="btn-primary btn-sm"
 																disabled={!groups[cat] || groups[cat].length === 0}
 																onClick={() => navigate('/orders/new', { state: { prefillItems: groups[cat].map((it) => ({ ...it, category: normalizeCategory(it.category) })) } })}
+																style={{
+																	backgroundColor: '#10b981',
+																	borderColor: '#10b981',
+																	color: 'white'
+																}}
 															>
 																🛒 Order All {cat}
 															</button>
@@ -197,7 +245,15 @@ const OrderList = () => {
 																		<td>{it.threshold}</td>
 																		<td>{it.reason || (it.quantity < it.threshold ? 'Low Stock' : '')}</td>
 																		<td>
-																			<button className="btn-primary btn-sm" onClick={() => navigate('/orders/new', { state: { prefillItems: [{ ...it, category: normalizeCategory(it.category) }] } })}>
+																			<button 
+																				className="btn-primary btn-sm" 
+																				onClick={() => navigate('/orders/new', { state: { prefillItems: [{ ...it, category: normalizeCategory(it.category) }] } })}
+																				style={{
+																					backgroundColor: '#10b981',
+																					borderColor: '#10b981',
+																					color: 'white'
+																				}}
+																			>
 																				🛒 Order
 																			</button>
 																		</td>

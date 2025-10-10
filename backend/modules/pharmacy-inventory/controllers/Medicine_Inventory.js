@@ -8,7 +8,10 @@ const getMedicines = async (req, res) => {
     console.log('getMedicines called - fetching from medicine_inventory collection');
     const medicines = await Medicine.find();
     console.log('Found medicines:', medicines.length);
-    console.log('Sample medicine:', medicines[0]);
+    if (medicines.length > 0) {
+      console.log('Sample medicine:', medicines[0]);
+      console.log('Sample medicine reorderLevel:', medicines[0].reorderLevel);
+    }
     res.status(200).json({
       success: true,
       count: medicines.length,
@@ -115,8 +118,37 @@ const createMedicine = async (req, res) => {
       }
     }
 
-    const medicine = await Medicine.create(req.body);
+    // Ensure reorderLevel has a value (use default if not provided)
+    if (req.body.reorderLevel === undefined || req.body.reorderLevel === null) {
+      req.body.reorderLevel = 5; // Default value
+    }
+    
+    console.log('[createMedicine] Final payload before create:', req.body);
+    console.log('[createMedicine] ReorderLevel in payload:', req.body.reorderLevel);
+    
+    // Explicitly build medicine object to ensure all fields are included
+    const medicineData = {
+      medicine_id: req.body.medicine_id,
+      medicineName: req.body.medicineName,
+      genericName: req.body.genericName,
+      strength: req.body.strength,
+      unit: req.body.unit,
+      quantity: req.body.quantity,
+      batchNumber: req.body.batchNumber,
+      dosageForm: req.body.dosageForm,
+      reorderLevel: req.body.reorderLevel, // Explicitly include reorderLevel
+    };
+    
+    // Add optional fields if they exist
+    if (req.body.expiryDate) medicineData.expiryDate = req.body.expiryDate;
+    if (req.body.manufactureDate) medicineData.manufactureDate = req.body.manufactureDate;
+    if (req.body.inventory) medicineData.inventory = req.body.inventory;
+    
+    console.log('[createMedicine] Medicine data object:', medicineData);
+    const medicine = await Medicine.create(medicineData);
     console.log('[createMedicine] Created medicine:', medicine._id, medicine.medicine_id);
+    console.log('[createMedicine] Saved reorderLevel:', medicine.reorderLevel);
+    console.log('[createMedicine] Full medicine object:', JSON.stringify(medicine, null, 2));
     res.status(201).json({ success: true, data: medicine });
   } catch (error) {
     console.error('[createMedicine] Error:', error);

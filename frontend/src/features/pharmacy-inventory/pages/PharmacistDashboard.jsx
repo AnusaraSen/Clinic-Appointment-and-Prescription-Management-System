@@ -246,6 +246,11 @@ const PharmacistDashboard = () => {
     navigate('/low-stock-items');
   };
 
+  const handleNavigateToPrescriptionSummary = () => {
+    // Navigate to prescription summary page
+    navigate('/prescription-summary');
+  };
+
   // Handle URL-based navigation
   useEffect(() => {
     const path = location.pathname;
@@ -299,18 +304,58 @@ const PharmacistDashboard = () => {
         {/* Main Content */}
         <div className={`main-content ${isSidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
             {/* Header */}
-            <header className="header">
-              <div className="header-left">
-                <h1>Pharmacist Dashboard</h1>
-                <div className="current-date">
-                  Tuesday, September 3, 2024
+            <header style={{
+              backgroundColor: 'white',
+              padding: '24px 32px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <h1 style={{
+                  fontSize: '28px',
+                  fontWeight: '700',
+                  color: '#0c5460',
+                  margin: '0 0 4px 0'
+                }}>
+                  Inventory Dashboard
+                </h1>
+                <div style={{
+                  fontSize: '14px',
+                  color: '#6b7280',
+                  fontWeight: '400'
+                }}>
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
               </div>
               
-              <div className="header-right">
-                <div className="pharmacist-info">
-                  <i className="fas fa-user-md"></i>
-                  <span>Pharmacist</span>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '24px'
+              }}>
+                <i className="fas fa-bell" style={{
+                  fontSize: '20px',
+                  color: '#6b7280',
+                  cursor: 'pointer'
+                }}></i>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <i className="fas fa-user-circle" style={{
+                    fontSize: '24px',
+                    color: '#6b7280'
+                  }}></i>
+                  <span style={{
+                    fontSize: '14px',
+                    color: '#374151',
+                    fontWeight: '500'
+                  }}>
+                    Inventory Manager
+                  </span>
                 </div>
               </div>
             </header>
@@ -326,6 +371,7 @@ const PharmacistDashboard = () => {
                   onNavigateToPrescriptions={handleNavigateToPrescriptions}
                   onNavigateToMedicineInventory={handleNavigateToMedicineInventory}
                   onNavigateToLowStockMedicines={handleNavigateToLowStockMedicines}
+                  onNavigateToPrescriptionSummary={handleNavigateToPrescriptionSummary}
                 />
               )}
               

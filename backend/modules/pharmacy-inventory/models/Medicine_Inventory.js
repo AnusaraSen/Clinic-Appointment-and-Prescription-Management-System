@@ -12,8 +12,9 @@ const medicineSchema = new mongoose.Schema({
   genericName: { type: String },
   expiryDate: { type: Date },
   manufactureDate: { type: Date },
-  dosageForm: { type: String }
-}, { timestamps: true });
+  dosageForm: { type: String },
+  reorderLevel: { type: Number, required: false, default: 5 }, // Default reorder level
+}, { timestamps: true, strict: false });
 
 const Medicine = mongoose.model("Medicine", medicineSchema, "medicine_inventory");
 

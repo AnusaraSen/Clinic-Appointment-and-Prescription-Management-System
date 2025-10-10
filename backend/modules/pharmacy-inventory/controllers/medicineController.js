@@ -1,4 +1,4 @@
-const Medicine = require('../models/medicineModel');
+const Medicine = require('../models/Medicine_Inventory');
 
 // @desc    Get all medicines
 // @route   GET /api/medicines

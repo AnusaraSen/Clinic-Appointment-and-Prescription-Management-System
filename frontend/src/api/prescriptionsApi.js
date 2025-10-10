@@ -12,4 +12,6 @@ export default {
   get: (id) => api.get(`/get/${id}`),
   // GET /prescriptions/by-patient/:patientId (alt route in clinical-workflow)
   listByPatient: (patientId) => api.get(`/by-patient/${encodeURIComponent(patientId)}`),
+  // DELETE /prescription/delete/:id
+  delete: (id) => api.delete(`/delete/${id}`),
 };
