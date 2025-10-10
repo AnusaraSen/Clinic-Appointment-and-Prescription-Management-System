@@ -88,6 +88,7 @@ const clinicalLabTaskSchema = new mongoose.Schema({
     processedBy: { type: String },
     instrumentUsed: { type: String },
     methodUsed: { type: String },
+    chemicalUsed: { type: String }, // New field for chemical used in processing
     calibrationStatus: { type: String },
     qualityControlPassed: { type: Boolean },
     processingNotes: { type: String },

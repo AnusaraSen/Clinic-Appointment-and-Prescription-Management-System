@@ -9,17 +9,21 @@ import {
   AlertCircle
 } from 'lucide-react';
 import ValidationAlert from './ValidationAlert';
+import { useAuth } from '../../authentication/context/AuthContext';
 
 const SampleCollectionForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
+  // Get current user from authentication context
+  const { user } = useAuth();
+  
   // Current user - should match the logged-in user from dashboard
   const currentUser = {
-    name: 'Kasun',
-    id: 'LAB-0001',
-    role: 'Lab Assistant'
+    name: user?.name || user?.firstName || user?.username || 'Unknown User',
+    id: user?.lab_staff_id || user?.id || 'N/A',
+    role: user?.role || user?.specialization || 'Lab Assistant'
   };
 
   const [formData, setFormData] = useState({
-    collectedBy: currentUser.name, // Auto-populate with current user
+    collectedBy: currentUser.name, // Auto-populate with current user name only
     collectionDateTime: '',
     collectionSite: '',
     tubeType: '',
@@ -134,13 +138,13 @@ const SampleCollectionForm = ({ taskId, onClose, onSuccess, isModal = false }) =
 
   const fetchExistingData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`);
+      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}`);
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data.sampleCollection) {
-          const existing = result.data.sampleCollection;
+        if (result.success && result.task.sampleCollection) {
+          const existing = result.task.sampleCollection;
           setFormData({
-            collectedBy: existing.collectedBy || currentUser.name, // Preserve current user if no existing data
+            collectedBy: existing.collectedBy || currentUser.name, // Preserve existing or use current user name only
             collectionDateTime: existing.collectionDateTime ? new Date(existing.collectionDateTime).toISOString().slice(0, 16) : '',
             collectionSite: existing.collectionSite || '',
             tubeType: existing.tubeType || '',
@@ -193,6 +197,8 @@ const SampleCollectionForm = ({ taskId, onClose, onSuccess, isModal = false }) =
       };
 
       console.log('Submitting sample collection data:', sampleCollectionData); // Debug log
+      console.log('Task ID:', taskId); // Debug log
+      console.log('API URL:', `http://localhost:5000/api/labtasks/${taskId}/processing`); // Debug log
 
       const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`, {
         method: 'POST',
@@ -204,14 +210,17 @@ const SampleCollectionForm = ({ taskId, onClose, onSuccess, isModal = false }) =
 
       const result = await response.json();
       console.log('Backend response:', result); // Debug log
+      console.log('Response status:', response.status); // Debug log
+      console.log('Response ok:', response.ok); // Debug log
 
-      if (response.ok && result.success) {
-        console.log('✅ Sample collection recorded:', result.data);
-        onSuccess && onSuccess('Sample collection completed successfully!');
+      if (response.ok && (result.success || result.message)) {
+        console.log('✅ Sample collection recorded:', result.task || result.data);
+        onSuccess && onSuccess(result.message || 'Sample collection completed successfully!');
         onClose();
       } else {
         console.error('Backend error:', result);
-        setError(result.error || 'Failed to save sample collection data');
+        console.error('Full error details:', JSON.stringify(result, null, 2));
+        setError(result.error || result.message || `Server error (${response.status}): Failed to save sample collection data`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -283,7 +292,6 @@ const SampleCollectionForm = ({ taskId, onClose, onSuccess, isModal = false }) =
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 flex items-center">
                     <User className="h-4 w-4 text-gray-500 mr-2" />
                     <span className="text-gray-900 font-medium">{currentUser.name}</span>
-                    <span className="text-gray-500 ml-2">({currentUser.id})</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">Sample collected by current logged-in user</p>
                   {/* Hidden input to maintain form data */}

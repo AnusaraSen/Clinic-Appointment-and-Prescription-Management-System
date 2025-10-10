@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Edit, Trash2, Plus, Search, Filter, AlertCircle, CheckCircle, Clock, Calendar, UserPlus, User } from "lucide-react";
 import TaskAPI from "../../../api/api";
 import PatientSearchModal from "./PatientSearchModal";
@@ -156,7 +156,13 @@ const TaskListPage = () => {
       // You'll need to create this API endpoint
       const response = await TaskAPI.get("/lab-staff");
       console.log("Lab staff response:", response.data);
-      setLabStaff(response.data);
+      
+      // Filter only available staff for assignment
+      const availableStaff = response.data.filter(staff => 
+        staff.availability === 'Available'
+      );
+      console.log("Available staff for assignment:", availableStaff);
+      setLabStaff(availableStaff);
     } catch (error) {
       console.error("Error fetching lab staff:", error);
       setLabStaff([]);
@@ -333,8 +339,11 @@ const TaskListPage = () => {
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending': return 'status-pending';
+      case 'sample collected': return 'status-sample-collected';
       case 'in progress': return 'status-in-progress';
+      case 'results ready': return 'status-results-ready';
       case 'completed': return 'status-completed';
+      case 'cancelled': return 'status-cancelled';
       default: return 'status-default';
     }
   };
@@ -403,57 +412,71 @@ const TaskListPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="grid grid-cols-5 gap-3">
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{tasks.length}</p>
+                <p className="text-xs font-medium text-gray-600">Total Tasks</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">{tasks.length}</p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock size={20} className="text-blue-600" />
+              <div className="p-1.5 bg-blue-100 rounded-lg">
+                <Clock size={16} className="text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">
+                <p className="text-xs font-medium text-gray-600">Pending</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">
                   {tasks.filter(task => task.status === 'Pending').length}
                 </p>
               </div>
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock size={20} className="text-yellow-600" />
+              <div className="p-1.5 bg-yellow-100 rounded-lg">
+                <Clock size={16} className="text-yellow-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">
+                <p className="text-xs font-medium text-gray-600">In Progress</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">
                   {tasks.filter(task => task.status === 'In Progress').length}
                 </p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <AlertCircle size={20} className="text-blue-600" />
+              <div className="p-1.5 bg-blue-100 rounded-lg">
+                <AlertCircle size={16} className="text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">
+                <p className="text-xs font-medium text-gray-600">Results Ready</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">
+                  {tasks.filter(task => task.status === 'Results Ready').length}
+                </p>
+              </div>
+              <div className="p-1.5 bg-orange-100 rounded-lg">
+                <AlertCircle size={16} className="text-orange-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600">Completed</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">
                   {tasks.filter(task => task.status === 'Completed').length}
                 </p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle size={20} className="text-green-600" />
+              <div className="p-1.5 bg-green-100 rounded-lg">
+                <CheckCircle size={16} className="text-green-600" />
               </div>
             </div>
           </div>
@@ -483,8 +506,11 @@ const TaskListPage = () => {
               >
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
+                <option value="Sample Collected">Sample Collected</option>
                 <option value="In Progress">In Progress</option>
+                <option value="Results Ready">Results Ready</option>
                 <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
               
               <select
@@ -513,13 +539,6 @@ const TaskListPage = () => {
                   : "No tasks match your current filters."
                 }
               </p>
-              <Link 
-                to="/add-task" 
-                className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Your First Task
-              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -621,7 +640,10 @@ const TaskListPage = () => {
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
                           task.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                          task.status === 'Results Ready' ? 'bg-orange-100 text-orange-800' :
                           task.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                          task.status === 'Sample Collected' ? 'bg-purple-100 text-purple-800' :
+                          task.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
                           {task.status}
@@ -647,18 +669,21 @@ const TaskListPage = () => {
                             <UserPlus size={16} />
                           </button>
                           
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              console.log("Edit button clicked for task:", task);
-                              openEditModal(task);
-                            }}
-                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-0"
-                            title="Edit Task"
-                          >
-                            <Edit size={16} />
-                          </button>
+                          {/* Only show Edit button if task is not completed or results ready */}
+                          {task.status !== 'Completed' && task.status !== 'Results Ready' && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log("Edit button clicked for task:", task);
+                                openEditModal(task);
+                              }}
+                              className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-0"
+                              title="Edit Task"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => {
@@ -799,7 +824,7 @@ const TaskListPage = () => {
                       ))}
                     </select>
                     {labStaff.length === 0 && (
-                      <p className="text-xs text-gray-500 mt-1">No lab assistants available</p>
+                      <p className="text-xs text-red-500 mt-1">No lab assistants are currently available for assignment</p>
                     )}
                   </div>
                 </div>
@@ -936,8 +961,11 @@ const TaskListPage = () => {
                       >
                         <option value="">Select Status</option>
                         <option value="Pending">Pending</option>
+                        <option value="Sample Collected">Sample Collected</option>
                         <option value="In Progress">In Progress</option>
+                        <option value="Results Ready">Results Ready</option>
                         <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                     </div>
                   </div>
@@ -1086,8 +1114,11 @@ const TaskListPage = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm bg-white"
                       >
                         <option value="Pending">Pending</option>
+                        <option value="Sample Collected">Sample Collected</option>
                         <option value="In Progress">In Progress</option>
+                        <option value="Results Ready">Results Ready</option>
                         <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                     </div>
                   </div>

@@ -400,9 +400,13 @@ function App() {
         <Route 
           path="/lab/supervisor/dashboard" 
           element={
-            <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
-              <LabSupervisorDashboardPage />
-            </RoleProtectedRoute>
+            <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
+                <ProfessionalLayout>
+                  <LabSupervisorDashboardPage />
+                </ProfessionalLayout>
+              </RoleProtectedRoute>
+            </ProtectedRoute>
           } 
         />
         
