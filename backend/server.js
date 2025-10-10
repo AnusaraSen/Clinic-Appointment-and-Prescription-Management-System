@@ -30,6 +30,7 @@ const {
 } = require('./middleware');
 
 const connectToDatabase = require('./config/db');
+const equipmentStatusService = require('./services/equipmentStatusService');
 
 // Let's create our Express app - this is where the magic begins! ✨
 const app = express();
@@ -217,6 +218,9 @@ const PORT = process.env.PORT || 5000;
   try {
     // First, let's make sure we can talk to MongoDB
     await connectToDatabase();
+
+    // Initialize equipment status checker for automatic updates
+    equipmentStatusService.initializeEquipmentStatusChecker();
 
     // Now we can start our server with confidence!
     const server = app.listen(PORT, () => {

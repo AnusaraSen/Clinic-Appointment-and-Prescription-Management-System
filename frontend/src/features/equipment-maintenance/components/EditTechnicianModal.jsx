@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, MapPin, Clock, Wrench, Save } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../../../shared/components/ValidatedInput';
+import { validators } from '../../../shared/utils/formValidation';
 
 /**
  * Edit Technician Modal
@@ -34,6 +36,8 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
   const [skillInput, setSkillInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Populate form data when technician prop changes
   useEffect(() => {
@@ -79,6 +83,71 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
         [name]: value
       }));
     }
+    
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'firstName':
+      case 'lastName':
+        error = validators.name(value);
+        break;
+      case 'email':
+        error = validators.email(value);
+        break;
+      case 'phone':
+        error = validators.phone(value);
+        break;
+      case 'employeeId':
+        error = validators.employeeId(value);
+        break;
+      case 'department':
+        error = validators.required(value, 'Department');
+        break;
+      case 'location':
+        if (value && value.length > 200) {
+          error = 'Location must be less than 200 characters';
+        }
+        break;
+      case 'experienceLevel':
+        if (value && !['Junior', 'Mid-Level', 'Senior', 'Expert'].includes(value)) {
+          error = 'Invalid experience level';
+        }
+        break;
+      case 'hireDate':
+        if (value) {
+          error = validators.pastDate(value);
+        }
+        break;
+      case 'emergencyContact.name':
+        if (value) {
+          error = validators.name(value);
+        }
+        break;
+      case 'emergencyContact.phone':
+        if (value) {
+          error = validators.phone(value);
+        }
+        break;
+      case 'notes':
+        error = validators.textLength(value, 0, 1000, 'Notes');
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
   };
 
   // Add skill
@@ -110,40 +179,36 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
 
   // Validate form
   const validateForm = () => {
-    if (!formData.firstName.trim()) return 'First name is required';
-    if (!formData.lastName.trim()) return 'Last name is required';
-    if (!formData.email.trim()) return 'Email is required';
-    if (!formData.phone.trim()) return 'Phone number is required';
-    if (!formData.employeeId.trim()) return 'Employee ID is required';
-    if (!formData.department.trim()) return 'Department is required';
+    const newErrors = {};
+    const allTouched = {};
+
+    // Validate all fields
+    const fieldsToValidate = ['firstName', 'lastName', 'email', 'phone', 'employeeId', 
+      'department', 'location', 'experienceLevel', 'hireDate', 'emergencyContact.name', 
+      'emergencyContact.phone', 'notes'];
     
-    // Employee ID validation (must be T### format)
-    const employeeIdRegex = /^T\d{3}$/;
-    if (!employeeIdRegex.test(formData.employeeId)) return 'Employee ID must be in T### format (e.g., T123)';
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) return 'Please enter a valid email address';
-    
-    // Phone validation (must be digits only, starting with 1-9)
-    const phoneDigitsOnly = formData.phone.replace(/\D/g, ''); // Remove all non-digits
-    if (phoneDigitsOnly.length < 10 || phoneDigitsOnly.length > 15) {
-      return 'Phone number must be 10-15 digits';
-    }
-    if (phoneDigitsOnly[0] === '0') {
-      return 'Phone number cannot start with 0';
-    }
-    
-    return null;
+    fieldsToValidate.forEach(field => {
+      allTouched[field] = true;
+      const value = field.includes('.') 
+        ? formData[field.split('.')[0]][field.split('.')[1]]
+        : formData[field];
+      const error = validateField(field, value);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    setTouched(allTouched);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    if (!validateForm()) {
+      setError('Please fix all validation errors before submitting');
       return;
     }
 

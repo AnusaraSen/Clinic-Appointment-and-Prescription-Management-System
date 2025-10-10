@@ -332,10 +332,10 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
                 Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Last Maintenance
+                Model Number
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Next Maintenance
+                Serial Number
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -393,10 +393,10 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
                       {item.type || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(item.lastMaintenance)}
+                      {item.modelNumber || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(item.nextMaintenance)}
+                      {item.serialNumber || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex items-center space-x-2">

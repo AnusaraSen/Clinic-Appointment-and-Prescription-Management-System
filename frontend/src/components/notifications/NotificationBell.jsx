@@ -13,8 +13,8 @@ const NotificationBell = () => {
   useEffect(() => {
     fetchUnreadCount();
     
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Poll for new notifications every 5 seconds for real-time updates
+    const interval = setInterval(fetchUnreadCount, 5000);
     
     return () => clearInterval(interval);
   }, []);
@@ -34,6 +34,16 @@ const NotificationBell = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [showDropdown]);
+
+  // Auto-refresh notifications when dropdown is open
+  useEffect(() => {
+    if (showDropdown) {
+      // Refresh notifications every 5 seconds while dropdown is open
+      const interval = setInterval(fetchNotifications, 5000);
+      
+      return () => clearInterval(interval);
+    }
   }, [showDropdown]);
 
   const fetchUnreadCount = async () => {

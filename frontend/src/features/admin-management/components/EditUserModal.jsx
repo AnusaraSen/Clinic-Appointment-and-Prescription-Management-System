@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar, Shield, Key, Eye, EyeOff } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
+import { ValidatedInput, ValidatedSelect, PasswordStrengthMeter } from '../../../shared/components/ValidatedInput';
+import { validators, calculatePasswordStrength } from '../../../shared/utils/formValidation';
 
 export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
   useHideNavbar(isOpen);
@@ -21,6 +23,8 @@ export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [passwordStrength, setPasswordStrength] = useState({ strength: 'none', score: 0, feedback: '' });
 
   // Initialize form data when user changes
   useEffect(() => {
@@ -47,42 +51,100 @@ export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear specific error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    // Calculate password strength on change
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
     }
+
+    // Real-time validation ONLY if field has been touched and has error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    
+    // Mark field as touched
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    // Validate the field
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = null;
+
+    switch (fieldName) {
+      case 'name':
+        error = validators.name(value, 'Name');
+        break;
+      case 'email':
+        error = validators.email(value);
+        break;
+      case 'phone':
+        error = validators.phoneOptional(value);
+        break;
+      case 'password':
+        // Password is optional in edit mode, but if provided, must be valid
+        if (value) {
+          error = validators.password(value);
+        }
+        break;
+      case 'confirmPassword':
+        // Only validate if password was entered
+        if (formData.password && value) {
+          error = validators.passwordConfirm(value, formData.password);
+        }
+        break;
+      default:
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
+    // Validate all fields
+    const nameError = validators.name(formData.name, 'Name');
+    if (nameError) newErrors.name = nameError;
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
+    const emailError = validators.email(formData.email);
+    if (emailError) newErrors.email = emailError;
 
     if (!formData.role) {
       newErrors.role = 'Role is required';
     }
 
-    // Password validation only if password is provided
-    if (formData.password) {
-      if (formData.password.length < 6) {
-        newErrors.password = 'Password must be at least 6 characters';
-      }
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
+    // Phone is optional
+    if (formData.phone) {
+      const phoneError = validators.phoneOptional(formData.phone);
+      if (phoneError) newErrors.phone = phoneError;
     }
 
-    if (formData.age && (isNaN(formData.age) || formData.age < 1 || formData.age > 150)) {
-      newErrors.age = 'Age must be between 1 and 150';
+    // Password validation only if password is provided (optional in edit mode)
+    if (formData.password) {
+      const passwordError = validators.password(formData.password);
+      if (passwordError) newErrors.password = passwordError;
+
+      const confirmPasswordError = validators.passwordConfirm(formData.confirmPassword, formData.password);
+      if (confirmPasswordError) newErrors.confirmPassword = confirmPasswordError;
     }
+
+    // Age validation
+    if (formData.age) {
+      const ageError = validators.numberRange(formData.age, 1, 150, 'Age');
+      if (ageError) newErrors.age = ageError;
+    }
+
+    // Mark all fields as touched
+    const allTouched = {};
+    Object.keys(formData).forEach(key => {
+      allTouched[key] = true;
+    });
+    setTouched(allTouched);
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -163,147 +225,124 @@ export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <User className="h-4 w-4 inline mr-1" />
-                Full Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Enter full name"
-              />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-            </div>
+            <ValidatedInput
+              label="Full Name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.name}
+              touched={touched.name}
+              required
+              placeholder="Enter full name"
+              autoComplete="name"
+            />
 
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Mail className="h-4 w-4 inline mr-1" />
-                Email *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Enter email address"
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
+            <ValidatedInput
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.email}
+              touched={touched.email}
+              required
+              placeholder="user@example.com"
+              autoComplete="email"
+            />
 
             {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Phone className="h-4 w-4 inline mr-1" />
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter phone number"
-              />
-            </div>
+            <ValidatedInput
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.phone}
+              touched={touched.phone}
+              placeholder="(555) 123-4567"
+              helpText="Optional"
+              autoComplete="tel"
+            />
 
             {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Shield className="h-4 w-4 inline mr-1" />
-                Role *
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.role ? 'border-red-300' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select a role</option>
-                {roleOptions.map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-              {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
-            </div>
+            <ValidatedSelect
+              label="Role"
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.role}
+              touched={touched.role}
+              required
+              options={roleOptions.map(role => ({ value: role, label: role }))}
+              placeholder="Select a role"
+            />
 
             {/* Age */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Age
-              </label>
-              <input
-                type="number"
-                name="age"
-                value={formData.age}
-                onChange={handleInputChange}
-                min="1"
-                max="150"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.age ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Enter age"
-              />
-              {errors.age && <p className="text-red-500 text-xs mt-1">{errors.age}</p>}
-            </div>
+            <ValidatedInput
+              label="Age"
+              name="age"
+              type="number"
+              value={formData.age}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.age}
+              touched={touched.age}
+              placeholder="Enter age"
+              helpText="Optional (1-150)"
+            />
 
             {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gender
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <ValidatedSelect
+              label="Gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.gender}
+              touched={touched.gender}
+              options={[
+                { value: 'Male', label: 'Male' },
+                { value: 'Female', label: 'Female' },
+                { value: 'Other', label: 'Other' }
+              ]}
+              placeholder="Select gender"
+              helpText="Optional"
+            />
 
             {/* Date of Birth */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Calendar className="h-4 w-4 inline mr-1" />
-                Date of Birth
-              </label>
-              <input
-                type="date"
+              <ValidatedInput
+                label="Date of Birth"
                 name="dob"
+                type="date"
                 value={formData.dob}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onBlur={handleFieldBlur}
+                error={errors.dob}
+                touched={touched.dob}
+                helpText="Optional"
               />
             </div>
 
             {/* Address */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <MapPin className="h-4 w-4 inline mr-1" />
-                Address
-              </label>
-              <textarea
+              <ValidatedInput
+                label="Address"
                 name="address"
+                type="text"
                 value={formData.address}
                 onChange={handleInputChange}
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter full address"
+                onBlur={handleFieldBlur}
+                error={errors.address}
+                touched={touched.address}
+                placeholder="Enter address"
+                helpText="Optional"
               />
             </div>
 
@@ -317,56 +356,44 @@ export const EditUserModal = ({ isOpen, onClose, user, onUpdate }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* New Password */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.password ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                        placeholder="Enter new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    <ValidatedInput
+                      label="New Password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      error={errors.password}
+                      touched={touched.password}
+                      placeholder="Enter new password"
+                      showPasswordToggle
+                      showPassword={showPassword}
+                      onTogglePassword={() => setShowPassword(!showPassword)}
+                      helpText="Leave blank to keep current password"
+                      autoComplete="new-password"
+                    />
+                    {formData.password && (
+                      <PasswordStrengthMeter password={formData.password} strength={passwordStrength} />
+                    )}
                   </div>
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                        placeholder="Confirm new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                    <ValidatedInput
+                      label="Confirm Password"
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      error={errors.confirmPassword}
+                      touched={touched.confirmPassword}
+                      placeholder="Confirm new password"
+                      showPasswordToggle
+                      showPassword={showConfirmPassword}
+                      onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                      autoComplete="new-password"
+                    />
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
