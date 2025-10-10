@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/SidebarPatient";
-import Topbar from "../components/Topbar";
+import PatientLayout from "../components/PatientLayout";
 import { CheckCircle2, UploadCloud, Trash2, Download } from "lucide-react";
 import "../../../styles/Patient-Interaction/PatientProfile.css";
 
@@ -202,11 +201,8 @@ export default function PatientProfile() {
   };
 
   return (
-    <div className="profile-layout">
-      <Sidebar />
-      <div className="profile-main">
-        <Topbar />
-        <main className="profile-content">
+    <PatientLayout currentPage="profile">
+      <div className="profile-content">
           <div className="profile-grid">
             {/* LEFT PANEL */}
             <aside className="profile-left">
@@ -377,8 +373,7 @@ export default function PatientProfile() {
               </div>
             </section>
           </div>
-        </main>
       </div>
-    </div>
+    </PatientLayout>
   );
 }

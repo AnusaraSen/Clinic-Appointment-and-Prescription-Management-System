@@ -215,8 +215,8 @@ function NavBar({ search, onSearchChange }) {
             </Link>
 
             <Link 
-              to="/doctors" 
-              className={`nav-item ${isActive('/doctors') ? 'active' : ''}`}
+              to="/doctors-directory" 
+              className={`nav-item ${isActive('/doctors-directory') ? 'active' : ''}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <div className="nav-icon">

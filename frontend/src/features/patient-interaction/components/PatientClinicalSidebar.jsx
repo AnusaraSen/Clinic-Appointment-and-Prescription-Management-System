@@ -2,22 +2,20 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   User, 
-  Calendar, 
-  FileText, 
   Activity, 
-  FolderOpen, 
   ClipboardList, 
-  HelpCircle, 
-  LogOut,
   Menu, 
-  X 
+  X,
+  UserCircle
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../authentication/context/AuthContext';
 
 // Reusable Patient Clinical Sidebar Component
 export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPageChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   // Patient-specific menu items using clinical sidebar design
   const menuItems = [
@@ -25,7 +23,7 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
       name: 'Dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
       page: 'dashboard',
-      path: '/patient/dashboard'
+      path: '/dashboard/patient'
     },
     {
       name: 'Find Doctors',
@@ -34,28 +32,10 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
       path: '/doctors'
     },
     {
-      name: 'My Appointments',
-      icon: <Calendar className="h-5 w-5" />,
-      page: 'appointments',
-      path: '/appointments'
-    },
-    {
-      name: 'Prescriptions',
-      icon: <FileText className="h-5 w-5" />,
-      page: 'prescriptions',
-      path: '/dashboard/prescriptions'
-    },
-    {
       name: 'Lab Reports',
       icon: <Activity className="h-5 w-5" />,
       page: 'lab-reports',
       path: '/dashboard/lab-reports'
-    },
-    {
-      name: 'Medical Records',
-      icon: <FolderOpen className="h-5 w-5" />,
-      page: 'medical-records',
-      path: '/dashboard/medical-records'
     },
     {
       name: 'My Feedback',
@@ -64,16 +44,10 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
       path: '/feedback'
     },
     {
-      name: 'Support',
-      icon: <HelpCircle className="h-5 w-5" />,
-      page: 'support',
-      path: '/dashboard/support'
-    },
-    {
-      name: 'Logout',
-      icon: <LogOut className="h-5 w-5" />,
-      page: 'logout',
-      path: '/logout'
+      name: 'Profile',
+      icon: <UserCircle className="h-5 w-5" />,
+      page: 'profile',
+      path: null // computed on click
     }
   ];
 
@@ -81,9 +55,12 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
     if (onPageChange) {
       onPageChange(page);
     }
-    if (path) {
-      navigate(path);
+    if (page === 'profile') {
+      const pid = user?.patientId || user?.user_id || user?._id || user?.id;
+      if (pid) return navigate(`/patient/${pid}`);
+      return navigate('/dashboard/patient');
     }
+    if (path) return navigate(path);
   };
 
   // Determine current page based on location pathname if not explicitly set
@@ -91,14 +68,11 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
     if (currentPage) return currentPage;
     
     const pathname = location.pathname;
-    if (pathname === '/dashboard') return 'dashboard';
+    if (pathname === '/dashboard/patient' || pathname === '/patient-dashboard' || pathname === '/patient/dashboard') return 'dashboard';
     if (pathname === '/doctors') return 'doctors';
-    if (pathname === '/appointments') return 'appointments';
-    if (pathname.includes('/prescriptions')) return 'prescriptions';
     if (pathname.includes('/lab-reports')) return 'lab-reports';
-    if (pathname.includes('/medical-records')) return 'medical-records';
     if (pathname.includes('/feedback')) return 'feedback';
-    if (pathname.includes('/support')) return 'support';
+    if (/^\/patient\/[^/]+$/.test(pathname)) return 'profile';
     
     return 'dashboard'; // default
   };

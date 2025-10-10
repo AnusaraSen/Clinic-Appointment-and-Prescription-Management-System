@@ -14,6 +14,8 @@ import ContactPage from './pages/ContactPage';
 import ServicesPage from './pages/ServicesPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
+import DoctorsDirectory from './pages/DoctorsDirectory';
+import DoctorPublicProfile from './pages/DoctorPublicProfile';
 
 
 // Role-based Dashboard imports
@@ -737,6 +739,8 @@ function App() {
           <Route path="/dashboard/lab-reports" element={<LabReports />} />
           <Route path="/dashboard/support" element={<Support />} />
           <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/doctors-directory" element={<DoctorsDirectory />} />
+          <Route path="/doctors-directory/:id" element={<DoctorPublicProfile />} />
 
           {/* Catch all route - moved to end */}
           <Route path="*" element={<Navigate to="/" replace />} />

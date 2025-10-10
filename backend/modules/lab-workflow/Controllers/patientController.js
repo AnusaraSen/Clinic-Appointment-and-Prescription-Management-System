@@ -55,6 +55,29 @@ class PatientController {
     }
   }
   
+  // Get patient by linked User._id (workforce user)
+  static async getPatientByUser(req, res) {
+    try {
+      const { userId } = req.params;
+      if (!userId) {
+        return res.status(400).json({ success: false, message: 'userId is required' });
+      }
+
+      // Find patient linked to this user
+      const patient = await Patient.findOne({ user: userId })
+        .populate('user', 'name email phone');
+
+      if (!patient) {
+        return res.status(404).json({ success: false, message: 'Patient not found for this user' });
+      }
+
+      return res.status(200).json({ success: true, data: patient });
+    } catch (error) {
+      console.error('Error fetching patient by user:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    }
+  }
+
   // Get patient by ID
   static async getPatientById(req, res) {
     try {
@@ -167,22 +190,27 @@ class PatientController {
       const labHistory = await LabTask.find({ 
         patient_id: id,
         status: 'Completed',
-        results: { $exists: true, $ne: [] }
+        results: { $exists: true }
       })
-      .select('taskTitle createdAt results updatedAt')
+      .select('taskTitle createdAt updatedAt results priority status sampleCollection processing')
       .sort({ updatedAt: -1 })
       .limit(20); // Last 20 completed tests
       
       // Transform data for better frontend consumption
       const history = labHistory.map(task => {
-        const latestResult = task.results && task.results.length > 0 ? task.results[0] : null;
+        const resultSummary = task.results?.overallInterpretation || 'No result summary';
+        const status = task.status || 'Unknown';
+        const technician = task.processing?.processedBy || task.sampleCollection?.collectedBy || 'Unknown';
+        const priority = task.priority || 'Medium';
+
         return {
           _id: task._id,
           testType: task.taskTitle,
           date: task.updatedAt || task.createdAt,
-          result: latestResult ? latestResult.summary : 'No result summary',
-          status: latestResult ? latestResult.status : 'Unknown',
-          technician: latestResult ? latestResult.technician : 'Unknown'
+          result: resultSummary,
+          status: status,
+          technician: technician,
+          priority
         };
       });
       
