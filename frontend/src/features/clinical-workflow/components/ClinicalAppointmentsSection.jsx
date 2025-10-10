@@ -95,10 +95,10 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
           {displayAppointments.map((appointment) => (
             <div
               key={appointment._id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in"
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   {/* Time */}
                   <div className="text-center min-w-[80px]">
                     <div className="text-lg font-bold text-gray-900">
@@ -110,14 +110,14 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                   </div>
 
                   {/* Patient Info */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-gray-600 font-semibold text-sm">
                         {getInitials(appointment.patient_name)}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 truncate max-w-[160px] sm:max-w-[220px]">
                         {appointment.patient_name}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -133,14 +133,14 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                 </div>
 
                 {/* Status and Actions */}
-                <div className="flex items-center gap-3">
+                <div className="ml-auto flex flex-wrap items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-2 ${getStatusColor(appointment.status)}`}>
                     <span className={`w-2 h-2 rounded-full ${statusMeta[appointment.status]?.dot || 'bg-gray-400'}`}></span>
                     {statusMeta[appointment.status]?.label || appointment.status}
                   </span>
 
                   {appointment.status === 'upcoming' && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 max-w-full">
                       <button
                         onClick={() => handleActionClick(appointment._id, 'start')}
                         className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-blue-200 rounded-md hover:bg-blue-50"
