@@ -8,9 +8,14 @@ import ClinicalPastAppointmentsSection from './ClinicalPastAppointmentsSection.j
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
 import CalmLoader from '../../../components/CalmLoader';
 import '../styles/clinicalDashboard.css';
+import { useAuth } from '../../authentication/context/AuthContext.jsx';
+import { getDoctorAppointments, getDoctorAppointmentsByName, getAllAppointments } from '../../../api/appointmentsApi.js';
 
 
 export const ClinicalDashboard = ({ onNavigate }) => {
+  const { user } = useAuth() || {};
+  const doctorId = user?._id;
+  const doctorName = user?.name;
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -64,12 +69,59 @@ export const ClinicalDashboard = ({ onNavigate }) => {
       }
 
       setApiError(null);
+
+      // After baseline loads, override Today's Appointments list with doctor-specific results for today
+      try {
+        const todayDocs = await fetchDoctorTodaysAppointments();
+        if (Array.isArray(todayDocs) && todayDocs.length >= 0) {
+          setAppointments(todayDocs);
+        }
+      } catch (e) {
+        console.debug('[ClinicalDashboard] doctor today override failed:', e?.message);
+      }
     } catch (err) {
       console.error('Clinical Dashboard: failed to load data', err);
       setApiError(err.message || 'Failed to load clinical dashboard data');
     } finally {
       setIsInitialLoading(false);
     }
+  };
+
+  // Helper YYYY-MM-DD (local)
+  const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
+
+  // Identity-aware: get only today's appointments for this doctor
+  const fetchDoctorTodaysAppointments = async () => {
+    const ymd = toYMD(new Date());
+    let data = [];
+    // 1) by id
+    if (doctorId) {
+      try { data = await getDoctorAppointments({ doctorId, start: ymd, end: ymd }); } catch (_) {}
+    }
+    // 2) by name (loose)
+    if ((!data || data.length === 0) && doctorName) {
+      try { data = await getDoctorAppointmentsByName({ doctorName, start: ymd, end: ymd, loose: true }); } catch (_) {}
+    }
+    // 3) fallback: all+filter
+    if ((!data || data.length === 0) && (doctorId || doctorName)) {
+      try {
+        const all = await getAllAppointments();
+        const lowered = (doctorName||'').toLowerCase();
+        data = (all||[]).filter(a => {
+          const d = new Date(a.appointment_date || a.date); d.setHours(0,0,0,0);
+          const isToday = toYMD(d) === ymd;
+          const idMatch = doctorId && String(a.doctor_id) === String(doctorId);
+          const nameMatch = (a.doctor_name||'').toLowerCase().includes(lowered);
+          return isToday && (idMatch || nameMatch);
+        });
+      } catch (_) {}
+    }
+    return Array.isArray(data) ? data : [];
   };
 
   const handleRefreshDashboard = async () => {
@@ -234,6 +286,8 @@ export const ClinicalDashboard = ({ onNavigate }) => {
                 isLoading={isInitialLoading || isRefreshing}
                 onUpdateAppointment={handleUpdateAppointment}
               />
+              {/* Moved: Past Appointments under Today's Appointments */}
+              <ClinicalPastAppointmentsSection />
             </div>
 
             {/* Right Column */}
@@ -243,8 +297,6 @@ export const ClinicalDashboard = ({ onNavigate }) => {
                 isLoading={isInitialLoading || isRefreshing}
                 onCompleteTask={handleCompleteTask}
               />
-              {/* New: Past Appointments section */}
-              <ClinicalPastAppointmentsSection />
             </div>
           </div>
 
