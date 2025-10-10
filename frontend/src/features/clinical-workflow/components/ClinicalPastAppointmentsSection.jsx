@@ -2,6 +2,28 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, Clock, User } from 'lucide-react';
 import { useAuth } from '../../authentication/context/AuthContext.jsx';
 import { getDoctorAppointments, getDoctorAppointmentsByName, getAllAppointments } from '../../../api/appointmentsApi.js';
+import axios from 'axios';
+
+// Simple star renderer for ratings (0-5)
+function Stars({ value = 0 }) {
+  const v = Math.max(0, Math.min(5, Number(value) || 0));
+  return (
+    <span aria-label={`Rating ${v} of 5`} className="inline-flex">
+      {[...Array(5)].map((_, i) => (
+        <svg
+          key={i}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill={i < v ? '#f59e0b' : 'none'}
+          stroke={i < v ? '#f59e0b' : '#d1d5db'}
+          className="inline w-4 h-4 mr-0.5"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.802 2.036a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.802-2.036a1 1 0 00-1.176 0l-2.802 2.036c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.88 8.72c-.783-.57-.38-1.81.588-1.81H6.93a1 1 0 00.95-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
 
 export const ClinicalPastAppointmentsSection = () => {
   const { user } = useAuth() || {};
@@ -10,6 +32,11 @@ export const ClinicalPastAppointmentsSection = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [fbOpen, setFbOpen] = useState(false);
+  const [fbLoading, setFbLoading] = useState(false);
+  const [fbError, setFbError] = useState('');
+  const [fbItems, setFbItems] = useState([]);
+  const [fbApptId, setFbApptId] = useState(null);
 
   const toYMD = (d) => {
     const y = d.getFullYear();
@@ -80,6 +107,42 @@ export const ClinicalPastAppointmentsSection = () => {
 
   const sortedDatesDesc = useMemo(()=> Object.keys(grouped).sort((a,b)=> b.localeCompare(a)), [grouped]);
 
+  const fetchFeedbackByAppointment = async (appointmentId) => {
+    const urls = [
+      `/feedback/by-appointment/${appointmentId}`,
+      `http://localhost:5000/feedback/by-appointment/${appointmentId}`,
+      `http://127.0.0.1:5000/feedback/by-appointment/${appointmentId}`,
+      `/feedback/`,
+      `http://localhost:5000/feedback/`,
+    ];
+    let lastErr = null;
+    for (const url of urls) {
+      try {
+        const res = await axios.get(url, { timeout: 7000 });
+        if (res?.data?.feedback) {
+          return Array.isArray(res.data.feedback) ? res.data.feedback : [res.data.feedback];
+        }
+        if (Array.isArray(res?.data)) {
+          // Fallback: filter all feedback by appointment id
+          return res.data.filter(f => {
+            const id = f.appointment?._id || (typeof f.appointment_id === 'string' ? f.appointment_id : f.appointment_id?._id);
+            return id && String(id) === String(appointmentId);
+          });
+        }
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('Unable to fetch feedback');
+  };
+
+  const openFeedback = async (appointmentId) => {
+    setFbOpen(true); setFbLoading(true); setFbError(''); setFbItems([]); setFbApptId(appointmentId);
+    try {
+      const list = await fetchFeedbackByAppointment(appointmentId);
+      setFbItems(list);
+    } catch (e) { setFbError(e?.message || 'Failed to load feedback'); }
+    finally { setFbLoading(false); }
+  };
+
   return (
     <div id="past-appointments" className="cd-card" role="region" aria-label="Past Appointments">
       <div className="flex items-center justify-between mb-6">
@@ -118,6 +181,7 @@ export const ClinicalPastAppointmentsSection = () => {
                   <th className="px-4 py-2">Patient</th>
                   <th className="px-4 py-2">Type</th>
                   <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,6 +194,9 @@ export const ClinicalPastAppointmentsSection = () => {
                     <td className="px-4 py-2 flex items-center gap-2"><User className="h-3 w-3 text-gray-500"/><span>{a.patient}</span></td>
                     <td className="px-4 py-2">{a.type}</td>
                     <td className="px-4 py-2"><span className={`px-2 py-1 rounded text-xs ${a.displayStatus==='completed' ? 'bg-green-100 text-green-700' : a.displayStatus==='past' ? 'bg-amber-100 text-amber-700' : a.displayStatus?.toLowerCase()?.startsWith('cancel') ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>{a.displayStatus}</span></td>
+                    <td className="px-4 py-2">
+                      <button onClick={()=>openFeedback(a.id)} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50">View Feedback</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -137,6 +204,44 @@ export const ClinicalPastAppointmentsSection = () => {
           </div>
         ))}
       </div>
+
+      {/* Feedback Modal */}
+      {fbOpen && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30" onClick={()=>setFbOpen(false)}></div>
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-lg mx-4 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Feedback for appointment</h3>
+              <code className="text-xs bg-gray-100 px-2 py-0.5 rounded">{fbApptId}</code>
+            </div>
+            {fbLoading && <div className="text-sm text-gray-500">Loading…</div>}
+            {fbError && !fbLoading && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2 mb-2">{fbError}</div>}
+            {!fbLoading && !fbError && fbItems.length === 0 && (
+              <div className="text-sm text-gray-600">No feedback found for this appointment.</div>
+            )}
+            {!fbLoading && !fbError && fbItems.length > 0 && (
+              <div className="space-y-3 max-h-80 overflow-auto pr-1">
+                {fbItems.map(f => (
+                  <div key={f._id} className="border rounded p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Stars value={f.rating} />
+                      <span className="text-sm text-gray-600">({typeof f.rating !== 'undefined' ? `${f.rating}/5` : '—'})</span>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      <span className="text-gray-600 font-medium">Comments:</span>
+                      <div className="mt-1 border rounded p-2 text-gray-800">{f.comments || '—'}</div>
+                    </div>
+                    {f.created_at && <div className="text-[11px] text-gray-500 mt-2">Created: {new Date(f.created_at).toLocaleString()}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 text-right">
+              <button onClick={()=>setFbOpen(false)} className="px-3 py-1.5 text-sm rounded border bg-white hover:bg-gray-50">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -138,6 +138,7 @@ export default function DoctorAppointmentsPage() {
           dateObj: d,
           date: d.toISOString().split('T')[0],
           time: a.appointment_time,
+          dateTimeMs: dateTime.getTime(),
           type: a.appointment_type,
           status: baseStatus,
           displayStatus,
@@ -146,7 +147,7 @@ export default function DoctorAppointmentsPage() {
           raw: a
         };
       })
-      // Sort newest first: by date descending, then time descending
+      // Initial sort: newest by date desc then time desc (fallback)
       .sort((a,b)=> (b.dateObj - a.dateObj) || b.time.localeCompare(a.time));
       setAppointments(normalized);
       setLastLoadedAt(new Date());
@@ -165,6 +166,29 @@ export default function DoctorAppointmentsPage() {
   const grouped = useMemo(()=> {
     return appointments.reduce((acc,a)=> { (acc[a.date] ||= []).push(a); return acc; }, {});
   }, [appointments]);
+
+  // Determine group order: Today first, then future (ascending), then past (descending)
+  const todayYmd = useMemo(()=> {
+    const t = new Date(); t.setHours(0,0,0,0);
+    return t.toISOString().split('T')[0];
+  }, []);
+
+  const sortedDates = useMemo(()=> {
+    const keys = Object.keys(grouped);
+    const toMs = (ymd) => { const d = new Date(ymd + 'T00:00:00'); d.setHours(0,0,0,0); return d.getTime(); };
+    const todayMs = toMs(todayYmd);
+    return keys.sort((a,b)=> {
+      const da = toMs(a), db = toMs(b);
+      const diffA = Math.abs(da - todayMs);
+      const diffB = Math.abs(db - todayMs);
+      if (diffA !== diffB) return diffA - diffB; // nearest date first
+      // Tie-breaker: prefer future over past (actionable), keep today at very top naturally
+      const aIsFuture = da > todayMs, bIsFuture = db > todayMs;
+      if (aIsFuture !== bIsFuture) return aIsFuture ? -1 : 1;
+      // If still tied (same side and distance), sort by recency toward today
+      return a.localeCompare(b);
+    });
+  }, [grouped, todayYmd]);
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -203,7 +227,7 @@ export default function DoctorAppointmentsPage() {
         <div className="p-6 text-center text-gray-500 border border-dashed rounded bg-gray-50">No appointments found.</div>
       )}
       <div className="space-y-6">
-        {Object.keys(grouped).sort((a,b)=> b.localeCompare(a)).map(date => (
+        {sortedDates.map(date => (
           <div key={date} className="border rounded-lg shadow-sm overflow-hidden">
             <div className="bg-gray-100 px-4 py-2 text-sm font-semibold flex items-center justify-between">
               <span>{date}</span>
@@ -223,7 +247,20 @@ export default function DoctorAppointmentsPage() {
               <tbody>
                 {grouped[date]
                   .slice()
-                  .sort((a,b)=> b.time.localeCompare(a.time))
+                  .sort((a,b)=> {
+                    // Within a date, if it's today: upcoming (>= now) first ascending; then past descending
+                    const nowMs = Date.now();
+                    if (date === todayYmd) {
+                      const aUp = a.dateTimeMs >= nowMs; const bUp = b.dateTimeMs >= nowMs;
+                      if (aUp && !bUp) return -1;
+                      if (!aUp && bUp) return 1;
+                      if (aUp && bUp) return a.dateTimeMs - b.dateTimeMs; // soonest next
+                      return b.dateTimeMs - a.dateTimeMs; // most recently passed first
+                    }
+                    // For future dates: earliest time first; for past dates: latest time first
+                    if (date > todayYmd) return a.dateTimeMs - b.dateTimeMs;
+                    return b.dateTimeMs - a.dateTimeMs;
+                  })
                   .map(a => (
                   <tr key={a.id} className="odd:bg-white even:bg-gray-50 hover:bg-blue-50/50">
                     <td className="px-4 py-2 font-mono text-xs">{a.time}</td>
