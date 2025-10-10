@@ -248,25 +248,36 @@ class UserCreationService {
     try {
       const result = await session.withTransaction(async () => {
         // Step 1: Atomically increment user_id sequence using counters collection
-        const counter = await Counter.findOneAndUpdate(
-          { _id: 'user_id' },
-          { $inc: { seq: 1 } },
-          { new: true, upsert: true, session, setDefaultsOnInsert: true }
-        );
-        const userId = `USR-${String(counter.seq).padStart(4, '0')}`;
+        // Keep incrementing until we find an unused ID (handles counter desync)
+        let userId;
+        let maxAttempts = 100; // Prevent infinite loop
+        let attempts = 0;
         
-        // Defensive re-check (should never happen due to uniqueness + atomic counter)
-        const existingSameId = await User.findOne({ user_id: userId }).session(session);
-        if (existingSameId) {
-          // Rare fallback: increment again
-            const counter2 = await Counter.findOneAndUpdate(
-              { _id: 'user_id' },
-              { $inc: { seq: 1 } },
-              { new: true, session }
-            );
-            console.warn('⚠️ Counter collision detected for', userId, 'advanced to', counter2.seq);
-            // eslint-disable-next-line require-atomic-updates
-            userId = `USR-${String(counter2.seq).padStart(4, '0')}`; // reassign for clarity
+        while (attempts < maxAttempts) {
+          const counter = await Counter.findOneAndUpdate(
+            { _id: 'user_id' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true, session, setDefaultsOnInsert: true }
+          );
+          userId = `USR-${String(counter.seq).padStart(4, '0')}`;
+          
+          // Check if this ID is already in use
+          const existingSameId = await User.findOne({ user_id: userId }).session(session);
+          if (!existingSameId) {
+            // Found an unused ID, break out of loop
+            if (attempts > 0) {
+              console.warn(`⚠️ Counter was out of sync. Took ${attempts + 1} attempts to find unused ID: ${userId}`);
+            }
+            break;
+          }
+          
+          // ID already exists, try again
+          attempts++;
+          console.warn(`⚠️ ID collision detected for ${userId}, attempting again (${attempts}/${maxAttempts})...`);
+        }
+        
+        if (attempts >= maxAttempts) {
+          throw new Error('Failed to generate unique user ID after maximum attempts');
         }
         
         // Step 2: Create the main user

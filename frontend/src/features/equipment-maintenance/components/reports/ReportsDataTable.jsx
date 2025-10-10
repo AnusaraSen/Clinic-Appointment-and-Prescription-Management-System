@@ -54,7 +54,6 @@ const ReportsDataTable = ({ data, loading, reportType = 'maintenance' }) => {
     { field: 'status', header: 'Status', width: 'w-28' },
     { field: 'assignedTo', header: 'Assigned To', width: 'w-32' },
     { field: 'date', header: 'Date', width: 'w-28' },
-    { field: 'cost', header: 'Cost', width: 'w-24' },
   ];
 
   const getStatusBadge = (status) => {
@@ -115,9 +114,6 @@ const ReportsDataTable = ({ data, loading, reportType = 'maintenance' }) => {
             break;
           case 'date':
             value = row.date ? new Date(row.date).toLocaleDateString() : 'N/A';
-            break;
-          case 'cost':
-            value = row.cost !== undefined ? `$${row.cost}` : '$0';
             break;
           default:
             value = row[col.field] || 'N/A';
@@ -236,9 +232,6 @@ const ReportsDataTable = ({ data, loading, reportType = 'maintenance' }) => {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     {row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${row.cost || 0}
                   </td>
                 </tr>
               ))

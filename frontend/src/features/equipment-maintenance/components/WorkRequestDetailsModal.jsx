@@ -553,6 +553,7 @@ export const WorkRequestDetailsModal = ({
                 </p>
               )}
             </div>
+
           </div>
         </div>
 

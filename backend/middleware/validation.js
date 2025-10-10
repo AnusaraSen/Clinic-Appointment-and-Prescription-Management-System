@@ -155,7 +155,13 @@ const maintenanceRequestSchemas = {
     date: Joi.date().optional(),
     time: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
     equipment: Joi.array().items(Joi.string()).optional(),
-    cost: Joi.number().min(0).optional()
+    cost: Joi.number().min(0).optional(),
+    costs: Joi.array().items(
+      Joi.object({
+        description: Joi.string().trim().max(200).required(),
+        cost: Joi.number().min(0).required()
+      })
+    ).optional()
   }).min(1),
 
   assign: Joi.object({

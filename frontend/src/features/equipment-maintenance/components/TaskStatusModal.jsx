@@ -9,14 +9,13 @@ import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
   useHideNavbar(isOpen);
   
-  const [status, setStatus] = useState(task?.status || 'Open');
+  const [status, setStatus] = useState(task?.status || 'In Progress');
   const [notes, setNotes] = useState(task?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const statusOptions = [
-    { value: 'Open', label: 'Open', description: 'Task is open and waiting to start' },
     { value: 'In Progress', label: 'In Progress', description: 'Currently working on this task' },
     { value: 'Completed', label: 'Completed', description: 'Task has been finished successfully' },
     { value: 'Cancelled', label: 'Cancelled', description: 'Task has been cancelled' }
@@ -29,24 +28,32 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
     setSuccess('');
 
     try {
+      const updateData = {
+        status: status,
+        notes: notes
+      };
+      
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/maintenance-requests/${task.id || task._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          status: status,
-          notes: notes
-        })
+        body: JSON.stringify(updateData)
       });
 
       if (response.ok) {
         const updatedTask = await response.json();
+        console.log('✅ Update response:', updatedTask);
         setSuccess(`Status updated to ${status} successfully!`);
+        // Close modal and trigger refresh immediately
         setTimeout(() => {
-          onUpdate(updatedTask.data || updatedTask);
+          if (onUpdate) {
+            onUpdate(updatedTask.data || updatedTask);
+          }
           onClose();
-        }, 1500); // Show success message briefly before closing
+        }, 800); // Reduced delay for faster refresh
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to update task status');
@@ -80,19 +87,21 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <Wrench className="h-6 w-6 text-gray-500" />
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Update Request Status</h2>
-              <p className="text-sm text-gray-600 mt-1">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Wrench className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Update Request Status</h2>
+              <p className="text-xl font-bold text-gray-900 mt-1">
                 {task?.title || 'Maintenance Request'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
@@ -181,19 +190,14 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
             </div>
           </div>
 
-          {/* Current Status Display */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{task?.title || 'Maintenance Request'}</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              <span className="font-medium">Current status:</span> {task?.status || 'Open'}
-            </p>
-          </div>
-
           {/* Status Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Select New Status
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Update Status
             </label>
+            <p className="text-xs text-gray-500 mb-3">
+              <span className="font-medium">Current status:</span> <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task?.status)}`}>{task?.status || 'Open'}</span>
+            </p>
             <div className="space-y-3">
               {statusOptions.map((option) => (
                 <div key={option.value} className="flex items-start">

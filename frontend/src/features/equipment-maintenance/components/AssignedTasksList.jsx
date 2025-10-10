@@ -1,12 +1,14 @@
 ﻿import React, { useState } from 'react';
 import { Clock, CheckCircle, AlertTriangle, Calendar, MapPin, Wrench, Filter, Search, Eye, Edit } from 'lucide-react';
 import { TaskStatusModal } from './TaskStatusModal';
+import { WorkRequestDetailsModal } from './WorkRequestDetailsModal';
 
 export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, onTaskAction }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
   const getStatusBadge = (status) => {
@@ -42,7 +44,12 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
   };
 
   const handleTaskAction = (task, action) => {
-    if (action === 'view' || action === 'updateStatus') {
+    if (action === 'view') {
+      // Open details modal for viewing full information
+      setSelectedTask(task);
+      setShowDetailsModal(true);
+    } else if (action === 'updateStatus') {
+      // Open status update modal
       setSelectedTask(task);
       setShowStatusModal(true);
     } else if (onTaskAction) {
@@ -113,11 +120,11 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
               onChange={(e) => setStatusFilter(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full appearance-none"
             >
-              <option value="all">All Status</option>
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
+              <option key="status-all" value="all">All Status</option>
+              <option key="status-open" value="Open">Open</option>
+              <option key="status-progress" value="In Progress">In Progress</option>
+              <option key="status-completed" value="Completed">Completed</option>
+              <option key="status-cancelled" value="Cancelled">Cancelled</option>
             </select>
           </div>
           <div className="relative">
@@ -127,11 +134,11 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full appearance-none"
             >
-              <option value="all">All Priority</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
+              <option key="priority-all" value="all">All Priority</option>
+              <option key="priority-low" value="Low">Low</option>
+              <option key="priority-medium" value="Medium">Medium</option>
+              <option key="priority-high" value="High">High</option>
+              <option key="priority-critical" value="Critical">Critical</option>
             </select>
           </div>
         </div>
@@ -235,6 +242,25 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
               onRefresh();
             }
           }}
+        />
+      )}
+
+      {showDetailsModal && selectedTask && (
+        <WorkRequestDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedTask(null);
+          }}
+          workRequest={selectedTask}
+          onUpdate={() => {
+            setShowDetailsModal(false);
+            setSelectedTask(null);
+            if (onRefresh) {
+              onRefresh();
+            }
+          }}
+          canEdit={false}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ const {
   handleMaintenanceRequestCreated, 
   handleMaintenanceRequestCompleted 
 } = require('./EquipmentController');
+const notificationService = require('../../../services/notificationService');
 
 /**
  * Get all maintenance requests 📋
@@ -186,6 +187,13 @@ exports.createRequest = async (req, res) => {
       { path: 'equipment', select: 'name location type status' }
     ]);
 
+    // 🔔 Create notification for new maintenance request
+    if (priority === 'Critical' || priority === 'High') {
+      await notificationService.notifyUrgentMaintenanceRequest(newRequest);
+    } else {
+      await notificationService.notifyNewMaintenanceRequest(newRequest);
+    }
+
     return res.status(201).json({ 
       success: true, 
       message: 'Maintenance request created successfully', 
@@ -296,7 +304,8 @@ exports.assignRequest = async (req, res) => {
       id, 
       { 
         assignedTo: technicianId,
-        status: 'In Progress' // Auto-update status when assigned
+        status: 'In Progress', // Auto-update status when assigned
+        startedAt: new Date() // Track when work actually started
       }, 
       { new: true }
     )
@@ -344,6 +353,7 @@ exports.assignRequest = async (req, res) => {
  */
 exports.updateRequest = async (req, res) => {
   try {
+    console.log('🚀 updateRequest called with body:', JSON.stringify(req.body, null, 2));
     const { id } = req.params;
     
     if (!mongoose.isValidObjectId(id)) {
@@ -366,7 +376,8 @@ exports.updateRequest = async (req, res) => {
       'category',
       'estimatedHours',
       'notes',
-      'assignedTo'
+      'assignedTo',
+      'costs'
     ];
     
     const update = {};
@@ -375,6 +386,26 @@ exports.updateRequest = async (req, res) => {
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) {
         update[key] = req.body[key];
+      }
+    }
+
+    // If costs array is provided, calculate total cost automatically
+    if (update.costs && Array.isArray(update.costs)) {
+      console.log('💰 Processing costs array:', update.costs);
+      const totalCost = update.costs.reduce((sum, item) => {
+        return sum + (parseFloat(item.cost) || 0);
+      }, 0);
+      update.cost = totalCost; // Update the total cost field
+      console.log('💰 Calculated total cost:', totalCost);
+    } else {
+      console.log('⚠️ No costs array found in update:', { hasCosts: !!update.costs, isArray: Array.isArray(update.costs) });
+    }
+
+    // Set startedAt when status changes to 'In Progress'
+    if (update.status === 'In Progress') {
+      const existing = await MaintenanceRequest.findById(id);
+      if (existing && !existing.startedAt) {
+        update.startedAt = new Date();
       }
     }
 
@@ -402,6 +433,12 @@ exports.updateRequest = async (req, res) => {
       // Optionally, could verify technician exists here
     }
 
+    console.log('🔍 About to update database with:', JSON.stringify(update, null, 2));
+
+    // Get the existing request before update for comparison
+    const existingRequest = await MaintenanceRequest.findById(id)
+      .populate('assignedTo', 'name');
+
     const updated = await MaintenanceRequest.findByIdAndUpdate(id, update, { 
       new: true,
       runValidators: true // Run schema validators on update
@@ -416,6 +453,27 @@ exports.updateRequest = async (req, res) => {
         message: 'Maintenance request not found',
         data: null 
       });
+    }
+
+    console.log('✅ Database updated successfully. Cost field:', updated.cost, 'Costs array:', updated.costs);
+
+    // 🔔 Create notifications based on what changed
+    if (existingRequest) {
+      // Notification for technician assignment
+      if (update.assignedTo && (!existingRequest.assignedTo || existingRequest.assignedTo._id.toString() !== update.assignedTo.toString())) {
+        await notificationService.notifyMaintenanceRequestAssigned(updated, updated.assignedTo);
+        await notificationService.notifyTechnicianAssignedToTask(updated.assignedTo, updated, 'maintenance');
+      }
+
+      // Notification for status change
+      if (update.status && existingRequest.status !== update.status) {
+        await notificationService.notifyMaintenanceRequestStatusUpdate(updated, existingRequest.status, update.status);
+        
+        // Special notification for completion
+        if (update.status === 'Completed') {
+          await notificationService.notifyMaintenanceRequestCompleted(updated);
+        }
+      }
     }
 
     return res.json({ 
@@ -498,6 +556,9 @@ exports.completeRequest = async (req, res) => {
       await handleMaintenanceRequestCompleted(equipmentIds);
       console.log(`✅ Auto-updated ${equipmentIds.length} equipment items to operational status`);
     }
+
+    // 🔔 Create notification for completion
+    await notificationService.notifyMaintenanceRequestCompleted(updated);
 
     return res.json({ 
       success: true, 
@@ -652,7 +713,7 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
 
     // Fetch maintenance requests with filters
     let requests = await MaintenanceRequest.find(query)
-      .populate('equipment', 'equipmentId name location')
+      .populate('equipment', 'equipment_id name location')
       .populate('assignedTo', 'name user_id')
       .sort({ createdAt: -1 })
       .lean();
@@ -719,7 +780,7 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
 
       // Handle equipment array - can have multiple equipment items
       const equipmentList = request.equipment || [];
-      const equipmentIds = equipmentList.map(e => e?.equipmentId).filter(Boolean).join(', ') || 'N/A';
+      const equipmentIds = equipmentList.map(e => e?.equipment_id).filter(Boolean).join(', ') || 'N/A';
       const equipmentNames = equipmentList.map(e => e?.name).filter(Boolean).join(', ') || 'N/A';
       const locations = equipmentList.map(e => e?.location).filter(Boolean).join(', ') || 'N/A';
 

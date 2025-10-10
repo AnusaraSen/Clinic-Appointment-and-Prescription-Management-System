@@ -7,6 +7,8 @@
 
 const express = require('express');
 const Technician = require('../models/Technician');
+const technicianWorkOrderController = require('../controllers/TechnicianWorkOrderController');
+const { verifyToken } = require('../../../middleware/authMiddleware');
 const router = express.Router();
 
 /**
@@ -72,6 +74,14 @@ router.get('/', async (req, res) => {
     });
   }
 });
+
+// === Technician Work Order Management Routes ===
+// DISABLED: Commented out pending authentication fix - these routes were causing 401 errors
+// TODO: Re-enable after resolving authentication issues with verifyToken middleware
+// router.get('/my-work-orders', verifyToken, technicianWorkOrderController.getMyWorkOrders);
+// router.get('/dashboard-stats', verifyToken, technicianWorkOrderController.getDashboardStats);
+// router.patch('/work-orders/:id/start', verifyToken, technicianWorkOrderController.startWorkOrder);
+// router.patch('/work-orders/:id/complete', verifyToken, technicianWorkOrderController.completeWorkOrder);
 
 /**
  * GET /api/technicians/:id - Get a specific technician 🎯

@@ -3,6 +3,7 @@ const Equipment = require('../models/equipments');
 const Technician = require('../models/Technician');
 const TechnicianController = require('./TechnicianController');
 const mongoose = require('mongoose');
+const notificationService = require('../../../services/notificationService');
 
 /**
  * Scheduled Maintenance Controller - Clean and focused! 📅
@@ -272,6 +273,9 @@ const createScheduledMaintenance = async (req, res) => {
     // Populate technician info for response
     await newScheduledMaintenance.populate('assigned_technician', 'firstName lastName email phone');
     
+    // 🔔 Create notification for new scheduled maintenance
+    await notificationService.notifyScheduledMaintenanceCreated(newScheduledMaintenance);
+    
     res.status(201).json({
       success: true,
       message: `Scheduled maintenance created successfully`,
@@ -458,27 +462,17 @@ const updateMaintenanceStatus = async (req, res) => {
       });
     }
     
-    // Validate status transition - Updated for maintenance workflow
-    const validTransitions = {
-      'Scheduled': ['Assigned', 'In Progress', 'Cancelled'],
-      'Assigned': ['In Progress', 'Scheduled', 'Cancelled'],
-      'In Progress': ['Completed', 'Awaiting Parts', 'On Hold', 'Requires Approval', 'Cancelled'],
-      'Awaiting Parts': ['In Progress', 'On Hold', 'Cancelled'],
-      'On Hold': ['In Progress', 'Assigned', 'Cancelled'],
-      'Requires Approval': ['Completed', 'In Progress'],
-      'Completed': [], // Cannot change once completed
-      'Cancelled': ['Scheduled'] // Can reschedule cancelled maintenance
-    };
-    
-    if (!validTransitions[scheduledMaintenance.status].includes(status)) {
+    // Validate that the status is one of the allowed values from the schema
+    const allowedStatuses = ['Scheduled', 'Assigned', 'In Progress', 'Completed', 'Cancelled', 'Rescheduled'];
+    if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: `Cannot change status from ${scheduledMaintenance.status} to ${status}`,
+        message: `Invalid status: ${status}. Allowed statuses: ${allowedStatuses.join(', ')}`,
         data: null
       });
     }
     
-    // Update status
+    // Update status - no strict transition validation
     scheduledMaintenance.status = status;
     
     // Handle additional fields from frontend
@@ -506,6 +500,11 @@ const updateMaintenanceStatus = async (req, res) => {
     }
     
     await scheduledMaintenance.save();
+    
+    // 🔔 Create notification for status update
+    if (status === 'Completed') {
+      await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
+    }
     
     res.json({
       success: true,

@@ -6,6 +6,7 @@
 const User = require('../models/User');
 const mongoose = require('mongoose');
 const LoginEvent = require('../../auth/models/LoginEvent');
+const PDFDocument = require('pdfkit');
 
 /**
  * Get user metrics for dashboard KPIs
@@ -505,10 +506,96 @@ exports.exportUserData = async (req, res) => {
       ...roleSpecificData
     };
 
-    res.status(200).json({
-      success: true,
-      data: exportData
-    });
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50 });
+    
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=user-${user.user_id}-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add header with logo placeholder and title
+    doc.fontSize(24).fillColor('#2563EB').text('User Report', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(10).fillColor('#6B7280').text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Draw header line
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#2563EB').lineWidth(2).stroke();
+    doc.moveDown(1);
+
+    // Basic Information Section
+    doc.fontSize(16).fillColor('#1F2937').text('Basic Information', { underline: true });
+    doc.moveDown(0.5);
+
+    const addField = (label, value, yPos) => {
+      doc.fontSize(11).fillColor('#4B5563').text(label + ':', 70, yPos, { width: 150, continued: false });
+      doc.fontSize(11).fillColor('#1F2937').text(value || 'N/A', 230, yPos, { width: 300 });
+    };
+
+    let yPosition = doc.y;
+    addField('User ID', exportData.userId, yPosition);
+    yPosition += 25;
+    addField('Full Name', exportData.name, yPosition);
+    yPosition += 25;
+    addField('Email', exportData.email, yPosition);
+    yPosition += 25;
+    addField('Phone', exportData.phone, yPosition);
+    yPosition += 25;
+    addField('Role', exportData.role, yPosition);
+    yPosition += 25;
+    addField('Age', exportData.age, yPosition);
+    yPosition += 25;
+    addField('Gender', exportData.gender, yPosition);
+    yPosition += 25;
+    addField('Address', exportData.address, yPosition);
+    yPosition += 35;
+
+    // Account Status Section
+    doc.fontSize(16).fillColor('#1F2937').text('Account Status', 50, yPosition, { underline: true });
+    yPosition += 30;
+
+    addField('Account Status', exportData.status, yPosition);
+    yPosition += 25;
+    addField('Account Locked', exportData.isLocked, yPosition);
+    yPosition += 25;
+    addField('Login Attempts', exportData.loginAttempts.toString(), yPosition);
+    yPosition += 25;
+    addField('Registration Date', exportData.registrationDate, yPosition);
+    yPosition += 25;
+    addField('Last Login', exportData.lastLogin, yPosition);
+    yPosition += 25;
+    addField('Account Age', exportData.accountAge, yPosition);
+    yPosition += 35;
+
+    // Role-Specific Information (if any)
+    if (Object.keys(roleSpecificData).length > 0) {
+      doc.fontSize(16).fillColor('#1F2937').text('Role-Specific Information', 50, yPosition, { underline: true });
+      yPosition += 30;
+
+      for (const [key, value] of Object.entries(roleSpecificData)) {
+        if (value !== undefined && value !== null) {
+          const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+          const displayValue = typeof value === 'object' ? JSON.stringify(value) : value.toString();
+          addField(label, displayValue, yPosition);
+          yPosition += 25;
+        }
+      }
+    }
+
+    // Footer
+    const pageHeight = doc.page.height;
+    doc.fontSize(9).fillColor('#9CA3AF').text(
+      'This is a system-generated report. For any discrepancies, please contact the administrator.',
+      50,
+      pageHeight - 50,
+      { align: 'center', width: 500 }
+    );
+
+    // Finalize PDF
+    doc.end();
 
   } catch (error) {
     console.error('Error exporting user data:', error);
