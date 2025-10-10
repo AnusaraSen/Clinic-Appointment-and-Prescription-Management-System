@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../authentication/context/AuthContext';
 import axios from 'axios';
 
 import '../../../styles/Medicine/AllActivities.css';
 
 const AllActivities = () => {
   const navigate = useNavigate();
+  const { user } = useAuth?.() || {};
   const [activities, setActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -261,7 +263,17 @@ const AllActivities = () => {
           {/* Header */}
           <div className="activities-header">
             <div className="header-left">
-              <button className="back-btn" onClick={() => navigate('/inventory-dashboard')}>
+              <button
+                className="back-btn"
+                onClick={() => {
+                  const role = user?.role;
+                  if (role === 'Pharmacist' || role === 'Pharmacy Manager') {
+                    navigate('/pharmacist/dashboard');
+                  } else {
+                    navigate('/inventory-dashboard');
+                  }
+                }}
+              >
                 <i className="fas fa-arrow-left"></i>
                 Back to Dashboard
               </button>

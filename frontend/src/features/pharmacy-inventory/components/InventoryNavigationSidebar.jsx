@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../authentication/context/AuthContext';
 import '../../../styles/InventoryNavigationSidebar.css';
 
 const InventoryNavigationSidebar = ({ collapsed = false, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
+  const { user } = useAuth?.() || {};
   const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
     // Set active section based on current path
     const path = location.pathname;
-    if (path.includes('/inventory-dashboard') || path === '/dashboard') {
+    if (path.includes('/inventory-dashboard') || path === '/dashboard' || path.startsWith('/pharmacist/')) {
       setActiveSection('dashboard');
     } else if (path.includes('/medicine') || path.includes('/medicine-inventory')) {
       setActiveSection('medicines');
@@ -24,12 +26,13 @@ const InventoryNavigationSidebar = ({ collapsed = false, onToggle }) => {
     }
   }, [location.pathname]);
 
+  const isPharmacist = user?.role === 'Pharmacist' || user?.role === 'Pharmacy Manager';
   const navigationItems = [
     {
       section: 'dashboard',
-      title: 'Inventory Dashboard',
+      title: isPharmacist ? 'Pharmacist Dashboard' : 'Inventory Dashboard',
       icon: 'fas fa-tachometer-alt',
-      path: '/inventory-dashboard',
+      path: isPharmacist ? '/pharmacist/dashboard' : '/inventory-dashboard',
       description: 'Overview of inventory metrics and alerts'
     },
     {
