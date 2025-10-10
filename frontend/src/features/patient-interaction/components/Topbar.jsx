@@ -126,7 +126,19 @@ const Topbar = ({ sidebarWidth = 220 }) => {
     <header className="topbar" style={{ left: `${sidebarWidth}px` }}>
       <div className="topbar-title">My Account</div>
       <div className="topbar-actions">
-        <Bell size={22} color="#008080" style={{ marginRight: 24, cursor: 'pointer' }} />
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <Bell size={22} color="#008080" style={{ marginRight: 24, cursor: 'pointer' }} />
+          <span style={{ 
+            position: 'absolute', 
+            top: '0', 
+            right: '20px', 
+            width: '8px', 
+            height: '8px', 
+            backgroundColor: '#ef4444', 
+            borderRadius: '50%',
+            border: '2px solid white'
+          }}></span>
+        </div>
         <div className="topbar-user" onClick={handleProfileClick} style={{ cursor: 'pointer' }} title="View profile">
           {patient?.avatar ? (
             <img src={patient.avatar} alt={patient?.name || 'Patient'} />

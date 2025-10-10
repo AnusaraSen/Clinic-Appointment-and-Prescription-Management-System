@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   X, 
   Upload, 
@@ -16,13 +17,14 @@ import {
 } from 'lucide-react';
 
 const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
+  const navigate = useNavigate();
+  
   const [resultData, setResultData] = useState({
     summary: '',
     interpretation: '',
     recommendations: '',
     status: 'preliminary', // preliminary, final, reviewed
     technician: 'John Doe', // Should come from auth context
-    reviewedBy: '',
     notes: ''
   });
 
@@ -61,7 +63,6 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
             recommendations: latest.recommendations || '',
             status: latest.status || 'preliminary',
             technician: latest.technician || 'John Doe',
-            reviewedBy: latest.reviewedBy || '',
             notes: latest.notes || ''
           });
         }
@@ -167,7 +168,7 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
         formData.append('taskId', taskId);
         formData.append('type', 'result');
 
-        const response = await fetch(`http://localhost:5000/api/upload`, {
+        const response = await fetch(`http://localhost:5000/api/labtasks/upload`, {
           method: 'POST',
           body: formData
         });
@@ -189,7 +190,9 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
             )
           );
         } else {
-          throw new Error(`Failed to upload ${fileObj.name}`);
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`Failed to upload ${fileObj.name}:`, errorData);
+          throw new Error(`Failed to upload ${fileObj.name}: ${errorData.error || response.statusText}`);
         }
       }
     } catch (error) {
@@ -224,6 +227,9 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
         createdAt: new Date().toISOString()
       };
 
+      console.log('Sending results data:', resultsData);
+      console.log('Task ID:', taskId);
+
       const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/results`, {
         method: 'POST',
         headers: {
@@ -232,18 +238,36 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
         body: JSON.stringify(resultsData)
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
         alert('Results saved successfully!');
         fetchExistingResults();
+        
+        // Redirect to test results page
+        navigate('/lab-workflow/test-results');
+        
         if (isModal && onClose) {
           onClose();
         }
       } else {
-        throw new Error('Failed to save results');
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          errorData = { message: responseText };
+        }
+        
+        console.error('Failed to save results:', errorData);
+        throw new Error(`Failed to save results: ${errorData.error || errorData.message || response.statusText}`);
       }
     } catch (error) {
       console.error('Error saving results:', error);
-      alert('Failed to save results. Please try again.');
+      alert(`Failed to save results. Please try again. Error: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -347,18 +371,6 @@ const ResultsUpload = ({ taskId, onClose, isModal = false }) => {
                 <option value="final">Final</option>
                 <option value="reviewed">Reviewed</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reviewed By (Optional)
-              </label>
-              <input
-                type="text"
-                value={resultData.reviewedBy}
-                onChange={(e) => setResultData(prev => ({ ...prev, reviewedBy: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Supervisor or reviewing physician..."
-              />
             </div>
           </div>
 

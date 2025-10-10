@@ -121,8 +121,8 @@ const ProfessionalSidebar = ({
       ];
     }
 
-    // For Lab Supervisors, show lab-specific navigation
-    if (user?.role === 'LabSupervisor') {
+    // For Lab Supervisors and Lab Managers, show lab-specific navigation
+    if (user?.role === 'LabSupervisor' || user?.role === 'Lab Supervisor' || user?.role === 'Lab Manager') {
       return [
         {
           name: 'Lab Dashboard',
@@ -146,7 +146,7 @@ const ProfessionalSidebar = ({
           name: 'My Tasks',
           icon: <ClipboardList size={20} />,
           page: 'my-tasks',
-          path: '/lab-workflow/tasks'
+          path: '/lab-workflow/dashboard'
         },
         {
           name: 'Lab Results',
