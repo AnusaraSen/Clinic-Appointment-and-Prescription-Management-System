@@ -1,7 +1,45 @@
 // controllers/labTaskController.js
 const mongoose = require("mongoose");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const LabTask = require("../Model/LabTask");
 const LabStaff = require("../../workforce-facility/models/LabStaff"); // Use existing LabStaff model
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '../../../uploads/lab-results');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'lab-result-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Allow images, PDFs, and documents
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt|csv/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only images, PDFs, and documents are allowed!'));
+    }
+  }
+});
 
 class LabTaskController {
   
@@ -112,10 +150,47 @@ class LabTaskController {
     }
   }
 
+  // Temporary test endpoint for debugging
+  static async testTasksWithPatientNames(req, res) {
+    try {
+      console.log("🔥 TEST ENDPOINT: Fetching tasks with patient names...");
+      
+      const tasks = await LabTask.find({})
+        .populate({
+          path: 'patient_id',
+          select: 'patient_id user',
+          populate: {
+            path: 'user',
+            select: 'name email'
+          }
+        })
+        .lean()
+        .exec();
+      
+      const transformedTasks = tasks.map(task => ({
+        ...task,
+        patient: task.patient_id ? {
+          _id: task.patient_id._id,
+          name: task.patient_id.user?.name || 'Unknown',
+          patient_id: task.patient_id.patient_id,
+          email: task.patient_id.user?.email || null
+        } : null
+      }));
+      
+      console.log(`🔥 Transformed ${transformedTasks.length} tasks with patient names`);
+      
+      res.status(200).json({
+        count: transformedTasks.length,
+        tasks: transformedTasks
+      });
+    } catch (error) {
+      console.error("Error in test endpoint:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   static async getAllTasks(req, res) {
     try {
-      console.log("Attempting to fetch all tasks...");
-      
       // Query with populate to get labAssistant and patient details
       const tasks = await LabTask.find({})
         .populate({
@@ -126,23 +201,32 @@ class LabTaskController {
             select: 'name'
           }
         })
-        .populate('patient_id', 'name patient_id email')
+        .populate({
+          path: 'patient_id',
+          select: 'patient_id user',
+          populate: {
+            path: 'user',
+            select: 'name email'
+          }
+        })
         .lean()
         .exec();
       
-      console.log("Tasks found:", tasks.length);
-      
       // Transform the data to ensure labAssistant is a string for frontend compatibility
-      const transformedTasks = tasks.map(task => ({
-        ...task,
-        labAssistant: task.labAssistant?.user?.name || null,
-        patient: task.patient_id ? {
+      const transformedTasks = tasks.map(task => {
+        const patient = task.patient_id ? {
           _id: task.patient_id._id,
-          name: task.patient_id.name,
+          name: task.patient_id.user?.name || 'Unknown',
           patient_id: task.patient_id.patient_id,
-          email: task.patient_id.email
-        } : null
-      }));
+          email: task.patient_id.user?.email || null
+        } : null;
+        
+        return {
+          ...task,
+          labAssistant: task.labAssistant?.user?.name || null,
+          patient: patient
+        };
+      });
       
       res.status(200).json({
         count: transformedTasks.length,
@@ -159,12 +243,35 @@ class LabTaskController {
     try {
       const task = await LabTask.findById(req.params.id)
         .populate("labAssistant", "name staff_id")
-        .populate("patient_id", "name patient_id email");
+        .populate({
+          path: 'patient_id',
+          select: 'patient_id user',
+          populate: {
+            path: 'user',
+            select: 'name email'
+          }
+        })
+        .lean()
+        .exec();
+      
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
-      res.status(200).json(task);
+      
+      // Transform the data to ensure patient information is in the correct format
+      const transformedTask = {
+        ...task,
+        patient: task.patient_id ? {
+          _id: task.patient_id._id,
+          name: task.patient_id.user?.name || 'Unknown',
+          patient_id: task.patient_id.patient_id,
+          email: task.patient_id.user?.email || null
+        } : null
+      };
+      
+      res.status(200).json(transformedTask);
     } catch (error) {
+      console.error('Error in getTaskById:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -185,13 +292,34 @@ class LabTaskController {
           select: 'name'
         }
       })
-      .populate('patient_id', 'name patient_id email');
+      .populate({
+        path: 'patient_id',
+        select: 'patient_id user',
+        populate: {
+          path: 'user',
+          select: 'name email'
+        }
+      })
+      .lean()
+      .exec();
       
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
       
-      res.status(200).json(task);
+      // Transform the data to ensure consistent patient format
+      const transformedTask = {
+        ...task,
+        labAssistant: task.labAssistant?.user?.name || null,
+        patient: task.patient_id ? {
+          _id: task.patient_id._id,
+          name: task.patient_id.user?.name || 'Unknown',
+          patient_id: task.patient_id.patient_id,
+          email: task.patient_id.user?.email || null
+        } : null
+      };
+      
+      res.status(200).json(transformedTask);
     } catch (error) {
       console.error("Error updating task:", error);
       res.status(400).json({ error: error.message });
@@ -214,7 +342,7 @@ class LabTaskController {
   static async getLabStaff(req, res) {
     try {
       console.log("=== getLabStaff called ===");
-      const labStaff = await LabStaff.find({}, 'lab_staff_id user')
+      const labStaff = await LabStaff.find({}, 'lab_staff_id user position availability')
         .populate('user', 'name')
         .sort({ 'user.name': 1 });
       console.log("Lab staff query result:", JSON.stringify(labStaff, null, 2));
@@ -222,6 +350,47 @@ class LabTaskController {
     } catch (error) {
       console.error("Error fetching lab staff:", error);
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async updateStaffAvailability(req, res) {
+    try {
+      const { staffId } = req.params;
+      const { availability } = req.body;
+
+      // Validate availability value
+      if (!['Available', 'Not Available'].includes(availability)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid availability status. Must be "Available" or "Not Available"'
+        });
+      }
+
+      const updatedStaff = await LabStaff.findByIdAndUpdate(
+        staffId,
+        { availability },
+        { new: true }
+      ).populate('user', 'name');
+
+      if (!updatedStaff) {
+        return res.status(404).json({
+          success: false,
+          message: 'Lab staff member not found'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Staff availability updated successfully',
+        data: updatedStaff
+      });
+    } catch (error) {
+      console.error("Error updating staff availability:", error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update staff availability',
+        error: error.message
+      });
     }
   }
 
@@ -238,10 +407,30 @@ class LabTaskController {
           { assignedTo: assistantId }
         ]
       })
-      .populate('patient_id', 'name patient_id email')
-      .sort({ createdAt: -1 });
+      .populate({
+        path: 'patient_id',
+        select: 'patient_id user',
+        populate: {
+          path: 'user',
+          select: 'name email'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
       
-      res.status(200).json({ count: tasks.length, tasks });
+      // Transform the data to ensure patient information is in the correct format
+      const transformedTasks = tasks.map(task => ({
+        ...task,
+        patient: task.patient_id ? {
+          _id: task.patient_id._id,
+          name: task.patient_id.user?.name || 'Unknown',
+          patient_id: task.patient_id.patient_id,
+          email: task.patient_id.user?.email || null
+        } : null
+      }));
+      
+      res.status(200).json({ count: transformedTasks.length, tasks: transformedTasks });
     } catch (error) {
       console.error("Error fetching assistant tasks:", error);
       res.status(500).json({ error: error.message });
@@ -397,52 +586,160 @@ class LabTaskController {
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
-      res.status(200).json({ results: task.results || [] });
+      // Return results as object or empty object with proper structure
+      const results = task.results || {
+        testResults: [],
+        overallInterpretation: '',
+        recommendations: '',
+        criticalValues: false,
+        physicianNotified: false
+      };
+      res.status(200).json({ results });
     } catch (error) {
       console.error("Error fetching task results:", error);
       res.status(500).json({ error: error.message });
     }
   }
 
+  static async testEndpoint(req, res) {
+    console.log('Test endpoint called');
+    res.json({ message: "Test endpoint working", timestamp: new Date() });
+  }
+
   static async addTaskResults(req, res) {
     try {
+      console.log('Received request to add task results:', {
+        taskId: req.params.id,
+        bodyKeys: Object.keys(req.body)
+      });
+      
       const resultData = req.body;
       const task = await LabTask.findById(req.params.id);
       
       if (!task) {
+        console.log('Task not found:', req.params.id);
         return res.status(404).json({ message: "Task not found" });
       }
 
-      const newResult = {
-        ...resultData,
-        _id: new mongoose.Types.ObjectId(),
-        createdAt: new Date()
-      };
+      console.log('Task found, current results structure:', {
+        hasResults: !!task.results,
+        resultsType: typeof task.results,
+        isArray: Array.isArray(task.results),
+        resultsKeys: task.results ? Object.keys(task.results) : 'null'
+      });
 
+      // Fix corrupted data - if results is an array, convert it to object
+      if (Array.isArray(task.results)) {
+        console.log('Found results as array, converting to object structure');
+        const oldResults = task.results;
+        task.results = {
+          testResults: [],
+          overallInterpretation: '',
+          recommendations: '',
+          criticalValues: false,
+          physicianNotified: false
+        };
+        // If old results had data, try to preserve what we can
+        if (oldResults.length > 0) {
+          console.log('Attempting to preserve old results data');
+          task.results.overallInterpretation = `Legacy data: ${JSON.stringify(oldResults)}`;
+        }
+      }
+
+      // Initialize results object if it doesn't exist
       if (!task.results) {
-        task.results = [];
+        task.results = {
+          testResults: [],
+          overallInterpretation: '',
+          recommendations: '',
+          criticalValues: false,
+          physicianNotified: false
+        };
+        console.log('Initialized results object');
       }
-      task.results.unshift(newResult); // Add to beginning for latest first
-      
-      // Update task status if results are finalized
-      if (resultData.status === 'final') {
-        task.status = 'Completed';
+
+      // Map frontend data to schema structure
+      // Use interpretation field as overallInterpretation
+      if (resultData.interpretation) {
+        task.results.overallInterpretation = resultData.interpretation;
+        console.log('Set overallInterpretation');
       }
       
+      // If summary is provided, add it to overallInterpretation as well
+      if (resultData.summary) {
+        const summaryText = resultData.summary;
+        const existingInterpretation = task.results.overallInterpretation || '';
+        task.results.overallInterpretation = existingInterpretation 
+          ? `${existingInterpretation}\n\nSummary: ${summaryText}`
+          : `Summary: ${summaryText}`;
+        console.log('Updated overallInterpretation with summary');
+      }
+
+      // Update recommendations
+      if (resultData.recommendations) {
+        task.results.recommendations = resultData.recommendations;
+        console.log('Set recommendations');
+      }
+
+      // Add reviewer information
+      if (resultData.reviewedBy) {
+        task.results.reviewedBy = resultData.reviewedBy;
+        console.log('Set reviewedBy');
+      }
+
+      // Handle test results if provided
+      if (resultData.testResults && Array.isArray(resultData.testResults)) {
+        task.results.testResults.push(...resultData.testResults);
+        console.log('Added test results');
+      }
+
+      // Update other result fields
+      if (resultData.criticalValues !== undefined) {
+        task.results.criticalValues = resultData.criticalValues;
+      }
+      if (resultData.physicianNotified !== undefined) {
+        task.results.physicianNotified = resultData.physicianNotified;
+      }
+
+      // Handle approval
+      if (resultData.status === 'final' || resultData.status === 'reviewed') {
+        task.results.approvedBy = resultData.reviewedBy || resultData.technician;
+        task.results.approvalDateTime = new Date();
+        task.status = 'Results Ready';
+        console.log('Set approval information and status');
+      }
+
+      // Add a note if provided
+      if (resultData.notes) {
+        if (!task.notes) {
+          task.notes = [];
+        }
+        task.notes.push({
+          content: resultData.notes,
+          author: resultData.technician || resultData.reviewedBy || 'Lab Staff',
+          type: 'result',
+          createdAt: new Date()
+        });
+        console.log('Added note');
+      }
+      
+      console.log('About to save task');
       await task.save();
-      res.status(201).json({ message: "Results added successfully", result: newResult });
+      console.log('Task saved successfully');
+      
+      res.status(201).json({ 
+        message: "Results added successfully", 
+        results: task.results 
+      });
     } catch (error) {
       console.error("Error adding task results:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ error: error.message });
     }
   }
 
   static async uploadFile(req, res) {
     try {
-      // This is a placeholder for file upload functionality
-      // In a real implementation, you would use multer or similar middleware
-      // and store files in a cloud storage service like AWS S3
-      
       const { taskId, type } = req.body;
       const file = req.file;
       
@@ -450,11 +747,12 @@ class LabTaskController {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Simulate file upload response
+      // File upload response with actual file information
       const fileData = {
         fileId: new mongoose.Types.ObjectId().toString(),
-        url: `/uploads/${file.filename}`, // This would be the actual file URL
+        url: `/uploads/lab-results/${file.filename}`,
         originalName: file.originalname,
+        filename: file.filename,
         size: file.size,
         mimeType: file.mimetype,
         uploadedAt: new Date()
@@ -468,6 +766,11 @@ class LabTaskController {
       console.error("Error uploading file:", error);
       res.status(500).json({ error: error.message });
     }
+  }
+
+  // Static method to get the upload middleware
+  static getUploadMiddleware() {
+    return upload.single('file');
   }
 }
 

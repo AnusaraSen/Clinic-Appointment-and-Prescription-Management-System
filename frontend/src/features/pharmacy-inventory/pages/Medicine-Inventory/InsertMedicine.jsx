@@ -71,6 +71,7 @@ const InsertMedicine = () => {
     expiryDate: "",
     batchNumber: generateBatchNumber(),
     dosageForm: "",
+    reorderLevel: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -91,7 +92,7 @@ const InsertMedicine = () => {
     setFieldErrors({});
     setErrorDetails([]);
 
-    const requiredFields = ["medicineName", "unit", "quantity"];
+    const requiredFields = ["medicineName", "unit", "quantity", "reorderLevel"];
     for (const f of requiredFields) {
       if (!medicine[f] || String(medicine[f]).trim() === "") {
         setSubmitting(false);
@@ -116,6 +117,7 @@ const InsertMedicine = () => {
 
     if (!payload.batchNumber) payload.batchNumber = generateBatchNumber();
     payload.quantity = medicine.quantity === "" ? 0 : Number(medicine.quantity);
+    payload.reorderLevel = Number(medicine.reorderLevel);
     if (payload.expiryDate === "") delete payload.expiryDate;
 
     if (Number.isNaN(payload.quantity) || payload.quantity < 0) {
@@ -129,7 +131,20 @@ const InsertMedicine = () => {
       return;
     }
 
+    if (Number.isNaN(payload.reorderLevel) || payload.reorderLevel < 0) {
+      setSubmitting(false);
+      setFieldErrors((prev) => ({
+        ...prev,
+        reorderLevel: "Reorder level must be a non-negative number",
+      }));
+      setError("Please fix the highlighted fields.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     try {
+      console.log("Submitting medicine payload:", payload);
+      console.log("ReorderLevel value:", payload.reorderLevel, "Type:", typeof payload.reorderLevel);
       const response = await axios.post(
         `http://localhost:5000/api/medicines`,
         payload
@@ -145,6 +160,7 @@ const InsertMedicine = () => {
         expiryDate: "",
         batchNumber: generateBatchNumber(),
         dosageForm: "",
+        reorderLevel: "",
       });
       setFieldErrors({});
       setErrorDetails([]);
@@ -413,6 +429,29 @@ const InsertMedicine = () => {
                 style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
               >
                 {fieldErrors.dosageForm}
+              </div>
+            )}
+          </div>
+
+          <div className={`medicine-field ${fieldErrors.reorderLevel ? "error" : ""}`}>
+            <label htmlFor="reorderLevel">Reorder Level</label>
+            <input
+              id="reorderLevel"
+              type="number"
+              name="reorderLevel"
+              value={medicine.reorderLevel}
+              onChange={handleChange}
+              placeholder="Enter reorder level"
+              min="0"
+              required
+              disabled={submitting}
+            />
+            {fieldErrors.reorderLevel && (
+              <div
+                className="input-error"
+                style={{ color: "#b91c1c", fontSize: "12px", marginTop: "6px" }}
+              >
+                {fieldErrors.reorderLevel}
               </div>
             )}
           </div>

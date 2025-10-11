@@ -8,6 +8,7 @@ const SupervisorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState('dashboard');
+  const [updatingStaff, setUpdatingStaff] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -33,7 +34,8 @@ const SupervisorDashboard = () => {
       const processedStaff = rawStaffData.map(staff => ({
         ...staff,
         name: staff.user?.name || staff.name || `(${staff.lab_staff_id || staff.staff_id})`,
-        specialization: staff.specialization || staff.position || 'General'
+        specialization: staff.specialization || staff.position || 'Lab Assistant',
+        availability: staff.availability || 'Available'
       }));
       
       setTasks(processedTasks);
@@ -80,24 +82,43 @@ const SupervisorDashboard = () => {
       const mockAssistants = [
         {
           _id: '675b4123456789abcdef0001',
-          name: 'Dr. Sarah Wilson',
+          name: 'Kamal Perera',
           status: 'available',
           currentTasks: 2,
-          specialization: 'Hematology'
+          specialization: 'Lab Assistant',
+          availability: 'Available'
         },
         {
           _id: '675b4123456789abcdef0002',
-          name: 'Dr. Mike Chen',
+          name: 'Nisha Fernando',
           status: 'busy',
           currentTasks: 3,
-          specialization: 'Clinical Chemistry'
+          specialization: 'Lab Assistant',
+          availability: 'Available'
         },
         {
           _id: '675b4123456789abcdef0003',
-          name: 'Dr. Lisa Adams',
+          name: 'Rajesh Silva',
           status: 'available',
           currentTasks: 1,
-          specialization: 'Microbiology'
+          specialization: 'Lab Assistant',
+          availability: 'Not Available'
+        },
+        {
+          _id: '675b4123456789abcdef0004',
+          name: 'Amara Wijesinghe',
+          status: 'available',
+          currentTasks: 1,
+          specialization: 'Lab Assistant',
+          availability: 'Available'
+        },
+        {
+          _id: '675b4123456789abcdef0005',
+          name: 'Sarasi Mannada',
+          status: 'busy',
+          currentTasks: 2,
+          specialization: 'Lab Assistant',
+          availability: 'Available'
         }
       ];
       
@@ -105,6 +126,40 @@ const SupervisorDashboard = () => {
       setAssistants(mockAssistants);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvailabilityUpdate = async (staffId, newAvailability) => {
+    try {
+      setUpdatingStaff(staffId);
+      
+      const response = await fetch(`http://localhost:5000/api/labtasks/lab-staff/${staffId}/availability`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ availability: newAvailability }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update availability');
+      }
+
+      // Update local state
+      setAssistants(prevAssistants => 
+        prevAssistants.map(assistant => 
+          assistant._id === staffId || assistant.id === staffId
+            ? { ...assistant, availability: newAvailability }
+            : assistant
+        )
+      );
+
+      console.log('Availability updated successfully');
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      setError('Failed to update staff availability. Please try again.');
+    } finally {
+      setUpdatingStaff(null);
     }
   };
 
@@ -129,10 +184,10 @@ const SupervisorDashboard = () => {
   // Staff calculations
   const totalStaff = safeAssistants.length;
   const availableStaff = safeAssistants.filter(assistant => 
-    assistant.status === 'available' || assistant.status === 'Available'
+    assistant.availability === 'Available'
   ).length;
-  const busyStaff = safeAssistants.filter(assistant => 
-    assistant.status === 'busy' || assistant.status === 'Busy'
+  const notAvailableStaff = safeAssistants.filter(assistant => 
+    assistant.availability === 'Not Available'
   ).length;
 
   // Calculate completion rate
@@ -331,6 +386,7 @@ const SupervisorDashboard = () => {
                       <tr className="border-b border-gray-200">
                         <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-2">Name</th>
                         <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-2">Specialization</th>
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-2">Availability</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -345,7 +401,27 @@ const SupervisorDashboard = () => {
                             </div>
                           </td>
                           <td className="py-3">
-                            <span className="text-sm text-gray-600">{staff.specialization || 'General'}</span>
+                            <span className="text-sm text-gray-600">{staff.specialization || staff.position || 'Lab Assistant'}</span>
+                          </td>
+                          <td className="py-3">
+                            <select
+                              value={staff.availability || 'Available'}
+                              onChange={(e) => handleAvailabilityUpdate(staff._id || staff.id, e.target.value)}
+                              disabled={updatingStaff === (staff._id || staff.id)}
+                              className={`text-sm border rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                updatingStaff === (staff._id || staff.id) ? 'opacity-50 cursor-not-allowed' : ''
+                              } ${
+                                staff.availability === 'Available' 
+                                  ? 'bg-green-50 border-green-200 text-green-800' 
+                                  : 'bg-red-50 border-red-200 text-red-800'
+                              }`}
+                            >
+                              <option value="Available">Available</option>
+                              <option value="Not Available">Not Available</option>
+                            </select>
+                            {updatingStaff === (staff._id || staff.id) && (
+                              <div className="inline-block ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            )}
                           </td>
                         </tr>
                       ))}

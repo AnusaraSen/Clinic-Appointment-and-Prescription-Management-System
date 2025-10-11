@@ -9,20 +9,25 @@ import {
   AlertCircle
 } from 'lucide-react';
 import ValidationAlert from './ValidationAlert';
+import { useAuth } from '../../authentication/context/AuthContext';
 
 const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => {
+  // Get current user from authentication context
+  const { user } = useAuth();
+  
   // Current user - should match the logged-in user from dashboard
   const currentUser = {
-    name: 'Kasun',
-    id: 'LAB-0001',
-    role: 'Lab Technician'
+    name: user?.name || user?.firstName || user?.username || 'Unknown User',
+    id: user?.lab_staff_id || user?.id || 'N/A',
+    role: user?.role || user?.specialization || 'Lab Technician'
   };
 
   const [formData, setFormData] = useState({
     receivedDateTime: '',
-    processedBy: currentUser.name, // Auto-populate with current user
+    processedBy: currentUser.name, // Auto-populate with current user name only
     instrumentUsed: '',
     methodUsed: '',
+    chemicalUsed: '', // New field for chemical used
     qualityControlPassed: false,
     processingNotes: ''
   });
@@ -100,6 +105,19 @@ const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => 
       }
     },
     {
+      id: 'chemicalUsed',
+      field: 'Chemical Used',
+      validator: (data) => {
+        if (!data.chemicalUsed?.trim()) {
+          return { isValid: false, message: 'Please specify the chemical(s) used in processing', severity: 'warning' };
+        }
+        if (data.chemicalUsed.length < 3) {
+          return { isValid: false, message: 'Chemical description seems too short', severity: 'warning' };
+        }
+        return { isValid: true, message: 'Chemical usage documented', severity: 'success' };
+      }
+    },
+    {
       id: 'qualityControl',
       field: 'Quality Control',
       validator: (data) => ({
@@ -141,16 +159,17 @@ const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => 
 
   const fetchExistingData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`);
+      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}`);
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data.processing) {
-          const existing = result.data.processing;
+        if (result.processing) {
+          const existing = result.processing;
           setFormData({
             receivedDateTime: existing.receivedDateTime ? new Date(existing.receivedDateTime).toISOString().slice(0, 16) : '',
-            processedBy: existing.processedBy || currentUser.name, // Preserve current user if no existing data
+            processedBy: existing.processedBy || currentUser.name, // Preserve existing or use current user name only
             instrumentUsed: existing.instrumentUsed || '',
             methodUsed: existing.methodUsed || '',
+            chemicalUsed: existing.chemicalUsed || '', // Handle existing chemical used data
             qualityControlPassed: existing.qualityControlPassed || false,
             processingNotes: existing.processingNotes || ''
           });
@@ -207,13 +226,16 @@ const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => 
       });
 
       const result = await response.json();
+      console.log('Backend response:', result); // Debug log
+      console.log('Response status:', response.status); // Debug log
 
-      if (response.ok && result.success) {
-        console.log('✅ Test processing recorded:', result.data);
-        onSuccess && onSuccess('Test processing completed successfully!');
+      if (response.ok && (result.success || result.message)) {
+        console.log('✅ Test processing recorded:', result.task || result.data);
+        onSuccess && onSuccess(result.message || 'Test processing completed successfully!');
         onClose();
       } else {
-        setError(result.error || 'Failed to save processing data');
+        console.error('Backend error:', result);
+        setError(result.error || result.message || `Server error (${response.status}): Failed to save processing data`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -300,7 +322,6 @@ const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => 
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 flex items-center">
                     <User className="h-4 w-4 text-gray-500 mr-2" />
                     <span className="text-gray-900 font-medium">{currentUser.name}</span>
-                    <span className="text-gray-500 ml-2">({currentUser.id})</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">Test processed by current logged-in user</p>
                   {/* Hidden input to maintain form data */}
@@ -340,6 +361,21 @@ const TestProcessingForm = ({ taskId, onClose, onSuccess, isModal = false }) => 
                     value={formData.methodUsed}
                     onChange={handleInputChange}
                     placeholder="e.g., Enzymatic, Immunoturbidimetric, PCR"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+
+                {/* Chemical Used */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chemical Used
+                  </label>
+                  <input
+                    type="text"
+                    name="chemicalUsed"
+                    value={formData.chemicalUsed}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Reagent A, Buffer Solution, Enzyme Mix"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>

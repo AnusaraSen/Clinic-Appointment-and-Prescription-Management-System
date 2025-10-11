@@ -19,7 +19,8 @@ const ClinicalWorkflowManager = ({ taskId, onClose, isModal = false }) => {
     hasSampleCollection: false,
     hasProcessing: false,
     hasResults: false,
-    status: 'Pending'
+    status: 'Pending',
+    task_id: null
   });
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
@@ -60,22 +61,39 @@ const ClinicalWorkflowManager = ({ taskId, onClose, isModal = false }) => {
   const fetchWorkflowStatus = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}/processing`);
+      const response = await fetch(`http://localhost:5000/api/labtasks/${taskId}`);
       if (response.ok) {
         const result = await response.json();
         console.log('Workflow status response:', result); // Debug log
-        if (result.success) {
-          setWorkflowData({
-            hasSampleCollection: result.data.hasSampleCollection,
-            hasProcessing: result.data.hasProcessing,
-            hasResults: result.data.hasResults,
-            status: result.data.status,
-            sampleCollection: result.data.sampleCollection,
-            processing: result.data.processing,
-            results: result.data.results,
-            lastUpdated: result.data.lastUpdated
-          });
-        }
+        
+        // Check if the task has various workflow components completed
+        const hasSampleCollection = result.sampleCollection && 
+          result.sampleCollection.collectedBy && 
+          result.sampleCollection.collectionDateTime;
+        const hasProcessing = result.processing && 
+          (result.processing.processedBy || result.processing.receivedDateTime);
+        const hasResults = result.results && 
+          result.results.testResults && 
+          result.results.testResults.length > 0;
+        
+        setWorkflowData({
+          hasSampleCollection,
+          hasProcessing,
+          hasResults,
+          status: result.status,
+          task_id: result.task_id, // Store the formatted task ID
+          sampleCollection: result.sampleCollection,
+          processing: result.processing,
+          results: result.results,
+          lastUpdated: result.updatedAt
+        });
+        
+        console.log('Workflow data updated:', {
+          hasSampleCollection,
+          hasProcessing,
+          hasResults,
+          status: result.status
+        });
       } else {
         console.error('Failed to fetch workflow status:', response.status);
       }
@@ -179,7 +197,7 @@ const ClinicalWorkflowManager = ({ taskId, onClose, isModal = false }) => {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Clinical Test Workflow</h2>
-            <p className="text-gray-600 mt-1">Task ID: {taskId}</p>
+            <p className="text-gray-600 mt-1">Task ID: {workflowData.task_id || taskId}</p>
             <div className="flex items-center mt-2">
               <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 workflowData.status === 'Completed' ? 'bg-green-100 text-green-800' :

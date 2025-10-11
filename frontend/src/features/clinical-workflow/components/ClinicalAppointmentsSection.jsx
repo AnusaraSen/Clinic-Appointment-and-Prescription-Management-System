@@ -51,8 +51,39 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
     }
   };
 
-  // Use only real appointments passed via props (already filtered server-side for today)
-  const displayAppointments = appointments;
+  // Helpers to normalize date and filter for today's appointments
+  const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const extractApptYMD = (a) => {
+    const raw = (
+      a?.appointment_date ?? a?.appointmentDate ?? a?.date ?? a?.scheduledDate ?? a?.datetime ?? a?.startTime ?? a?.time
+    );
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      const s = raw.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10); // ISO 8601
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : toYMD(d);
+    }
+    if (typeof raw === 'number') {
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : toYMD(d);
+    }
+    try {
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : toYMD(d);
+    } catch { return null; }
+  };
+  const todayYmd = toYMD(new Date());
+  // Filter to only appointments with today's date
+  const displayAppointments = Array.isArray(appointments)
+    ? appointments.filter(a => extractApptYMD(a) === todayYmd)
+    : [];
 
   return (
     <div className="cd-card" role="region" aria-label="Today's Appointments">
@@ -91,14 +122,20 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="mt-2 -mx-4 -mb-4 divide-y divide-gray-200">
           {displayAppointments.map((appointment) => (
+            <div key={appointment._id} className="cd-fade-in">
+              <div className="p-4 grid grid-cols-1 gap-3 md:grid-cols-[minmax(84px,120px)_minmax(220px,1fr)_auto_auto] md:items-center">
+                {/* Time */}
+                <div className="text-left md:text-center order-1 md:order-none">
+                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                    {formatTime(appointment.appointment_time)}
             <div
               key={appointment._id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in"
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   {/* Time */}
                   <div className="text-center min-w-[80px]">
                     <div className="text-lg font-bold text-gray-900">
@@ -108,16 +145,38 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                       {appointment.appointment_type}
                     </div>
                   </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {appointment.appointment_type}
+                  </div>
+                </div>
 
+                {/* Patient Info */}
+                <div className="flex items-center gap-3 min-w-0 order-2 md:order-none">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      {getInitials(appointment.patient_name)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {appointment.patient_name}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      {appointment.phone && (
+                        <div className="flex items-center gap-1 truncate">
+                          <Phone className="h-3 w-3" />
+                          <span className="truncate">{appointment.phone}</span>
+                        </div>
+                      )}
                   {/* Patient Info */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-gray-600 font-semibold text-sm">
                         {getInitials(appointment.patient_name)}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 truncate max-w-[160px] sm:max-w-[220px]">
                         {appointment.patient_name}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -132,15 +191,21 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                   </div>
                 </div>
 
+                {/* Status */}
+                <div className="order-4 md:order-none">
                 {/* Status and Actions */}
-                <div className="flex items-center gap-3">
+                <div className="ml-auto flex flex-wrap items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-2 ${getStatusColor(appointment.status)}`}>
                     <span className={`w-2 h-2 rounded-full ${statusMeta[appointment.status]?.dot || 'bg-gray-400'}`}></span>
                     {statusMeta[appointment.status]?.label || appointment.status}
                   </span>
+                </div>
 
+                {/* Actions */}
+                <div className="order-3 md:order-none flex flex-wrap items-center gap-2 justify-start md:justify-end">
                   {appointment.status === 'upcoming' && (
-                    <div className="flex items-center gap-2">
+                    <>
+                    <div className="flex flex-wrap items-center gap-2 max-w-full">
                       <button
                         onClick={() => handleActionClick(appointment._id, 'start')}
                         className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-blue-200 rounded-md hover:bg-blue-50"
@@ -162,7 +227,7 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                         <X className="h-3 w-3" />
                         Cancel
                       </button>
-                    </div>
+                    </>
                   )}
 
                   {appointment.status === 'completed' && (
@@ -179,19 +244,20 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                 </div>
               </div>
 
-              {/* Notes */}
               {appointment.notes && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Notes:</span> {appointment.notes}
-                  </p>
+                <div className="px-4 pb-4">
+                  <div className="mt-1 pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Notes:</span> {appointment.notes}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           ))}
 
           {displayAppointments.length === 0 && !error && (
-            <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
+            <div className="text-center py-10 mx-4 my-4 border border-dashed border-gray-200 rounded-lg">
               <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-600 font-medium">No appointments scheduled for today</p>
               <p className="text-gray-400 text-xs">New bookings will appear here automatically.</p>

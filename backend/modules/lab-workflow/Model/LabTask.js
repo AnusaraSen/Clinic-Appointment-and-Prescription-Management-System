@@ -27,8 +27,8 @@ const labTaskSchema = new mongoose.Schema({
   patient_id: { type: mongoose.Schema.Types.ObjectId, ref: "Patient", required: true },
   priority: { 
     type: String, 
-    enum: ["Routine", "Urgent", "STAT", "Critical"], 
-    default: "Routine" 
+    enum: ["High", "Medium", "Low", "Routine", "Urgent", "STAT", "Critical"], 
+    default: "Medium" 
   },
   dueDate: { type: Date },
   updatedAt: { type: Date, default: Date.now },
@@ -85,6 +85,7 @@ const labTaskSchema = new mongoose.Schema({
     processedBy: { type: String },
     instrumentUsed: { type: String },
     methodUsed: { type: String },
+    chemicalUsed: { type: String }, // New field for chemical used in processing
     qualityControlPassed: { type: Boolean },
     processingNotes: { type: String }
   },
@@ -176,6 +177,11 @@ labTaskSchema.pre(["findOneAndUpdate", "updateOne", "updateMany"], async functio
   
   next();
 });
+
+// Clear any cached model to ensure schema changes take effect
+if (mongoose.models.LabTask) {
+  delete mongoose.models.LabTask;
+}
 
 module.exports = mongoose.model("LabTask", labTaskSchema);
 
