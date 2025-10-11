@@ -502,7 +502,7 @@ const updateMaintenanceStatus = async (req, res) => {
     
     await scheduledMaintenance.save();
     
-    // � Auto-update equipment status based on maintenance status
+    // Auto-update equipment status based on maintenance status
     const equipment = await Equipment.findById(scheduledMaintenance.equipment_id);
     if (equipment) {
       if (status === 'In Progress') {
@@ -518,9 +518,16 @@ const updateMaintenanceStatus = async (req, res) => {
       }
     }
     
-    // �🔔 Create notification for status update
+    // Create notification for status update (with error handling to prevent 500 errors)
     if (status === 'Completed') {
-      await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
+      try {
+        // Populate assignedTechnician before sending to notification service
+        await scheduledMaintenance.populate('assignedTechnician');
+        await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
+      } catch (notifError) {
+        // Log the error but don't fail the request - status update already succeeded
+        console.error('Error sending completion notification:', notifError);
+      }
     }
     
     res.json({

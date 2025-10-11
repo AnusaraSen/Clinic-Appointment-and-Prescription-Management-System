@@ -1,13 +1,15 @@
 /**
- * Login Component
- * User authentication form
+ * Login Component - Glassmorphism Design
+ * User authentication form with real-time validation
  */
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, LogIn, AlertCircle, CheckCircle, X } from 'lucide-react';
+import '../../../styles/glassmorphism.css';
 
-const LoginForm = ({ onToggleMode, onSuccess }) => {
+const LoginForm = ({ onSuccess }) => {
   const { login, error, isLoading, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -15,9 +17,35 @@ const LoginForm = ({ onToggleMode, onSuccess }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: ''
+  });
+  const [touchedFields, setTouchedFields] = useState({
+    email: false,
+    password: false
+  });
 
   /**
-   * Handle input changes
+   * Real-time field validation
+   */
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'email':
+        if (!value) return 'Email is required';
+        if (!isValidEmail(value)) return 'Please enter a valid email address';
+        return '';
+      case 'password':
+        if (!value) return 'Password is required';
+        if (value.length < 6) return 'Password must be at least 6 characters';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  /**
+   * Handle input changes with real-time validation
    */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,9 +54,25 @@ const LoginForm = ({ onToggleMode, onSuccess }) => {
       [name]: value
     }));
     
-    // Clear errors when user starts typing
+    // Real-time validation if field has been touched
+    if (touchedFields[name]) {
+      const error = validateField(name, value);
+      setFieldErrors(prev => ({ ...prev, [name]: error }));
+    }
+    
+    // Clear form errors when user starts typing
     if (formError) setFormError('');
     if (error) clearError();
+  };
+
+  /**
+   * Handle field blur for validation
+   */
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouchedFields(prev => ({ ...prev, [name]: true }));
+    const error = validateField(name, value);
+    setFieldErrors(prev => ({ ...prev, [name]: error }));
   };
 
   /**
@@ -100,147 +144,114 @@ const LoginForm = ({ onToggleMode, onSuccess }) => {
   const displayError = formError || error;
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center items-center mb-4">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <LogIn className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-        <p className="text-gray-600 mt-2">Sign in to your account</p>
-      </div>
-
-      {/* Demo Login Buttons */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600 mb-3 text-center">Quick Demo Login:</p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('admin')}
-            className="px-3 py-2 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-            disabled={isLoading}
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('doctor')}
-            className="px-3 py-2 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-            disabled={isLoading}
-          >
-            Doctor
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('patient')}
-            className="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-            disabled={isLoading}
-          >
-            Patient
-          </button>
-        </div>
+    <div className="glass-wrapper" style={{ maxWidth: '400px', padding: '40px 35px' }}>
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="glass-title" style={{ fontSize: '2rem', marginBottom: '30px' }}>Login</h2>
       </div>
 
       {/* Error Display */}
       {displayError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-          <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-          <span className="text-red-700 text-sm">{displayError}</span>
+        <div className="glass-alert glass-alert-error">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>{displayError}</span>
         </div>
       )}
 
       {/* Login Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit}>
         {/* Email Input */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email Address
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Enter your email"
-              required
-              disabled={isLoading}
-            />
-          </div>
+        <div className="glass-input-field">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className="glass-input"
+            placeholder="Enter your email"
+            disabled={isLoading}
+            style={{ paddingLeft: '0' }}
+          />
+          {touchedFields.email && fieldErrors.email && (
+            <span className="glass-error-message">
+              <AlertCircle className="w-3 h-3" />
+              {fieldErrors.email}
+            </span>
+          )}
         </div>
 
         {/* Password Input */}
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
+        <div className="glass-input-field">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className="glass-input"
+            placeholder="Enter your password"
+            disabled={isLoading}
+            style={{ paddingLeft: '0', paddingRight: '35px' }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="glass-password-toggle"
+            disabled={isLoading}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
+          {touchedFields.password && fieldErrors.password && (
+            <span className="glass-error-message">
+              <AlertCircle className="w-3 h-3" />
+              {fieldErrors.password}
+            </span>
+          )}
+        </div>
+
+        {/* Remember Me & Forgot Password */}
+        <div className="glass-remember">
+          <label className="glass-checkbox-label">
+            <input type="checkbox" className="glass-checkbox" id="remember" />
+            <span>Remember me</span>
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Enter your password"
-              required
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              disabled={isLoading}
-            >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
+          <a href="#" className="glass-link">Forgot password?</a>
         </div>
 
         {/* Login Button */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="glass-button-primary"
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              Signing in...
+              <span className="glass-spinner"></span>
+              <span className="ml-2">Signing in...</span>
             </>
           ) : (
-            <>
-              <LogIn className="w-5 h-5 mr-2" />
-              Sign In
-            </>
+            'Log In'
           )}
         </button>
       </form>
 
-      {/* Toggle to Register */}
-      <div className="mt-6 text-center">
-        <p className="text-gray-600">
+      {/* Link to Register */}
+      <div className="glass-toggle-section">
+        <p>
           Don't have an account?{' '}
-          <button
-            onClick={onToggleMode}
-            className="text-blue-600 hover:text-blue-700 font-medium"
-            disabled={isLoading}
+          <Link
+            to="/register"
+            className="glass-link"
           >
-            Sign up
-          </button>
+            Register here
+          </Link>
         </p>
       </div>
     </div>

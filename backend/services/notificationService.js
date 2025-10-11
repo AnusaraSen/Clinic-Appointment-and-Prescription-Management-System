@@ -390,11 +390,16 @@ exports.notifyScheduledMaintenanceCompleted = async (scheduledMaintenance) => {
     
     if (recipients.length === 0) return;
 
+    // Safely get technician name
+    const technicianName = scheduledMaintenance.assignedTechnician 
+      ? (scheduledMaintenance.assignedTechnician.name || scheduledMaintenance.assignedTechnician.firstName || 'Unknown')
+      : 'Unassigned';
+
     await Notification.createNotification({
       type: 'SCHEDULED_MAINTENANCE_COMPLETED',
       category: 'SCHEDULED_MAINTENANCE',
       title: '✓ Scheduled Maintenance Completed',
-      message: `Scheduled maintenance "${scheduledMaintenance.title}" has been completed`,
+      message: `Scheduled maintenance "${scheduledMaintenance.title || 'Unnamed'}" has been completed`,
       relatedEntity: {
         entityType: 'ScheduledMaintenance',
         entityId: scheduledMaintenance._id
@@ -402,12 +407,14 @@ exports.notifyScheduledMaintenanceCompleted = async (scheduledMaintenance) => {
       recipients,
       priority: 'low',
       metadata: {
-        maintenanceTitle: scheduledMaintenance.title,
-        completedBy: scheduledMaintenance.assignedTechnician?.name
+        maintenanceTitle: scheduledMaintenance.title || 'Unnamed',
+        completedBy: technicianName
       }
     });
   } catch (error) {
     console.error('Error creating scheduled maintenance completed notification:', error);
+    // Re-throw to be caught by controller's try-catch
+    throw error;
   }
 };
 

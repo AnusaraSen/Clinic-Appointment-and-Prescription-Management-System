@@ -7,7 +7,6 @@ import MaintenanceManagementPage from './features/equipment-maintenance/pages/Ma
 import MaintenanceReportsPage from './features/equipment-maintenance/pages/MaintenanceReportsPage';
 import UsersPage from './features/admin-management/pages/UsersPage';
 import TechnicianDashboard from './features/equipment-maintenance/pages/TechnicianDashboard';
-import AuthPage from './features/authentication/pages/AuthPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ContactPage from './pages/ContactPage';
@@ -256,15 +255,6 @@ function App() {
         <Routes>
         
         {/* Public routes */}
-        <Route 
-          path="/auth" 
-          element={
-            <PublicRoute>
-              <AuthPage />
-            </PublicRoute>
-          } 
-        />
-        
         <Route 
           path="/login" 
           element={

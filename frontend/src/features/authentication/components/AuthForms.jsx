@@ -4,6 +4,7 @@ import { MailIcon, LockIcon, UserIcon, PhoneIcon, EyeIcon, EyeOffIcon } from 'lu
 const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, error }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,6 +17,8 @@ const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, 
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    // Clear validation error when user starts typing
+    if (validationError) setValidationError('');
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -34,30 +37,57 @@ const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, 
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
+    setValidationError(''); // Clear previous errors
+    
+    console.log('🔍 Registration form data:', {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      passwordLength: formData.password?.length,
+      confirmPasswordLength: formData.confirmPassword?.length,
+      terms: formData.terms
+    });
+    
     if (formData.password !== formData.confirmPassword) {
-      // Password mismatch - this should be handled by showing an error in the UI
+      console.error('❌ Password mismatch');
+      setValidationError('Passwords do not match');
       return;
     }
     if (!formData.terms) {
-      // Terms not accepted - this should be handled by showing an error in the UI
+      console.error('❌ Terms not accepted');
+      setValidationError('You must accept the Terms & Conditions');
       return;
     }
 
     // Password validation to match backend rules: min 6 chars, 1 letter, 1 number, 1 special char [@$!%*?&]
     const PASSWORD_REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
     if (!PASSWORD_REGEX.test(formData.password)) {
-      // Password validation failed - this should be handled by showing an error in the UI
+      console.error('❌ Password validation failed - must have 6+ chars, letter, number, special char');
+      setValidationError('Password must be 6+ characters with at least one letter, one number, and one special character (@$!%*?&)');
       return;
     }
 
+    // Phone validation - must be 10-15 digits only (no spaces, dashes, or parentheses)
+    const PHONE_REGEX = /^[0-9]{10,15}$/;
+    if (formData.phone && !PHONE_REGEX.test(formData.phone)) {
+      console.error('❌ Phone validation failed - must be 10-15 digits only, no spaces or special characters');
+      setValidationError('Phone number must be 10-15 digits only (no spaces, dashes, or special characters). Example: 1234567890');
+      return;
+    }
+
+    const registrationData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password
+    };
+    
+    console.log('✅ Submitting registration data:', registrationData);
+
     if (onRegister) {
-      onRegister({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password
-      });
+      onRegister(registrationData);
     }
   };
 
@@ -65,9 +95,9 @@ const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, 
     <div className="w-full max-w-md">
       <div className="rounded-xl shadow-sm transition-all duration-300">
         {/* Display error message if exists */}
-        {error && (
+        {(error || validationError) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-600 text-sm font-medium">{validationError || error}</p>
           </div>
         )}
 
@@ -270,10 +300,13 @@ const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, 
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="pl-10 w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all" 
-                    placeholder="(123) 456-7890"
+                    placeholder="1234567890"
+                    pattern="[0-9]{10,15}"
+                    title="Enter 10-15 digits only (no spaces or special characters)"
                     required
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">Enter 10-15 digits only (no spaces, dashes, or parentheses)</p>
               </div>
               <div>
                 <label htmlFor="registerPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -301,6 +334,7 @@ const AuthForms = ({ activeForm, setActiveForm, onLogin, onRegister, isLoading, 
                     {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                   </button>
                 </div>
+                <p className="mt-1 text-xs text-gray-500">Must be 6+ characters with letter, number, and special character (@$!%*?&)</p>
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">

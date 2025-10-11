@@ -4,10 +4,12 @@
  */
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Calendar, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import '../../../styles/glassmorphism.css';
 
-const RegisterForm = ({ onToggleMode, onSuccess }) => {
+const RegisterForm = ({ onSuccess }) => {
   const { registerPatient, error, isLoading, clearError } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -186,63 +188,48 @@ const RegisterForm = ({ onToggleMode, onSuccess }) => {
   const strengthInfo = getPasswordStrengthInfo();
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center items-center mb-4">
-          <div className="bg-green-100 p-3 rounded-full">
-            <UserPlus className="w-8 h-8 text-green-600" />
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-        <p className="text-gray-600 mt-2">Register as a patient</p>
+    <div className="glass-wrapper glass-wrapper-wide">
+      {/* Header */}
+      <div className="text-center" style={{ marginBottom: '20px' }}>
+        <h2 className="glass-title">Register</h2>
+        <p className="glass-subtitle">Create your account to get started</p>
       </div>
 
       {/* Error Display */}
       {displayError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-          <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-          <span className="text-red-700 text-sm">{displayError}</span>
+        <div className="glass-alert glass-alert-error">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>{displayError}</span>
         </div>
       )}
 
       {/* Registration Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit}>
         {/* Name Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-              First Name *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="First name"
-                required
-                disabled={isLoading}
-              />
-            </div>
+        <div className="glass-form-grid">
+          <div className="glass-input-field">
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              placeholder="First Name *"
+              className="glass-input"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+            />
           </div>
 
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-              Last Name *
-            </label>
+          <div className="glass-input-field">
             <input
               type="text"
               id="lastName"
               name="lastName"
+              placeholder="Last Name *"
+              className="glass-input"
               value={formData.lastName}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-              placeholder="Last name"
               required
               disabled={isLoading}
             />
@@ -250,227 +237,198 @@ const RegisterForm = ({ onToggleMode, onSuccess }) => {
         </div>
 
         {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email Address *
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-              placeholder="Enter your email"
-              required
-              disabled={isLoading}
-            />
-          </div>
+        <div className="glass-input-field glass-full-width">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Email Address *"
+            className="glass-input"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
+          />
         </div>
 
         {/* Password */}
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password *
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-              placeholder="Create a password"
-              required
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              disabled={isLoading}
-            >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
+        <div className="glass-input-field glass-full-width">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            id="password"
+            name="password"
+            placeholder="Password *"
+            className="glass-input"
+            value={formData.password}
+            onChange={handleChange}
+            style={{ paddingRight: '45px' }}
+            required
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="glass-password-toggle"
+            disabled={isLoading}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
           
           {/* Password Strength Indicator */}
           {formData.password && (
-            <div className="mt-2">
-              <div className="flex justify-between items-center mb-1">
-                <span className={`text-xs ${strengthInfo.textColor}`}>
-                  Password strength: {strengthInfo.text}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${strengthInfo.color}`}
-                  style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                ></div>
-              </div>
+            <div className="glass-password-strength" style={{ marginTop: '10px' }}>
+              <div
+                className="glass-password-strength-bar"
+                style={{ 
+                  width: `${(passwordStrength / 6) * 100}%`,
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: passwordStrength <= 2 ? 'rgba(239, 68, 68, 0.8)' : passwordStrength <= 4 ? 'rgba(251, 191, 36, 0.8)' : 'rgba(16, 185, 129, 0.8)',
+                  transition: 'all 0.3s ease'
+                }}
+              ></div>
             </div>
           )}
         </div>
 
         {/* Confirm Password */}
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm Password *
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="w-5 h-5 text-gray-400" />
-            </div>
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-              placeholder="Confirm your password"
-              required
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              disabled={isLoading}
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
+        <div className="glass-input-field glass-full-width">
+          <input
+            type={showConfirmPassword ? 'text' : 'password'}
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="Confirm Password *"
+            className="glass-input"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            style={{ paddingRight: '45px' }}
+            required
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="glass-password-toggle"
+            disabled={isLoading}
+          >
+            {showConfirmPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
           {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-            <p className="mt-1 text-xs text-red-600 flex items-center">
-              <AlertCircle className="w-3 h-3 mr-1" />
+            <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'rgba(239, 68, 68, 0.9)', display: 'flex', alignItems: 'center' }}>
+              <AlertCircle className="w-3 h-3" style={{ marginRight: '4px' }} />
               Passwords do not match
-            </p>
+            </div>
           )}
           {formData.confirmPassword && formData.password === formData.confirmPassword && formData.password && (
-            <p className="mt-1 text-xs text-green-600 flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'rgba(16, 185, 129, 0.9)', display: 'flex', alignItems: 'center' }}>
+              <CheckCircle className="w-3 h-3" style={{ marginRight: '4px' }} />
               Passwords match
-            </p>
+            </div>
           )}
         </div>
 
         {/* Optional Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Phone className="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="Phone number"
-                disabled={isLoading}
-              />
-            </div>
+        <div className="glass-form-grid">
+          <div className="glass-input-field">
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="Phone Number"
+              className="glass-input"
+              value={formData.phone}
+              onChange={handleChange}
+              disabled={isLoading}
+            />
           </div>
 
-          <div>
-            <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-              Date of Birth
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Calendar className="w-5 h-5 text-gray-400" />
-              </div>
-              <input
-                type="date"
-                id="dateOfBirth"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                disabled={isLoading}
-              />
-            </div>
+          <div className="glass-input-field">
+            <input
+              type="date"
+              id="dateOfBirth"
+              name="dateOfBirth"
+              className="glass-input"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              max={new Date().toISOString().split('T')[0]}
+              disabled={isLoading}
+            />
           </div>
         </div>
 
         {/* Address Section */}
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
-            <MapPin className="w-5 h-5 mr-2" />
+        <div style={{ marginTop: '25px', paddingTop: '25px', borderTop: '1px solid rgba(255, 255, 255, 0.2)' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#ffffff', marginBottom: '15px', display: 'flex', alignItems: 'center', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
+            <MapPin className="w-5 h-5" style={{ marginRight: '8px' }} />
             Address (Optional)
           </h3>
           
-          <div className="space-y-3">
-            <input
-              type="text"
-              name="address.street"
-              value={formData.address.street}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-              placeholder="Street address"
-              disabled={isLoading}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div className="glass-input-field glass-full-width">
+              <input
+                type="text"
+                name="address.street"
+                placeholder="Street Address"
+                className="glass-input"
+                value={formData.address.street}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <input
-                type="text"
-                name="address.city"
-                value={formData.address.city}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="City"
-                disabled={isLoading}
-              />
-              <input
-                type="text"
-                name="address.state"
-                value={formData.address.state}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="State/Province"
-                disabled={isLoading}
-              />
-              <input
-                type="text"
-                name="address.zipCode"
-                value={formData.address.zipCode}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="Zip code"
-                disabled={isLoading}
-              />
-              <input
-                type="text"
-                name="address.country"
-                value={formData.address.country}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="Country"
-                disabled={isLoading}
-              />
+            <div className="glass-form-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              <div className="glass-input-field">
+                <input
+                  type="text"
+                  name="address.city"
+                  placeholder="City"
+                  className="glass-input"
+                  value={formData.address.city}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="glass-input-field">
+                <input
+                  type="text"
+                  name="address.state"
+                  placeholder="State/Province"
+                  className="glass-input"
+                  value={formData.address.state}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="glass-input-field">
+                <input
+                  type="text"
+                  name="address.zipCode"
+                  placeholder="Zip Code"
+                  className="glass-input"
+                  value={formData.address.zipCode}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="glass-input-field">
+                <input
+                  type="text"
+                  name="address.country"
+                  placeholder="Country"
+                  className="glass-input"
+                  value={formData.address.country}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -479,33 +437,29 @@ const RegisterForm = ({ onToggleMode, onSuccess }) => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="glass-button-primary"
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              Creating account...
+              <span className="glass-spinner"></span>
+              <span className="ml-2">Creating account...</span>
             </>
           ) : (
-            <>
-              <UserPlus className="w-5 h-5 mr-2" />
-              Create Account
-            </>
+            'Create Account'
           )}
         </button>
       </form>
 
-      {/* Toggle to Login */}
-      <div className="mt-6 text-center">
-        <p className="text-gray-600">
+      {/* Link to Login */}
+      <div className="glass-toggle-section">
+        <p>
           Already have an account?{' '}
-          <button
-            onClick={onToggleMode}
-            className="text-green-600 hover:text-green-700 font-medium"
-            disabled={isLoading}
+          <Link
+            to="/login"
+            className="glass-link"
           >
             Sign in
-          </button>
+          </Link>
         </p>
       </div>
     </div>

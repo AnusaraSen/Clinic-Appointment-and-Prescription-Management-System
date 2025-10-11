@@ -75,7 +75,7 @@ const ProfessionalSidebar = ({
           name: 'Dashboard',
           icon: <LayoutDashboard size={20} />,
           page: 'admin-dashboard',
-          path: '/dashboard/admin'
+          path: '/admin/dashboard'
         },
         {
           name: 'Users',
@@ -313,6 +313,21 @@ const ProfessionalSidebar = ({
 
       {/* User section and logout */}
       <div className="border-t border-gray-200 p-3">
+        {/* Collapse/Expand Toggle Button - positioned at bottom right corner */}
+        <div className={`mb-3 flex ${sidebarOpen ? 'justify-end px-3' : 'justify-center'}`}>
+          <button
+            onClick={handleToggle}
+            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md group"
+            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? (
+              <ChevronLeft size={20} className="transition-transform duration-200 group-hover:scale-110" />
+            ) : (
+              <ChevronRight size={20} className="transition-transform duration-200 group-hover:scale-110" />
+            )}
+          </button>
+        </div>
+
         {/* User info - only show when sidebar is open */}
         {sidebarOpen && user && (
           <div className="mb-3 px-3 animate-fadeIn">
