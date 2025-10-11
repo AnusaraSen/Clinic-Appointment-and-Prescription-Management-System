@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, AlertTriangle, UserCheck, Stethoscope, Heart, Activity } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Stethoscope, Heart } from 'lucide-react';
 import { ClinicalKPICards } from './ClinicalKPICards';
 import { ClinicalAppointmentsSection } from './ClinicalAppointmentsSection';
-import { ClinicalTasksSection } from './ClinicalTasksSection';
 import { ClinicalActivitySection } from './ClinicalActivitySection';
 import ClinicalPastAppointmentsSection from './ClinicalPastAppointmentsSection.jsx';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
@@ -21,7 +20,6 @@ export const ClinicalDashboard = ({ onNavigate }) => {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [dashboardData, setDashboardData] = useState({});
   const [appointments, setAppointments] = useState([]);
-  const [urgentTasks, setUrgentTasks] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [apiError, setApiError] = useState(null);
   const [systemStatus, setSystemStatus] = useState({ 
@@ -34,16 +32,58 @@ export const ClinicalDashboard = ({ onNavigate }) => {
     fetchClinicalDashboardData();
   }, []);
 
+  // Helpers to normalize and filter appointments for today's date
+  const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const extractApptYMD = (a) => {
+    const raw = (
+      a?.appointment_date ?? a?.appointmentDate ?? a?.date ?? a?.scheduledDate ?? a?.datetime ?? a?.startTime ?? a?.time
+    );
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      const s = raw.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10); // ISO date
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : toYMD(d);
+    }
+    if (typeof raw === 'number') { const d = new Date(raw); return isNaN(d.getTime()) ? null : toYMD(d); }
+    try { const d = new Date(raw); return isNaN(d.getTime()) ? null : toYMD(d); } catch { return null; }
+  };
+  const normalizeTodaysAppointments = (payload) => {
+    const todayYmd = toYMD(new Date());
+    if (Array.isArray(payload)) return payload.filter(a => extractApptYMD(a) === todayYmd);
+    if (payload && typeof payload === 'object') {
+      const arr = payload.items || payload.appointments || payload.data || payload.results;
+      if (Array.isArray(arr)) return arr.filter(a => extractApptYMD(a) === todayYmd);
+      // Object keyed by dates
+      const keys = Object.keys(payload);
+      if (keys.length && keys.every(k => /^\d{4}-\d{2}-\d{2}$/.test(k))) {
+        return Array.isArray(payload[todayYmd]) ? payload[todayYmd] : [];
+      }
+      // Nested today container
+      if (payload.today) {
+        const t = payload.today;
+        const tArr = Array.isArray(t) ? t : (t.items || t.appointments || t.data || t.results);
+        if (Array.isArray(tArr)) return tArr.filter(a => extractApptYMD(a) === todayYmd);
+      }
+    }
+    return [];
+  };
+
   const fetchClinicalDashboardData = async () => {
     setIsInitialLoading(true);
     try {
       const base = 'http://localhost:5000';
       
       // Fetch clinical dashboard data
-      const [statsRes, appointmentsRes, tasksRes, activitiesRes] = await Promise.all([
+      const [statsRes, appointmentsRes, activitiesRes] = await Promise.all([
         fetch(`${base}/dashboard/clinical/stats`).catch(() => ({ ok: false })),
         fetch(`${base}/dashboard/appointments/today`).catch(() => ({ ok: false })),
-        fetch(`${base}/dashboard/tasks/urgent`).catch(() => ({ ok: false })),
         fetch(`${base}/dashboard/activities/recent`).catch(() => ({ ok: false }))
       ]);
 
@@ -55,12 +95,43 @@ export const ClinicalDashboard = ({ onNavigate }) => {
 
       if (appointmentsRes.ok) {
         const appointmentsData = await appointmentsRes.json();
-        setAppointments(Array.isArray(appointmentsData) ? appointmentsData : appointmentsData.data || []);
-      }
+        let todayList = normalizeTodaysAppointments(appointmentsData);
 
-      if (tasksRes.ok) {
-        const tasksData = await tasksRes.json();
-        setUrgentTasks(Array.isArray(tasksData) ? tasksData : tasksData.data || []);
+        // Fallbacks if empty: fetch by doctor id/name or all, then filter to today
+        if (!todayList || todayList.length === 0) {
+          try {
+            const todayYmd = toYMD(new Date());
+            let fetched = [];
+            const doctorId = user?._id || user?.doctorId;
+            const doctorName = user?.name || user?.fullName || user?.username;
+            if (doctorId) {
+              try {
+                const byId = await getDoctorAppointments({ doctorId, start: todayYmd, end: todayYmd });
+                if (Array.isArray(byId) && byId.length) fetched = byId;
+              } catch {}
+            }
+            if ((!fetched || fetched.length === 0) && doctorName) {
+              try {
+                const byName = await getDoctorAppointmentsByName({ doctorName, start: todayYmd, end: todayYmd, loose: true });
+                if (Array.isArray(byName) && byName.length) fetched = byName;
+              } catch {}
+            }
+            if (!fetched || fetched.length === 0) {
+              try {
+                const all = await getAllAppointments();
+                const lowered = (doctorName || '').toLowerCase();
+                fetched = (all || []).filter(a => {
+                  const dateStr = (a.appointment_date || a.date || '').toString();
+                  const ymd = dateStr.includes('T') ? dateStr.slice(0,10) : dateStr;
+                  const nameStr = (a.doctor_name || '').toLowerCase();
+                  return ymd === todayYmd && (!doctorName || nameStr.includes(lowered));
+                });
+              } catch {}
+            }
+            todayList = fetched;
+          } catch {}
+        }
+        setAppointments(todayList || []);
       }
 
       if (activitiesRes.ok) {
@@ -176,21 +247,6 @@ export const ClinicalDashboard = ({ onNavigate }) => {
     }
   };
 
-  const handleCompleteTask = async (taskId) => {
-    try {
-      const base = 'http://localhost:5000';
-      await fetch(`${base}/dashboard/tasks/${taskId}/complete`, {
-        method: 'PATCH'
-      });
-
-      // Refresh tasks data
-      fetchClinicalDashboardData();
-    } catch (error) {
-      console.error('Error completing task:', error);
-      setApiError('Failed to complete task');
-    }
-  };
-
   const handleNavigate = (target) => {
     if (typeof onNavigate === 'function') onNavigate(target);
   };
@@ -292,6 +348,8 @@ export const ClinicalDashboard = ({ onNavigate }) => {
 
             {/* Right Column */}
             <div className="space-y-8">
+              {/* New: Past Appointments section */}
+              <ClinicalPastAppointmentsSection />
               <ClinicalTasksSection
                 tasks={urgentTasks}
                 isLoading={isInitialLoading || isRefreshing}
