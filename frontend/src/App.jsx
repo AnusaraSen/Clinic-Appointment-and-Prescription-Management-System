@@ -80,6 +80,8 @@ import DoctorProfilePage from './features/clinical-workflow/pages/DoctorProfileP
 import PatientHistoryPage from './features/clinical-workflow/pages/PatientHistoryPage';
 import Home from './pages/Home'
 import InventoryDashboard from './features/pharmacy-inventory/pages/InventoryDashboard'
+import InventorySummary from './features/pharmacy-inventory/pages/InventorySummary'
+import PrescriptionSummary from './features/pharmacy-inventory/pages/PrescriptionSummary'
 import AllActivities from './features/pharmacy-inventory/pages/AllActivities'
 import LowStockItems from './features/pharmacy-inventory/pages/LowStockItems'
 import MedicineList from './features/pharmacy-inventory/pages/Medicine-Inventory/MedicineList'
@@ -110,12 +112,14 @@ import DeleteAppointments from "./features/patient-interaction/pages/DeleteAppoi
 import PatientProfile from "./features/patient-interaction/pages/PatientProfile";
 import AppointmentDetails from "./features/patient-interaction/pages/AppointmentDetails";
 import AddFeedback from "./features/patient-interaction/pages/AddFeedback";
-import AllFeedback from "./features/patient-interaction/pages/AllFeedback";
+import MyFeedback from "./features/patient-interaction/pages/MyFeedback";
 import TestFeedback from "./features/patient-interaction/pages/TestFeedback";
 import SimpleFeedback from "./features/patient-interaction/pages/SimpleFeedback";
 import UpdateFeedback from "./features/patient-interaction/pages/UpdateFeedback";
 import DeleteFeedback from "./features/patient-interaction/pages/DeleteFeedback";
 import PatientDashboard from "./features/patient-interaction/pages/Dashboard";
+import FindDoctors from "./pages/FindDoctors";
+import DoctorPublicProfile from "./pages/DoctorPublicProfile";
 import DoctorsPage from "./features/patient-interaction/pages/DoctorsPage";
 import CompletedVisits from "./features/patient-interaction/pages/CompletedVisits";
 import Prescriptions from "./features/patient-interaction/pages/Prescriptions";
@@ -400,9 +404,13 @@ function App() {
         <Route 
           path="/lab/supervisor/dashboard" 
           element={
-            <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
-              <LabSupervisorDashboardPage />
-            </RoleProtectedRoute>
+            <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['Lab Supervisor', 'LabSupervisor', 'Lab Manager']}>
+                <ProfessionalLayout>
+                  <LabSupervisorDashboardPage />
+                </ProfessionalLayout>
+              </RoleProtectedRoute>
+            </ProtectedRoute>
           } 
         />
         
@@ -659,6 +667,8 @@ function App() {
 
           {/* Pharmacy/Inventory Routes with persistent sidebar */}
           <Route path="/inventory-dashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
+          <Route path="/inventory-summary" element={<InventoryLayout><InventorySummary /></InventoryLayout>} />
+          <Route path="/prescription-summary" element={<PrescriptionSummary />} />
           <Route path="/lab/Pdashboard" element={<InventoryLayout><InventoryDashboard /></InventoryLayout>} />
           <Route path="/activities" element={<InventoryLayout><AllActivities /></InventoryLayout>} />
           <Route path="/low-stock-items" element={<InventoryLayout><LowStockItems /></InventoryLayout>} />
@@ -711,11 +721,9 @@ function App() {
           <Route path="/delete" element={<DeleteAppointments />} />
           
           {/* Feedback Routes */}
-          <Route path="/feedback" element={<AllFeedback />} />
+          <Route path="/feedback" element={<MyFeedback />} />
           <Route path="/feedback/test" element={<TestFeedback />} />
           <Route path="/feedback/simple" element={<SimpleFeedback />} />
-          <Route path="/feedback/add" element={<AddFeedback />} />
-          <Route path="/add-feedback" element={<AddFeedback />} />
           <Route path="/feedback/update" element={<UpdateFeedback />} />
           <Route path="/feedback/delete" element={<DeleteFeedback />} />
           
@@ -730,7 +738,9 @@ function App() {
           <Route path="/dashboard/medical-records" element={<MedicalRecords />} />
           <Route path="/dashboard/lab-reports" element={<LabReports />} />
           <Route path="/dashboard/support" element={<Support />} />
-          <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/doctors" element={<FindDoctors />} />
+          <Route path="/doctors/:id" element={<DoctorPublicProfile />} />
+          <Route path="/patient/doctors" element={<DoctorsPage />} />
 
           {/* Catch all route - moved to end */}
           <Route path="*" element={<Navigate to="/" replace />} />

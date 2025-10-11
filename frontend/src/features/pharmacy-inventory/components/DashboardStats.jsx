@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../../../styles/DashboardStats.css';
 
-const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescriptionClick, onNavigateToPrescriptions, onNavigateToMedicineInventory, onNavigateToLowStockMedicines }) => {
+const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescriptionClick, onNavigateToPrescriptions, onNavigateToMedicineInventory, onNavigateToLowStockMedicines, onNavigateToPrescriptionSummary }) => {
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [showMedicineDetails, setShowMedicineDetails] = useState(false);
   if (!data) {
@@ -121,12 +121,34 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
           <div className="recent-prescriptions">
             <div className="section-header">
               <h3>Recent Prescriptions</h3>
-              <button 
-                className="view-all-btn"
-                onClick={() => onNavigateToPrescriptions && onNavigateToPrescriptions()}
-              >
-                View All
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  className="view-all-btn"
+                  onClick={() => onNavigateToPrescriptionSummary && onNavigateToPrescriptionSummary()}
+                  style={{
+                    backgroundColor: '#0d9488',
+                    color: 'white',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#0f766e'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#0d9488'}
+                >
+                  <i className="fas fa-file-alt" style={{ marginRight: '6px' }}></i>
+                  Summary Report
+                </button>
+                <button 
+                  className="view-all-btn"
+                  onClick={() => onNavigateToPrescriptions && onNavigateToPrescriptions()}
+                >
+                  View All
+                </button>
+              </div>
             </div>
             <div className="prescriptions-table">
               <div className="table-header">
@@ -162,17 +184,44 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
           </div>
         </div>
 
-        {/* Right Side - Low Stock Medications */}
+        {/* Right Side - Stock Alerts */}
         <div className="right-content">
           <div className="low-stock-section">
             <div className="section-header">
-              <h3>Low Stock Medications</h3>
-              <button className="alert-btn">
-                <i className="fas fa-bell"></i>
-                Alert
-              </button>
+              <h3>Stock Alerts</h3>
+              <i className="fas fa-chevron-down" style={{ color: '#9ca3af', fontSize: '16px' }}></i>
             </div>
-            <div className="low-stock-list">
+            
+            {/* Stock Alert Badges */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              padding: '16px 20px',
+              borderBottom: '1px solid #f3f4f6'
+            }}>
+              <span style={{
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}>
+                Low Stock ({lowStockMedications.filter(m => m.status === 'low').length})
+              </span>
+              <span style={{
+                backgroundColor: '#f8d7da',
+                color: '#721c24',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}>
+                Expired ({lowStockMedications.filter(m => m.status === 'critical').length})
+              </span>
+            </div>
+
+            <div className="low-stock-list" style={{ padding: '16px 20px' }}>
               {lowStockMedications.length === 0 ? (
                 <div className="no-low-stock">
                   <div className="no-stock-icon">
@@ -183,55 +232,108 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
                   </div>
                 </div>
               ) : (
-                lowStockMedications.map((medication, index) => (
-                  <div 
-                    key={medication._id || index} 
-                    className={`medication-item ${medication.status} clickable`}
-                    onClick={() => handleMedicineClick(medication)}
-                    title="Click for more details"
-                  >
-                    <div className="medication-info">
-                      <div className="medication-name">{medication.name || medication.medicineName}</div>
-                      <div className="medication-details">
-                        <div className="detail-row">
-                          <span className="label">Current Stock:</span>
-                          <span className={`current-stock ${medication.status}`}>
-                            {medication.quantity} {medication.unit || 'units'}
-                          </span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="label">Category:</span>
-                          <span className="category">{medication.category || 'General'}</span>
-                        </div>
-                        {medication.expiryDate && (
-                          <div className="detail-row">
-                            <span className="label">Expires:</span>
-                            <span className="expiry-date">
-                              {new Date(medication.expiryDate).toLocaleDateString()}
-                            </span>
+                lowStockMedications.map((medication, index) => {
+                  const isExpired = medication.status === 'critical' || (medication.expiryDate && new Date(medication.expiryDate) < new Date());
+                  const maxStock = 20; // Assumed max for progress bar
+                  const stockPercentage = Math.min((medication.quantity / maxStock) * 100, 100);
+                  
+                  return (
+                    <div 
+                      key={medication._id || index} 
+                      style={{
+                        backgroundColor: '#f9fafb',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        marginBottom: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', gap: '12px', flex: 1 }}>
+                          {/* Warning Icon */}
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            backgroundColor: isExpired ? '#fee2e2' : '#fff3cd',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {isExpired ? (
+                              <i className="fas fa-times-circle" style={{ color: '#dc2626', fontSize: '18px' }}></i>
+                            ) : (
+                              <i className="fas fa-exclamation-triangle" style={{ color: '#d97706', fontSize: '16px' }}></i>
+                            )}
                           </div>
-                        )}
-                        {medication.batchNumber && (
-                          <div className="detail-row">
-                            <span className="label">Batch:</span>
-                            <span className="batch-number">{medication.batchNumber}</span>
+                          
+                          {/* Medicine Info */}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              fontWeight: '600', 
+                              color: '#1f2937',
+                              fontSize: '14px',
+                              marginBottom: '4px'
+                            }}>
+                              {medication.name || medication.medicineName}
+                            </div>
+                            <div style={{ 
+                              fontSize: '13px', 
+                              color: '#6b7280',
+                              marginBottom: isExpired ? '0' : '8px'
+                            }}>
+                              {isExpired 
+                                ? `Expired: ${medication.expiryDate ? new Date(medication.expiryDate).toLocaleDateString() : 'N/A'}`
+                                : `${medication.quantity} ${medication.unit || 'capsules'} left`
+                              }
+                            </div>
+                            
+                            {/* Progress Bar - only for low stock items */}
+                            {!isExpired && (
+                              <div style={{
+                                width: '100%',
+                                height: '6px',
+                                backgroundColor: '#e5e7eb',
+                                borderRadius: '3px',
+                                overflow: 'hidden'
+                              }}>
+                                <div style={{
+                                  width: `${stockPercentage}%`,
+                                  height: '100%',
+                                  backgroundColor: medication.quantity <= 3 ? '#dc2626' : '#f59e0b',
+                                  transition: 'width 0.3s ease'
+                                }}></div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
-                    <div className="stock-indicator">
-                      <div className={`status-badge ${medication.status}`}>
-                        {medication.status === 'critical' ? 'Critical' : 'Low Stock'}
-                      </div>
-                      <div className="quantity-display">
-                        {medication.quantity}
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
               <button 
-                className="view-all-stock-btn"
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  color: '#2563eb',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #dbeafe',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#eff6ff';
+                  e.target.style.borderColor = '#2563eb';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent';
+                  e.target.style.borderColor = '#dbeafe';
+                }}
                 onClick={() => onNavigateToLowStockMedicines && onNavigateToLowStockMedicines()}
               >
                 View All Low Stock

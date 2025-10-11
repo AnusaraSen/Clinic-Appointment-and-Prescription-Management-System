@@ -163,6 +163,39 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
     }
   };
 
+  const handleDeletePrescription = async (prescription, event) => {
+    event.stopPropagation(); // Prevent triggering view action
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete prescription for ${prescription.patient.name}?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      await prescriptionsApi.delete(prescription._id);
+      
+      // Remove from local state
+      setPrescriptions(prev => prev.filter(p => p._id !== prescription._id));
+      
+      // Close details modal if this prescription was open
+      if (selectedPrescription && selectedPrescription._id === prescription._id) {
+        handleCloseDetails();
+      }
+      
+      // Show success message
+      alert('Prescription deleted successfully');
+      
+      // Trigger refresh if callback provided
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Error deleting prescription:', error);
+      alert(error.response?.data?.message || 'Failed to delete prescription. Please try again.');
+    }
+  };
+
   return (
     <div className="prescriptions-page">
       <div className="prescriptions-main">
@@ -217,12 +250,20 @@ const PrescriptionsList = ({ onPrescriptionClick, onRefresh }) => {
                   </span>
                   <div className="actions">
                     <button 
-                      className="view-btn"
+                      className="update-btn"
                       onClick={() => handleViewPrescription(prescription)}
+                      title="View Details"
                     >
-                      <i className="fas fa-eye"> </i>
+                      UPDATE
                     </button>
-                    
+                    <button 
+                      className="delete-btn"
+                      onClick={(e) => handleDeletePrescription(prescription, e)}
+                      disabled={prescription.status === 'New'}
+                      title={prescription.status === 'New' ? 'Cannot delete new prescription' : 'Delete Prescription'}
+                    >
+                      DELETE
+                    </button>
                   </div>
                 </div>
               ))

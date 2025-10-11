@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
 import { fetchPatientHistory, formatPrescription, fetchLabReportsByPatient } from '../../../api/patientHistoryApi';
 import { ChevronLeft, RefreshCw, FileText, AlertTriangle, Printer, Download, Layers } from 'lucide-react';
+import logoUrl from '../../../assets/family-health-logo.svg';
 
 export const PatientHistoryPage = () => {
   const { patientId } = useParams();
@@ -67,13 +68,99 @@ export const PatientHistoryPage = () => {
   useEffect(()=>{ if(page>totalPages) setPage(1); }, [totalPages,page]);
 
   const handlePrint = () => {
-    const w = window.open('', '', 'width=1000,height=800'); if(!w) return; const printDate=new Date().toLocaleString();
-    const rows = sortedPrescriptions.map(p=>{ const meds=p.medicines.map(m=>`${m.Medicine_Name} (${m.Dosage} ${m.Frequency} ${m.Duration})`).join('; '); return `<tr><td>${p.date? p.date.toLocaleDateString():''}</td><td>${p.doctor||''}</td><td>${p.diagnosis||''}</td><td>${meds}</td><td>${(p.instructions||'').replace(/</g,'&lt;')}</td></tr>`; }).join('');
-    w.document.write(`<!DOCTYPE html><html><head><title>Patient History ${patientId}</title><style>body{font-family:Arial,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px;text-align:left;}th{background:#f5f5f5;}h1{margin:0 0 8px;} .meta{color:#555;font-size:12px;margin-bottom:16px;} </style></head><body>`);
-    w.document.write(`<h1>Patient History</h1><div class="meta">Patient ID: ${patientId} | Generated: ${printDate}</div>`);
-    if(patient){ w.document.write(`<p><strong>Name:</strong> ${patient.patient_name||''} &nbsp; <strong>Age:</strong> ${patient.patient_age||''} &nbsp; <strong>Gender:</strong> ${patient.Gender||''}</p>`); }
-    w.document.write('<table><thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th>Instructions</th></tr></thead><tbody>'+rows+'</tbody></table>');
-    w.document.write('</body></html>'); w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+    const w = window.open('', '', 'width=1000,height=800');
+    if (!w) return;
+    const printDate = new Date().toLocaleString();
+
+    // Build prescriptions rows
+    const rows = sortedPrescriptions.map(p => {
+      const meds = p.medicines.map(m => `${m.Medicine_Name} (${m.Dosage} ${m.Frequency} ${m.Duration})`).join('; ');
+      return `<tr>
+        <td>${p.date ? p.date.toLocaleDateString() : ''}</td>
+        <td>${(p.doctor||'').toString().replace(/</g,'&lt;')}</td>
+        <td>${(p.diagnosis||'').toString().replace(/</g,'&lt;')}</td>
+        <td>${(meds||'').toString().replace(/</g,'&lt;')}</td>
+        <td>${(p.instructions||'').toString().replace(/</g,'&lt;')}</td>
+      </tr>`;
+    }).join('');
+
+    const patientPhoto = (patient && patient.photo) ? `<img src="${patient.photo}" alt="${(patient.patient_name||'Patient').toString().replace(/"/g,'&quot;')}" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:1px solid #e5e7eb;"/>` : '<div style="width:120px;height:120px;border-radius:50%;background:#f1f5f9;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;">No Photo</div>';
+
+    const headerLogo = `<img src="${logoUrl}" alt="System Logo" style="height:42px;vertical-align:middle;"/>`;
+    const systemName = 'Clinic Appointment & Prescription Management System';
+
+    const infoCell = (label, value) => `<div style="padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#f8fafc;display:inline-block;margin:2px 6px 2px 0;min-width:120px;"><div style="color:#64748b;font-size:11px;">${label}</div><div style="font-weight:600;color:#0f172a;">${(value??'-')}</div></div>`;
+
+    w.document.write(`<!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <title>Patient History ${patientId}</title>
+        <style>
+          @media print { @page { margin: 16mm; } }
+          body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+          .header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-bottom:2px solid #e5e7eb;padding-bottom:12px;margin-bottom:18px;}
+          .system{display:inline-flex;align-items:center;gap:10px;justify-self:center}
+          .system-name{font-size:18px;font-weight:700;color:#0f172a;letter-spacing:0.2px}
+          .meta{color:#475569;font-size:12px;justify-self:end}
+          .section{margin:18px 0}
+          .title{font-size:18px;font-weight:700;margin:0 0 8px}
+          .subtle{font-size:12px;color:#64748b}
+          .grid{display:flex;gap:18px}
+          .grid .col{flex:1}
+          table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+          th,td{border:1px solid #e5e7eb;padding:6px;text-align:left;vertical-align:top}
+          th{background:#f8fafc;color:#334155}
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div></div>
+          <div class="system">${headerLogo}<div class="system-name">${systemName}</div></div>
+          <div class="meta">Generated: ${printDate}</div>
+        </div>
+
+        <div class="section">
+          <div class="title">Patient Summary</div>
+          <div class="grid">
+            <div class="col" style="max-width:220px;text-align:center">
+              ${patientPhoto}
+              <div style="margin-top:10px;font-weight:700">${patient?.patient_name || ''}</div>
+              <div class="subtle">Patient Code: ${patient?.patient_ID || ''}</div>
+            </div>
+            <div class="col">
+              ${infoCell('Email', patient?.Email || '-')}
+              ${infoCell('Age', patient?.patient_age || '-')}
+              ${infoCell('Gender', patient?.Gender || '-')}
+              ${infoCell('Blood', patient?.Blood_group || '-')}
+              ${infoCell('Smoke', patient?.Smoking_status ?? '0')}
+              ${infoCell('Alcohol', patient?.Alcohol_consumption ?? '0')}
+              ${infoCell('Emergency', patient?.Emergency_Contact || '-')}
+              <div style="margin-top:8px"> 
+                <div class="subtle" style="margin:6px 0 2px">Allergies</div>
+                <div style="font-weight:600">${patient?.Allergies || '-'}</div>
+                <div class="subtle" style="margin:10px 0 2px">Current Conditions</div>
+                <div style="font-weight:600">${patient?.Current_medical_conditions || '-'}</div>
+                <div class="subtle" style="margin:10px 0 2px">Past Surgeries</div>
+                <div style="font-weight:600">${patient?.Past_surgeries || '-'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="title">Prescription History</div>
+          <div class="subtle">Patient ID: ${patientId} • Total: ${sortedPrescriptions.length}</div>
+          <table>
+            <thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th>Instructions</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </body>
+    </html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
   };
   const handleExportCSV = () => {
     const headers=['Date','Doctor','Diagnosis','Medicines','Instructions'];

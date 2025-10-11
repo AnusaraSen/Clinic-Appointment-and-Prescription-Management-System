@@ -16,6 +16,7 @@ const UpdateMedicine = () => {
     expiryDate: "",
     batchNumber: "",
     dosageForm: "",
+    reorderLevel: "",
   });
 
   const [loading, setLoading] = useState(true);
@@ -61,8 +62,18 @@ const UpdateMedicine = () => {
     setError("");
     
     try {
-      console.log('Submitting medicine update...', medicine);
-      const response = await axios.put(`http://localhost:5000/api/medicines/${id}`, medicine);
+      // Prepare payload with proper type conversion
+      const payload = { ...medicine };
+      if (payload.quantity !== undefined) {
+        payload.quantity = Number(payload.quantity);
+      }
+      if (payload.reorderLevel !== undefined) {
+        payload.reorderLevel = Number(payload.reorderLevel);
+      }
+      
+      console.log('Submitting medicine update...', payload);
+      console.log('ReorderLevel value:', payload.reorderLevel, 'Type:', typeof payload.reorderLevel);
+      const response = await axios.put(`http://localhost:5000/api/medicines/${id}`, payload);
       console.log('Update response:', response.data);
       
       alert("✅ Medicine updated successfully");
@@ -208,6 +219,21 @@ const UpdateMedicine = () => {
               value={medicine.dosageForm}
               onChange={handleChange}
               placeholder="Enter dosage form (e.g., tablet, capsule)"
+              required
+              disabled={submitting}
+            />
+          </div>
+
+          <div className="medicine-field">
+            <label htmlFor="reorderLevel">Reorder Level</label>
+            <input
+              id="reorderLevel"
+              type="number"
+              name="reorderLevel"
+              value={medicine.reorderLevel || ''}
+              onChange={handleChange}
+              placeholder="Enter reorder level"
+              min="0"
               required
               disabled={submitting}
             />

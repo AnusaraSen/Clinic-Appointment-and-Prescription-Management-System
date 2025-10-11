@@ -58,44 +58,274 @@ const UpdateOrder = () => {
 		}
 	};
 
-		return (
-			<div className="order-form-page">
-					<h2>Edit Order</h2>
-					{loading ? (
-						<div>Loading...</div>
-					) : (
-						<form className="order-form" onSubmit={submit}>
-							<label>Order Number
-								<input type="text" value={order.orderNumber} onChange={(e) => setOrder({ ...order, orderNumber: e.target.value })} />
-							</label>
-							<label>Supplier
-								<input type="text" value={order.supplier} onChange={(e) => setOrder({ ...order, supplier: e.target.value })} />
-							</label>
-							<label>Supplier Email
-								<input type="email" value={order.supplierEmail} onChange={(e) => setOrder({ ...order, supplierEmail: e.target.value })} />
-							</label>
-							<label>Items (comma separated)
-								<textarea rows={4} value={order.itemsText} onChange={(e) => setOrder({ ...order, itemsText: e.target.value })} />
-							</label>
-							<label>Date
-								<input type="text" value={order.date} readOnly />
-							</label>
-							<label>Status
-								<select value={order.status} onChange={(e) => setOrder({ ...order, status: e.target.value })}>
-									<option>Pending</option>
-									<option>Processing</option>
-									<option>Delivered</option>
-									<option>Cancelled</option>
-								</select>
-							</label>
-							{error && <div className="orders-error" style={{ marginTop: 10 }}>{error}</div>}
-							<div className="order-form-actions">
-								<button type="button" className="btn" onClick={() => navigate('/orders')}>Cancel</button>
-								<button type="submit" className="btn-primary" disabled={saving}>Save Changes</button>
+	return (
+		<div style={{
+			minHeight: '100vh',
+			backgroundColor: '#f3f4f6',
+			padding: '2rem'
+		}}>
+			<div style={{
+				maxWidth: '800px',
+				margin: '0 auto',
+				backgroundColor: 'white',
+				borderRadius: '12px',
+				boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+				padding: '2rem'
+			}}>
+				<h2 style={{
+					fontSize: '1.875rem',
+					fontWeight: '700',
+					color: '#1f2937',
+					marginBottom: '2rem'
+				}}>Edit Order</h2>
+				
+				{loading ? (
+					<div style={{
+						textAlign: 'center',
+						padding: '2rem',
+						color: '#6b7280'
+					}}>Loading...</div>
+				) : (
+					<form onSubmit={submit}>
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+							{/* Order Number */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Order Number</label>
+								<input
+									type="text"
+									value={order.orderNumber}
+									onChange={(e) => setOrder({ ...order, orderNumber: e.target.value })}
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										outline: 'none',
+										transition: 'all 0.2s',
+										backgroundColor: '#f9fafb'
+									}}
+									onFocus={(e) => e.target.style.borderColor = '#047857'}
+									onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+								/>
 							</div>
-						</form>
-								)}
-					</div>
+
+							{/* Date */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Date</label>
+								<input
+									type="text"
+									value={order.date}
+									readOnly
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										backgroundColor: '#f9fafb',
+										color: '#6b7280',
+										cursor: 'not-allowed'
+									}}
+								/>
+							</div>
+
+							{/* Supplier */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Supplier</label>
+								<select
+									value={order.supplier}
+									onChange={(e) => setOrder({ ...order, supplier: e.target.value })}
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										outline: 'none',
+										backgroundColor: 'white',
+										cursor: 'pointer'
+									}}
+									onFocus={(e) => e.target.style.borderColor = '#047857'}
+									onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+								>
+									<option value="">Select supplier</option>
+									<option value="Supplier A">Supplier A</option>
+									<option value="Supplier B">Supplier B</option>
+									<option value="Supplier C">Supplier C</option>
+								</select>
+							</div>
+
+							{/* Supplier Email */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Supplier Email</label>
+								<input
+									type="email"
+									value={order.supplierEmail}
+									placeholder="Auto-filled from supplier"
+									readOnly
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										backgroundColor: '#f9fafb',
+										color: '#9ca3af'
+									}}
+								/>
+							</div>
+
+							{/* Status */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Status</label>
+								<select
+									value={order.status}
+									onChange={(e) => setOrder({ ...order, status: e.target.value })}
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										outline: 'none',
+										backgroundColor: 'white',
+										cursor: 'pointer'
+									}}
+									onFocus={(e) => e.target.style.borderColor = '#047857'}
+									onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+								>
+									<option value="Pending">Pending</option>
+									<option value="Processing">Processing</option>
+									<option value="Delivered">Delivered</option>
+									<option value="Cancelled">Cancelled</option>
+								</select>
+							</div>
+
+							{/* Items */}
+							<div>
+								<label style={{
+									display: 'block',
+									fontSize: '0.875rem',
+									fontWeight: '600',
+									color: '#047857',
+									marginBottom: '0.5rem'
+								}}>Items (comma separated)</label>
+								<textarea
+									rows={4}
+									value={order.itemsText}
+									onChange={(e) => setOrder({ ...order, itemsText: e.target.value })}
+									style={{
+										width: '100%',
+										padding: '0.75rem',
+										border: '1px solid #d1d5db',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										outline: 'none',
+										resize: 'vertical',
+										fontFamily: 'inherit'
+									}}
+									onFocus={(e) => e.target.style.borderColor = '#047857'}
+									onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+								/>
+							</div>
+
+							{/* Error Message */}
+							{error && (
+								<div style={{
+									padding: '0.75rem',
+									backgroundColor: '#fee2e2',
+									color: '#991b1b',
+									borderRadius: '8px',
+									fontSize: '0.875rem',
+									border: '1px solid #fca5a5'
+								}}>
+									{error}
+								</div>
+							)}
+
+							{/* Action Buttons */}
+							<div style={{
+								display: 'flex',
+								gap: '1rem',
+								marginTop: '1rem'
+							}}>
+								<button
+									type="button"
+									onClick={() => navigate('/orders')}
+									style={{
+										flex: 1,
+										padding: '0.75rem',
+										backgroundColor: '#f3f4f6',
+										color: '#374151',
+										border: 'none',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										fontWeight: '600',
+										cursor: 'pointer',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+									onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+								>
+									Cancel
+								</button>
+								<button
+									type="submit"
+									disabled={saving}
+									style={{
+										flex: 1,
+										padding: '0.75rem',
+										backgroundColor: saving ? '#9ca3af' : '#047857',
+										color: 'white',
+										border: 'none',
+										borderRadius: '8px',
+										fontSize: '1rem',
+										fontWeight: '600',
+										cursor: saving ? 'not-allowed' : 'pointer',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => !saving && (e.target.style.backgroundColor = '#065f46')}
+									onMouseLeave={(e) => !saving && (e.target.style.backgroundColor = '#047857')}
+								>
+									{saving ? 'Saving...' : 'Save Changes'}
+								</button>
+							</div>
+						</div>
+					</form>
+				)}
+			</div>
+		</div>
 	);
 };
 

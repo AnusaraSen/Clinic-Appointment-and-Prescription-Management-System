@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, MessageSquare, Calendar, Clock, User, UserCheck } from 'lucide-react';
 import PatientLayout from '../components/PatientLayout';
 import { useNavigate } from 'react-router-dom';
+import FeedbackModal from '../components/FeedbackModal';
 import axios from 'axios';
 import '../../../styles/Patient-Interaction/CompletedVisits.css';
 
@@ -10,6 +11,8 @@ const CompletedVisits = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const getInitials = (fullName) => {
     if (!fullName || typeof fullName !== 'string') return 'Dr';
@@ -228,7 +231,7 @@ const CompletedVisits = () => {
                       <Eye size={16} color="#6366f1" />
                     </button>
                     <button
-                      onClick={() => navigate(`/add-feedback?appointmentId=${appointment._id}`)}
+                      onClick={() => { setSelectedAppointment(appointment); setFeedbackOpen(true); }}
                       style={{
                         background: 'rgba(34, 197, 94, 0.1)',
                         border: 'none',
@@ -274,6 +277,21 @@ const CompletedVisits = () => {
           )}
         </div>
       </div>
+      {/* Feedback Modal */}
+      <FeedbackModal
+        open={feedbackOpen}
+        appointment={selectedAppointment}
+        onClose={() => { setFeedbackOpen(false); setSelectedAppointment(null); }}
+        onSaved={(fb) => {
+          // After saving, close modal and navigate to My Feedback page highlighting this appointment
+          setFeedbackOpen(false); setSelectedAppointment(null);
+          try { window.alert('Feedback saved successfully'); } catch {}
+          const apptId = (fb && typeof fb.appointment_id === 'object' && fb.appointment_id._id)
+            ? String(fb.appointment_id._id)
+            : String(fb?.appointment_id || '');
+          navigate(`/feedback?justAdded=1&appointmentId=${encodeURIComponent(apptId)}`);
+        }}
+      />
     </PatientLayout>
   );
 };

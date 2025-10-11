@@ -51,6 +51,11 @@ const labStaffSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  availability: {
+    type: String,
+    enum: ['Available', 'Not Available'],
+    default: 'Available'
   }
 }, {
   timestamps: true,

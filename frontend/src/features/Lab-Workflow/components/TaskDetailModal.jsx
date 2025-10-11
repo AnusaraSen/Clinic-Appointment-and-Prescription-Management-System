@@ -153,11 +153,17 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'sample collected':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'in progress':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'results ready':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -202,20 +208,38 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
           <div className="flex items-center space-x-2">
             {taskData.status === 'Pending' && (
               <button
-                onClick={() => updateTaskStatus('In Progress')}
+                onClick={() => updateTaskStatus('Sample Collected')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
               >
                 <Play className="h-4 w-4 mr-2" />
-                Start Task
+                Collect Sample
+              </button>
+            )}
+            {taskData.status === 'Sample Collected' && (
+              <button
+                onClick={() => updateTaskStatus('In Progress')}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Start Analysis
               </button>
             )}
             {taskData.status === 'In Progress' && (
+              <button
+                onClick={() => updateTaskStatus('Results Ready')}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Enter Results
+              </button>
+            )}
+            {taskData.status === 'Results Ready' && (
               <button
                 onClick={() => updateTaskStatus('Completed')}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Complete Task
+                Complete & Send
               </button>
             )}
             <button
@@ -317,14 +341,6 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Patient ID</label>
                     <p className="mt-1 text-sm text-gray-900">{taskData.patient?.patient_id || 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Age</label>
-                    <p className="mt-1 text-sm text-gray-900">{taskData.patient?.age || 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Gender</label>
-                    <p className="mt-1 text-sm text-gray-900">{taskData.patient?.gender || 'Unknown'}</p>
                   </div>
                 </div>
               </div>

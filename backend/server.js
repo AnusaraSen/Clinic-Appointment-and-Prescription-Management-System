@@ -45,6 +45,9 @@ app.use(corsMiddleware);
 app.use(parsers);
 app.use(logger);
 
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
+
 /**
  * Our API Routes - This is where the real work happens! 🚀
  * 
@@ -138,6 +141,7 @@ app.use("/appointment", appointmentRouter);
 app.use("/appointments", appointmentRouter);
 app.use("/feedback", feedbackRouter);
 app.use("/prescriptions", prescriptionsRouter);
+app.use("/api/prescriptions", prescriptionsRouter);
 app.use("/patients", patientsRouter);
 
 // Error handling middleware

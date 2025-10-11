@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../authentication/context/AuthContext';
 import orderApi from '../../../api/orderApi';
 import '../../../styles/Medicine/LowStockItems.css';
 
 const LowStockItems = () => {
   const navigate = useNavigate();
+  const { user } = useAuth?.() || {};
   // items: { low: Array<Item>, expired: Array<Item> }
   const [items, setItems] = useState({ low: [], expired: [] });
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,17 @@ const LowStockItems = () => {
           {/* Header */}
           <div className="low-stock-header">
             <div className="header-left">
-              <button className="back-btn" onClick={() => navigate('/inventory-dashboard')}>
+              <button
+                className="back-btn"
+                onClick={() => {
+                  const role = user?.role;
+                  if (role === 'Pharmacist' || role === 'Pharmacy Manager') {
+                    navigate('/pharmacist/dashboard');
+                  } else {
+                    navigate('/inventory-dashboard');
+                  }
+                }}
+              >
                 <i className="fas fa-arrow-left"></i>
                 Back to Dashboard
               </button>
