@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, AlertCircle, Activity, Calendar, MapPin, Package } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../../../shared/components/ValidatedInput';
+import { validators } from '../../../shared/utils/formValidation';
 
 /**
  * Add Equipment Modal Component
@@ -30,6 +32,7 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [touched, setTouched] = useState({});
 
   // Generate equipment ID when modal opens
   useEffect(() => {
@@ -55,66 +58,111 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, type === 'checkbox' ? checked : value);
     }
+  };
+
+  // Handle field blur
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  // Validate individual field
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'equipment_id':
+        if (!value || !value.trim()) {
+          error = 'Equipment ID is required';
+        } else if (!/^EQ-\d{4}$/.test(value)) {
+          error = 'Equipment ID must be in format EQ-1234';
+        }
+        break;
+      
+      case 'name':
+        error = validators.required(value, 'Equipment name');
+        if (!error && value.length > 100) {
+          error = 'Equipment name must be less than 100 characters';
+        }
+        break;
+      
+      case 'type':
+        error = validators.required(value, 'Equipment type');
+        break;
+      
+      case 'location':
+        error = validators.required(value, 'Location');
+        if (!error && value.length > 200) {
+          error = 'Location must be less than 200 characters';
+        }
+        break;
+      
+      case 'manufacturer':
+        if (value && value.length > 100) {
+          error = 'Manufacturer name must be less than 100 characters';
+        }
+        break;
+      
+      case 'modelNumber':
+        error = validators.modelNumber(value);
+        break;
+      
+      case 'serialNumber':
+        error = validators.serialNumber(value);
+        break;
+      
+      case 'purchaseDate':
+        if (value) {
+          error = validators.pastDate(value);
+        }
+        break;
+      
+      case 'warrantyExpiry':
+        if (value) {
+          error = validators.futureDate(value);
+          // Additional check: warranty must be after purchase date
+          if (!error && formData.purchaseDate && new Date(value) < new Date(formData.purchaseDate)) {
+            error = 'Warranty expiry cannot be before purchase date';
+          }
+        }
+        break;
+      
+      case 'maintenanceInterval':
+        error = validators.numberRange(value, 1, 365, 'Maintenance interval');
+        break;
+      
+      case 'notes':
+        error = validators.textLength(value, 0, 1000, 'Notes');
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
   };
 
   // Validate form
   const validateForm = () => {
     const newErrors = {};
+    const allTouched = {};
 
-    // Equipment ID validation
-    if (!formData.equipment_id.trim()) {
-      newErrors.equipment_id = 'Equipment ID is required';
-    } else if (!/^EQ-\d{4}$/.test(formData.equipment_id)) {
-      newErrors.equipment_id = 'Equipment ID must be in format EQ-1234';
-    }
-
-    // Required fields
-    if (!formData.name.trim()) {
-      newErrors.name = 'Equipment name is required';
-    } else if (formData.name.length > 100) {
-      newErrors.name = 'Equipment name must be less than 100 characters';
-    }
-
-    if (!formData.type.trim()) {
-      newErrors.type = 'Equipment type is required';
-    }
-
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    } else if (formData.location.length > 200) {
-      newErrors.location = 'Location must be less than 200 characters';
-    }
-
-    // Date validations
-    if (formData.purchaseDate) {
-      const purchaseDate = new Date(formData.purchaseDate);
-      if (purchaseDate > new Date()) {
-        newErrors.purchaseDate = 'Purchase date cannot be in the future';
+    // Validate all required fields
+    const fieldsToValidate = ['equipment_id', 'name', 'type', 'location', 'manufacturer', 
+      'modelNumber', 'serialNumber', 'purchaseDate', 'warrantyExpiry', 'maintenanceInterval', 'notes'];
+    
+    fieldsToValidate.forEach(field => {
+      allTouched[field] = true;
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
       }
-    }
+    });
 
-    if (formData.warrantyExpiry && formData.purchaseDate) {
-      const warrantyDate = new Date(formData.warrantyExpiry);
-      const purchaseDate = new Date(formData.purchaseDate);
-      if (warrantyDate < purchaseDate) {
-        newErrors.warrantyExpiry = 'Warranty expiry cannot be before purchase date';
-      }
-    }
-
-    // Maintenance interval validation
-    if (formData.maintenanceInterval < 1 || formData.maintenanceInterval > 365) {
-      newErrors.maintenanceInterval = 'Maintenance interval must be between 1 and 365 days';
-    }
-
-    // Notes validation
-    if (formData.notes && formData.notes.length > 1000) {
-      newErrors.notes = 'Notes must be less than 1000 characters';
-    }
-
+    setTouched(allTouched);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -275,119 +323,82 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Equipment ID */}
-              <div>
-                <label htmlFor="equipment_id" className="block text-sm font-medium text-gray-700 mb-2">
-                  Equipment ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="equipment_id"
-                  name="equipment_id"
-                  value={formData.equipment_id}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.equipment_id ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="e.g., EQ-1234"
-                  pattern="^EQ-\d{4}$"
-                  maxLength="7"
-                />
-                {errors.equipment_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.equipment_id}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Equipment ID"
+                name="equipment_id"
+                type="text"
+                value={formData.equipment_id}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.equipment_id}
+                touched={touched.equipment_id}
+                required
+                placeholder="e.g., EQ-1234"
+                helpText="Format: EQ-####"
+              />
 
               {/* Equipment Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Equipment Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="e.g., MRI Scanner, X-Ray Machine"
-                  maxLength="100"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Equipment Name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.name}
+                touched={touched.name}
+                required
+                placeholder="e.g., MRI Scanner, X-Ray Machine"
+              />
 
               {/* Equipment Type */}
-              <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Equipment Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.type ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                >
-                  <option key="type-placeholder" value="">Select type...</option>
-                  <option key="type-medical" value="Medical Device">Medical Device</option>
-                  <option key="type-it" value="IT Equipment">IT Equipment</option>
-                  <option key="type-lab" value="Laboratory Equipment">Laboratory Equipment</option>
-                  <option key="type-facility" value="Facility Equipment">Facility Equipment</option>
-                  <option key="type-office" value="Office Equipment">Office Equipment</option>
-                  <option key="type-furniture" value="Furniture">Furniture</option>
-                  <option key="type-other" value="Other">Other</option>
-                </select>
-                {errors.type && (
-                  <p className="mt-1 text-sm text-red-600">{errors.type}</p>
-                )}
-              </div>
+              <ValidatedSelect
+                label="Equipment Type"
+                name="type"
+                value={formData.type}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.type ? errors.type : ''}
+                required
+              >
+                <option value="">Select type...</option>
+                <option value="Medical Device">Medical Device</option>
+                <option value="IT Equipment">IT Equipment</option>
+                <option value="Laboratory Equipment">Laboratory Equipment</option>
+                <option value="Facility Equipment">Facility Equipment</option>
+                <option value="Office Equipment">Office Equipment</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Other">Other</option>
+              </ValidatedSelect>
 
               {/* Location */}
-              <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                  Location <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.location ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="e.g., Room 205, Radiology Department"
-                  maxLength="200"
-                />
-                {errors.location && (
-                  <p className="mt-1 text-sm text-red-600">{errors.location}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Location"
+                name="location"
+                type="text"
+                value={formData.location}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.location ? errors.location : ''}
+                required
+                placeholder="e.g., Room 205, Radiology Department"
+              />
 
               {/* Status */}
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option key="status-operational" value="Operational">Operational</option>
-                  <option key="status-under" value="Under Maintenance">Under Maintenance</option>
-                  <option key="status-out" value="Out of Service">Out of Service</option>
-                  <option key="status-needs" value="Needs Repair">Needs Repair</option>
-                  <option key="status-scheduled" value="Scheduled for Maintenance">Scheduled for Maintenance</option>
-                </select>
-              </div>
+              <ValidatedSelect
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.status ? errors.status : ''}
+              >
+                <option value="Operational">Operational</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+                <option value="Out of Service">Out of Service</option>
+                <option value="Needs Repair">Needs Repair</option>
+                <option value="Scheduled for Maintenance">Scheduled for Maintenance</option>
+              </ValidatedSelect>
 
               {/* Critical Equipment */}
               <div>
@@ -419,52 +430,46 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Manufacturer */}
-              <div>
-                <label htmlFor="manufacturer" className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer
-                </label>
-                <input
-                  type="text"
-                  id="manufacturer"
-                  name="manufacturer"
-                  value={formData.manufacturer}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Siemens, Philips"
-                />
-              </div>
+              <ValidatedInput
+                label="Manufacturer"
+                name="manufacturer"
+                type="text"
+                value={formData.manufacturer}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.manufacturer}
+                touched={touched.manufacturer}
+                placeholder="e.g., Siemens, Philips"
+                helpText="Optional"
+              />
 
               {/* Model Number */}
-              <div>
-                <label htmlFor="modelNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                  Model Number
-                </label>
-                <input
-                  type="text"
-                  id="modelNumber"
-                  name="modelNumber"
-                  value={formData.modelNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., XR-2000"
-                />
-              </div>
+              <ValidatedInput
+                label="Model Number"
+                name="modelNumber"
+                type="text"
+                value={formData.modelNumber}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.modelNumber}
+                touched={touched.modelNumber}
+                placeholder="e.g., XR-2000"
+                helpText="Optional"
+              />
 
               {/* Serial Number */}
-              <div>
-                <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                  Serial Number
-                </label>
-                <input
-                  type="text"
-                  id="serialNumber"
-                  name="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., SN123456789"
-                />
-              </div>
+              <ValidatedInput
+                label="Serial Number"
+                name="serialNumber"
+                type="text"
+                value={formData.serialNumber}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.serialNumber}
+                touched={touched.serialNumber}
+                placeholder="e.g., SN123456789"
+                helpText="Optional"
+              />
             </div>
           </div>
 
@@ -477,95 +482,61 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Purchase Date */}
-              <div>
-                <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Purchase Date
-                </label>
-                <input
-                  type="date"
-                  id="purchaseDate"
-                  name="purchaseDate"
-                  value={formData.purchaseDate}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.purchaseDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                />
-                {errors.purchaseDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.purchaseDate}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Purchase Date"
+                name="purchaseDate"
+                type="date"
+                value={formData.purchaseDate}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.purchaseDate}
+                touched={touched.purchaseDate}
+                helpText="Optional (cannot be future)"
+              />
 
               {/* Warranty Expiry */}
-              <div>
-                <label htmlFor="warrantyExpiry" className="block text-sm font-medium text-gray-700 mb-2">
-                  Warranty Expiry
-                </label>
-                <input
-                  type="date"
-                  id="warrantyExpiry"
-                  name="warrantyExpiry"
-                  value={formData.warrantyExpiry}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.warrantyExpiry ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                />
-                {errors.warrantyExpiry && (
-                  <p className="mt-1 text-sm text-red-600">{errors.warrantyExpiry}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Warranty Expiry"
+                name="warrantyExpiry"
+                type="date"
+                value={formData.warrantyExpiry}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.warrantyExpiry}
+                touched={touched.warrantyExpiry}
+                helpText="Optional (must be after purchase date)"
+              />
 
               {/* Maintenance Interval */}
-              <div>
-                <label htmlFor="maintenanceInterval" className="block text-sm font-medium text-gray-700 mb-2">
-                  Maintenance Interval (days)
-                </label>
-                <input
-                  type="number"
-                  id="maintenanceInterval"
-                  name="maintenanceInterval"
-                  value={formData.maintenanceInterval}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="365"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.maintenanceInterval ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                />
-                {errors.maintenanceInterval && (
-                  <p className="mt-1 text-sm text-red-600">{errors.maintenanceInterval}</p>
-                )}
-              </div>
+              <ValidatedInput
+                label="Maintenance Interval (days)"
+                name="maintenanceInterval"
+                type="number"
+                value={formData.maintenanceInterval}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.maintenanceInterval}
+                touched={touched.maintenanceInterval}
+                helpText="1-365 days"
+              />
             </div>
           </div>
 
           {/* Notes */}
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical ${
-                errors.notes ? 'border-red-300 bg-red-50' : 'border-gray-300'
-              }`}
-              placeholder="Additional notes about the equipment..."
-              maxLength="1000"
-            />
-            <div className="flex justify-between mt-1">
-              {errors.notes && (
-                <p className="text-sm text-red-600">{errors.notes}</p>
-              )}
-              <p className="text-xs text-gray-500 ml-auto">
-                {formData.notes.length}/1000 characters
-              </p>
-            </div>
-          </div>
+          <ValidatedTextarea
+            label="Notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleInputChange}
+            onBlur={handleFieldBlur}
+            error={errors.notes}
+            touched={touched.notes}
+            placeholder="Additional notes about the equipment..."
+            rows={3}
+            maxLength={1000}
+            showCharCount
+            helpText="Optional (max 1000 characters)"
+          />
 
           {/* Form Actions */}
           <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">

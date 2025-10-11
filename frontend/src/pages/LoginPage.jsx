@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/authentication/context/AuthContext';
-import AuthForms from '../features/authentication/components/AuthForms';
-import ImageSlider from '../features/authentication/components/ImageSlider';
-import Logo from '../features/authentication/components/Logo';
+import LoginForm from '../features/authentication/components/LoginForm';
+import { Heart, Activity, Stethoscope, Cross } from 'lucide-react';
+import '../styles/glassmorphism.css';
 
 const LoginPage = () => {
-  const [activeForm, setActiveForm] = useState('login'); // Start with login form
-  const { login, register, isLoading, error, isAuthenticated, clearError, user } = useAuth();
+  const { isAuthenticated, clearError, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -17,56 +16,74 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Clear errors when switching forms
+  // Clear errors on mount
   useEffect(() => {
     clearError();
-  }, [activeForm, clearError]);
-
-  const handleLogin = async (credentials) => {
-    const result = await login(credentials);
-    if (result.success) {
-      navigate('/');
-    }
-  };
-
-  const handleRegister = async (userData) => {
-    const result = await register(userData);
-    if (result.success) {
-      navigate('/');
-    }
-  };
+  }, [clearError]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white to-blue-50">
-      {/* Header with Logo and Back to Home */}
-      <header className="p-4 md:p-6 flex justify-between items-center">
-        
-      </header>
+    <div className="auth-background" style={{
+      backgroundImage: 'url(/images/doctor-background.jpg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
+      {/* Floating Medical Icons */}
+      <Heart 
+        className="floating-icon text-green-400" 
+        size={60} 
+        style={{ top: '10%', left: '10%', animationDelay: '0s' }} 
+      />
+      <Activity 
+        className="floating-icon text-green-400" 
+        size={50} 
+        style={{ top: '70%', left: '15%', animationDelay: '3s' }} 
+      />
+      <Stethoscope 
+        className="floating-icon text-green-400" 
+        size={55} 
+        style={{ top: '20%', right: '10%', animationDelay: '6s' }} 
+      />
+      <Cross 
+        className="floating-icon text-green-400" 
+        size={65} 
+        style={{ bottom: '15%', right: '12%', animationDelay: '9s' }} 
+      />
+      <Heart 
+        className="floating-icon text-green-400" 
+        size={45} 
+        style={{ top: '50%', left: '5%', animationDelay: '12s' }} 
+      />
+      <Activity 
+        className="floating-icon text-green-400" 
+        size={58} 
+        style={{ bottom: '20%', left: '80%', animationDelay: '15s' }} 
+      />
 
-      {/* Main Content */}
-      <main className="flex flex-grow flex-col md:flex-row overflow-hidden shadow-xl md:m-6 md:rounded-2xl">
-        {/* Left Side - Image Slider */}
-        <div className="w-full md:w-1/2 h-72 md:h-auto relative">
-          <ImageSlider />
-        </div>
-
-        {/* Right Side - Auth Forms */}
-        <div className="w-full md:w-1/2 flex justify-center items-center p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-md">
-          <AuthForms
-            activeForm={activeForm}
-            setActiveForm={setActiveForm}
-            onLogin={handleLogin}
-            onRegister={handleRegister}
-            isLoading={isLoading}
-            error={error}
-          />
-        </div>
-      </main>
+      {/* Auth Forms Container */}
+      <div style={{ 
+        position: 'relative', 
+        zIndex: 10, 
+        width: '100%', 
+        maxWidth: '450px',
+        marginRight: '40px' 
+      }}>
+        <LoginForm />
+      </div>
 
       {/* Footer */}
-      <footer className="p-4 md:p-6 text-center text-gray-600 text-sm">
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '20px', 
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        zIndex: 10,
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '13px',
+        textAlign: 'center'
+      }}>
         © 2025 Family Health Care. All Rights Reserved.
-      </footer>
+      </div>
     </div>
   );
 };

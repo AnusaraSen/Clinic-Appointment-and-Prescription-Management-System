@@ -1,0 +1,488 @@
+/* Glassmorphism Styles for Authentication Pages */
+
+/* Background with medical theme */
+.auth-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 90px 60px 30px 20px;
+  overflow: hidden;
+}
+
+.auth-background::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 0;
+}
+
+/* Medical cross pattern overlay */
+.auth-background::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 1;
+}
+
+/* Floating medical icons animation */
+.floating-icon {
+  display: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(20px, -20px) rotate(5deg); }
+  50% { transform: translate(-20px, 20px) rotate(-5deg); }
+  75% { transform: translate(20px, 20px) rotate(5deg); }
+}
+
+/* Glass wrapper */
+.glass-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 35px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+  box-shadow: 
+    0 20px 60px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4) !important;
+  z-index: 10;
+  animation: slideIn 0.5s ease-out;
+}
+
+/* Custom scrollbar for glass wrapper */
+.glass-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.glass-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+.glass-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.glass-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+  background-clip: padding-box;
+}
+
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glass wrapper for wider forms (register) */
+.glass-wrapper-wide {
+  max-width: 650px;
+  max-height: calc(100vh - 180px);
+  padding: 30px 35px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Title and subtitle */
+.glass-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #1a1a1a !important;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+  letter-spacing: -0.5px;
+}
+
+.glass-subtitle {
+  font-size: 0.95rem;
+  color: #2d2d2d !important;
+  margin-bottom: 25px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+  font-weight: 400;
+}
+
+/* Input field container */
+.glass-input-field {
+  position: relative;
+  margin: 15px 0;
+}
+
+/* Input icons */
+.glass-input-field svg,
+.glass-input-field .lucide {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Input styling */
+.glass-input {
+  width: 100%;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 10px;
+  outline: none;
+  font-size: 15px !important;
+  color: #1a1a1a !important;
+  padding: 10px 15px;
+  padding-left: 15px;
+  transition: all 0.3s ease;
+  font-weight: 500 !important;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.glass-input.error {
+  border-bottom-color: rgba(239, 68, 68, 0.9);
+}
+
+.glass-input.success {
+  border-bottom-color: rgba(16, 185, 129, 0.9);
+}
+
+/* Placeholder styling */
+.glass-input::placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+}
+
+/* Validation icon */
+.glass-validation-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Error message */
+.glass-error-message {
+  position: absolute;
+  left: 0;
+  bottom: -20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(239, 68, 68, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Success message */
+.glass-success-message {
+  position: absolute;
+  left: 0;
+  bottom: -20px;
+  font-size: 12px;
+  color: rgba(16, 185, 129, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Password visibility toggle */
+.glass-password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 10;
+}
+
+.glass-password-toggle:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Password strength meter */
+.glass-password-strength {
+  margin-top: 8px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.glass-password-strength-bar {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 2px;
+}
+
+.glass-password-strength-text {
+  font-size: 11px;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Checkbox and remember me */
+.glass-remember {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 25px 0 35px 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+.glass-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.glass-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: rgb(16, 185, 129);
+  cursor: pointer;
+}
+
+/* Links */
+.glass-link {
+  color: rgba(255, 255, 255, 1);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.glass-link:hover {
+  color: rgba(16, 185, 129, 1);
+  text-decoration: underline;
+}
+
+/* Primary button */
+.glass-button-primary {
+  width: 100%;
+  background: rgba(16, 185, 129, 0.8) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  padding: 16px 20px !important;
+  cursor: pointer;
+  border-radius: 12px;
+  font-size: 17px !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(10px);
+}
+
+.glass-button-primary:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+.glass-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Demo login buttons */
+.glass-demo-section {
+  margin: 25px 0;
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-demo-title {
+  font-size: 13px;
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.glass-demo-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.glass-button-demo {
+  flex: 1;
+  min-width: 100px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #ffffff;
+  font-weight: 500;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.glass-button-demo:hover {
+  background: rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Toggle section */
+.glass-toggle-section {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+/* Alert/Error box */
+.glass-alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  animation: slideDown 0.3s ease;
+}
+
+.glass-alert-error {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1.5px solid rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+}
+
+.glass-alert-success {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Grid for register form */
+.glass-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+/* Full width field */
+.glass-full-width {
+  grid-column: 1 / -1;
+}
+
+.glass-form-full {
+  grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-background {
+    justify-content: center;
+    padding: 20px;
+    background-position: center !important;
+  }
+
+  .glass-wrapper {
+    padding: 35px 30px;
+    max-width: 100%;
+  }
+  
+  .glass-wrapper-wide {
+    max-width: 100%;
+    padding: 30px 25px;
+  }
+  
+  .glass-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .glass-demo-buttons {
+    flex-direction: column;
+  }
+  
+  .glass-button-demo {
+    min-width: 100%;
+  }
+
+  .glass-title {
+    font-size: 2.2rem;
+  }
+}
+
+/* Loading spinner */
+.glass-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

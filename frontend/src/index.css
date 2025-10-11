@@ -104,3 +104,29 @@ body .admin-form select:focus {
   border-color: #60a5fa !important; /* blue-400 */
   box-shadow: 0 0 0 3px rgba(96,165,250,0.12) !important;
 }
+
+/* Real-time Form Validation Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-0.5rem); }
+  75% { transform: translateX(0.5rem); }
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}

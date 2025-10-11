@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, MapPin, Clock, Wrench, Save, AlertCircle } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../../../shared/components/ValidatedInput';
+import { validators } from '../../../shared/utils/formValidation';
 
 /**
  * Add Technician Modal
@@ -32,6 +34,8 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
   const [newSkill, setNewSkill] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,6 +54,76 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
         [name]: value
       }));
     }
+    
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'name':
+        error = validators.name(value);
+        break;
+      case 'email':
+        error = validators.email(value);
+        break;
+      case 'phone':
+        error = validators.phone(value);
+        break;
+      case 'employeeId':
+        error = validators.employeeId(value);
+        break;
+      case 'jobTitle':
+        error = validators.required(value, 'Job title');
+        break;
+      case 'department':
+        error = validators.required(value, 'Department');
+        break;
+      case 'address':
+        if (value && value.length > 500) {
+          error = 'Address must be less than 500 characters';
+        }
+        break;
+      case 'dateOfBirth':
+        if (value) {
+          error = validators.pastDate(value);
+        }
+        break;
+      case 'supervisorId':
+        if (value && !validators.employeeId(value)) {
+          error = 'Invalid supervisor ID format';
+        }
+        break;
+      case 'emergencyContact.name':
+        if (value) {
+          error = validators.name(value);
+        }
+        break;
+      case 'emergencyContact.phone':
+        if (value) {
+          error = validators.phone(value);
+        }
+        break;
+      case 'notes':
+        error = validators.textLength(value, 0, 1000, 'Notes');
+        break;
+      case 'additionalInfo':
+        error = validators.textLength(value, 0, 1000, 'Additional info');
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
   };
 
   const handleAddSkill = () => {
@@ -86,35 +160,35 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const validateForm = () => {
-    const errors = [];
+    const newErrors = {};
+    const allTouched = {};
+
+    // Validate all required fields
+    const fieldsToValidate = ['name', 'email', 'phone', 'employeeId', 'jobTitle', 'department',
+      'address', 'dateOfBirth', 'supervisorId', 'emergencyContact.name', 'emergencyContact.phone', 
+      'notes', 'additionalInfo'];
     
-    if (!formData.name.trim()) errors.push('Name is required');
-    if (!formData.email.trim()) errors.push('Email is required');
-    if (!formData.phone.trim()) errors.push('Phone is required');
-    if (!formData.jobTitle.trim()) errors.push('Job Title is required');
-    if (!formData.department) errors.push('Department is required');
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      errors.push('Please enter a valid email address');
-    }
-    
-    // Phone validation
-    const phoneDigitsOnly = formData.phone.replace(/\D/g, '');
-    if (phoneDigitsOnly.length < 10 || phoneDigitsOnly.length > 15) {
-      errors.push('Phone number must be between 10 and 15 digits');
-    }
-    
-    return errors;
+    fieldsToValidate.forEach(field => {
+      allTouched[field] = true;
+      const value = field.includes('.') 
+        ? formData[field.split('.')[0]][field.split('.')[1]]
+        : formData[field];
+      const error = validateField(field, value);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    setTouched(allTouched);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join(', '));
+    if (!validateForm()) {
+      setError('Please fix all validation errors before submitting');
       return;
     }
 
@@ -255,60 +329,59 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
                   <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedInput
+                  label="Full Name"
+                  name="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.name}
+                  touched={touched.name}
+                  required
+                  placeholder="Enter full name"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedInput
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.email}
+                  touched={touched.email}
+                  required
+                  placeholder="email@example.com"
+                  autoComplete="email"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedInput
+                  label="Phone Number"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.phone}
+                  touched={touched.phone}
+                  required
+                  placeholder="+1 (555) 123-4567"
+                  autoComplete="tel"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
-                  </label>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedTextarea
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.address}
+                  touched={touched.address}
+                  rows={2}
+                  placeholder="Enter full address"
+                  helpText="Optional"
+                />
               </div>
 
               {/* Work Information Section */}
@@ -325,13 +398,17 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
                     Employee ID
                   </label>
                   <div className="flex space-x-2">
-                    <input
-                      type="text"
+                    <ValidatedInput
                       name="employeeId"
+                      type="text"
                       value={formData.employeeId}
                       onChange={handleInputChange}
-                      readOnly
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none"
+                      onBlur={handleFieldBlur}
+                      error={errors.employeeId}
+                      touched={touched.employeeId}
+                      disabled
+                      placeholder="Click Generate to create ID"
+                      className="flex-1"
                     />
                     <button
                       type="button"
@@ -343,53 +420,51 @@ export const AddTechnicianModal = ({ isOpen, onClose, onSuccess }) => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Job Title *
-                  </label>
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedInput
+                  label="Job Title"
+                  name="jobTitle"
+                  type="text"
+                  value={formData.jobTitle}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.jobTitle}
+                  touched={touched.jobTitle}
+                  required
+                  placeholder="e.g., Lab Technician, Maintenance Engineer"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Department</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="lab">Laboratory</option>
-                    <option value="radiology">Radiology</option>
-                    <option value="pharmacy">Pharmacy</option>
-                    <option value="general">General</option>
-                  </select>
-                </div>
+                <ValidatedSelect
+                  label="Department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.department}
+                  touched={touched.department}
+                  required
+                >
+                  <option value="">Select Department</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="lab">Laboratory</option>
+                  <option value="radiology">Radiology</option>
+                  <option value="pharmacy">Pharmacy</option>
+                  <option value="general">General</option>
+                </ValidatedSelect>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Additional Information
-                  </label>
-                  <textarea
-                    name="additionalInfo"
-                    value={formData.additionalInfo}
-                    onChange={handleInputChange}
-                    rows={3}
-                    placeholder="Any additional information about the technician..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ValidatedTextarea
+                  label="Additional Information"
+                  name="additionalInfo"
+                  value={formData.additionalInfo}
+                  onChange={handleInputChange}
+                  onBlur={handleFieldBlur}
+                  error={errors.additionalInfo}
+                  touched={touched.additionalInfo}
+                  rows={3}
+                  placeholder="Any additional information about the technician..."
+                  helpText="Optional"
+                  maxLength={1000}
+                  showCharCount
+                />
               </div>
             </div>
 

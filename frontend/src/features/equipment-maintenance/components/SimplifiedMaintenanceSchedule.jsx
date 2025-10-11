@@ -12,6 +12,8 @@ import {
   Edit2,
   Trash2
 } from 'lucide-react';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../../../shared/components/ValidatedInput';
+import { validators } from '../../../shared/utils/formValidation';
 
 /**
  * Simplified Maintenance Schedule Dashboard
@@ -772,6 +774,8 @@ const AddMaintenanceScheduleForm = ({ onClose, onSubmit }) => {
   const [equipment, setEquipment] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Fetch equipment and technicians on component mount
   useEffect(() => {
@@ -812,6 +816,61 @@ const AddMaintenanceScheduleForm = ({ onClose, onSubmit }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'title':
+        error = validators.required(value, 'Title');
+        if (!error && value.length > 200) {
+          error = 'Title must be less than 200 characters';
+        }
+        break;
+      case 'description':
+        if (value && value.length > 0) {
+          error = validators.textLength(value, 10, 2000, 'Description');
+        }
+        break;
+      case 'equipment_id':
+        error = validators.required(value, 'Equipment');
+        break;
+      case 'scheduled_date':
+        error = validators.required(value, 'Scheduled Date');
+        if (!error) {
+          error = validators.futureDate(value, 'Scheduled Date');
+        }
+        break;
+      case 'scheduled_time':
+        error = validators.required(value, 'Scheduled Time');
+        break;
+      case 'estimated_duration':
+        error = validators.required(value, 'Estimated Duration');
+        if (!error) {
+          error = validators.numberRange(value, 0.5, 8, 'Estimated Duration');
+        }
+        break;
+      case 'priority':
+        error = validators.required(value, 'Priority');
+        break;
+      default:
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
   };
 
   const handleSubmit = async (e) => {
@@ -893,7 +952,7 @@ const AddMaintenanceScheduleForm = ({ onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -913,186 +972,175 @@ const AddMaintenanceScheduleForm = ({ onClose, onSubmit }) => {
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
+              <ValidatedInput
+                label="Title"
                 name="title"
-                required
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.title ? errors.title : ''}
+                required
                 placeholder="Enter maintenance schedule title"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
+              <ValidatedTextarea
+                label="Description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.description ? errors.description : ''}
                 placeholder="Enter detailed description of the maintenance work"
+                rows={3}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Equipment * ({Array.isArray(equipment) ? equipment.length : 0} available)
-              </label>
-              <select
+              <ValidatedSelect
+                label={`Equipment (${Array.isArray(equipment) ? equipment.length : 0} available)`}
                 name="equipment_id"
-                required
                 value={formData.equipment_id}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.equipment_id ? errors.equipment_id : ''}
+                required
               >
-                <option key="equipment-placeholder" value="">Select equipment</option>
+                <option value="">Select equipment</option>
                 {Array.isArray(equipment) && equipment.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name} - {item.equipment_id}
                   </option>
                 ))}
-              </select>
+              </ValidatedSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Technician ({Array.isArray(technicians) ? technicians.length : 0} available)
-              </label>
-              <select
+              <ValidatedSelect
+                label={`Technician (${Array.isArray(technicians) ? technicians.length : 0} available)`}
                 name="technician_id"
                 value={formData.technician_id}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.technician_id ? errors.technician_id : ''}
               >
-                <option key="technician-placeholder" value="">Select technician</option>
+                <option value="">Select technician</option>
                 {Array.isArray(technicians) && technicians.map((tech) => (
                   <option key={tech._id} value={tech._id}>
                     {tech.firstName} {tech.lastName} - {tech.employeeId}
                   </option>
                 ))}
-              </select>
+              </ValidatedSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scheduled Date *
-              </label>
-              <input
+              <ValidatedInput
+                label="Scheduled Date"
                 type="date"
                 name="scheduled_date"
-                required
                 value={formData.scheduled_date}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.scheduled_date ? errors.scheduled_date : ''}
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scheduled Time
-              </label>
-              <input
+              <ValidatedInput
+                label="Scheduled Time"
                 type="time"
                 name="scheduled_time"
                 value={formData.scheduled_time}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.scheduled_time ? errors.scheduled_time : ''}
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Priority *
-              </label>
-              <select
+              <ValidatedSelect
+                label="Priority"
                 name="priority"
-                required
                 value={formData.priority}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.priority ? errors.priority : ''}
+                required
               >
-                <option key="low" value="Low">Low</option>
-                <option key="medium" value="Medium">Medium</option>
-                <option key="high" value="High">High</option>
-                <option key="critical" value="Critical">Critical</option>
-              </select>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </ValidatedSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Maintenance Type *
-              </label>
-              <select
+              <ValidatedSelect
+                label="Maintenance Type"
                 name="maintenance_type"
-                required
                 value={formData.maintenance_type}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.maintenance_type ? errors.maintenance_type : ''}
+                required
               >
-                <option key="preventive" value="Preventive">Preventive</option>
-                <option key="repair" value="Repair">Repair</option>
-                <option key="inspection" value="Inspection">Inspection</option>
-                <option key="calibration" value="Calibration">Calibration</option>
-                <option key="cleaning" value="Cleaning">Cleaning</option>
-              </select>
+                <option value="Preventive">Preventive</option>
+                <option value="Repair">Repair</option>
+                <option value="Inspection">Inspection</option>
+                <option value="Calibration">Calibration</option>
+                <option value="Cleaning">Cleaning</option>
+              </ValidatedSelect>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Estimated Duration (hours) *
-              </label>
-              <input
+              <ValidatedInput
+                label="Estimated Duration (hours)"
                 type="number"
                 name="estimated_duration"
-                required
                 value={formData.estimated_duration}
                 onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.estimated_duration ? errors.estimated_duration : ''}
+                required
                 min="0.5"
                 max="8"
                 step="0.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., 2.0"
+                helperText="Duration must be between 0.5 and 8 hours"
               />
-              <p className="text-xs text-gray-500 mt-1">Duration must be between 0.5 and 8 hours</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
+              <ValidatedSelect
+                label="Status"
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.status ? errors.status : ''}
                 disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
               >
-                <option key="status-pending" value="Pending">Pending</option>
-                <option key="status-inprogress" value="In Progress">In Progress</option>
-                <option key="status-completed" value="Completed">Completed</option>
-                <option key="status-cancelled" value="Cancelled">Cancelled</option>
-              </select>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </ValidatedSelect>
               <p className="text-xs text-gray-500 mt-1">Status is automatically set to "Pending" for new schedules</p>
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notes
-              </label>
-              <textarea
+              <ValidatedTextarea
+                label="Notes"
                 name="notes"
                 value={formData.notes}
                 onChange={handleInputChange}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onBlur={handleFieldBlur}
+                error={touched.notes ? errors.notes : ''}
                 placeholder="Additional notes or special instructions"
+                rows={2}
               />
             </div>
           </div>
@@ -1343,6 +1391,8 @@ const EditTaskModal = ({ task, onClose, onUpdate }) => {
   const [equipment, setEquipment] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   // Fetch equipment and technicians on component mount
   useEffect(() => {
@@ -1390,6 +1440,61 @@ const EditTaskModal = ({ task, onClose, onUpdate }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'title':
+        error = validators.required(value, 'Title');
+        if (!error && value.length > 200) {
+          error = 'Title must be less than 200 characters';
+        }
+        break;
+      case 'description':
+        if (value && value.length > 0) {
+          error = validators.textLength(value, 10, 2000, 'Description');
+        }
+        break;
+      case 'equipment_id':
+        error = validators.required(value, 'Equipment');
+        break;
+      case 'scheduled_date':
+        error = validators.required(value, 'Scheduled Date');
+        if (!error) {
+          error = validators.futureDate(value, 'Scheduled Date');
+        }
+        break;
+      case 'scheduled_time':
+        error = validators.required(value, 'Scheduled Time');
+        break;
+      case 'estimated_duration':
+        error = validators.required(value, 'Estimated Duration');
+        if (!error) {
+          error = validators.numberRange(value, 0.5, 8, 'Estimated Duration');
+        }
+        break;
+      case 'priority':
+        error = validators.required(value, 'Priority');
+        break;
+      default:
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
   };
 
   const handleSubmit = async (e) => {
@@ -1486,198 +1591,169 @@ const EditTaskModal = ({ task, onClose, onUpdate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter maintenance task title"
-            />
-          </div>
+          <ValidatedInput
+            label="Title"
+            name="title"
+            value={formData.title}
+            onChange={handleInputChange}
+            onBlur={handleFieldBlur}
+            error={touched.title ? errors.title : ''}
+            required
+            placeholder="Enter maintenance task title"
+          />
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter detailed description of the maintenance work"
-            />
-          </div>
+          <ValidatedTextarea
+            label="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            onBlur={handleFieldBlur}
+            error={touched.description ? errors.description : ''}
+            placeholder="Enter detailed description of the maintenance work"
+            rows={3}
+          />
 
           {/* Status and Priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
+              <ValidatedSelect
+                label="Status"
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.status ? errors.status : ''}
                 disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
               >
-                <option key="pending" value="Pending">Pending</option>
-                <option key="in-progress" value="In Progress">In Progress</option>
-                <option key="completed" value="Completed">Completed</option>
-                <option key="cancelled" value="Cancelled">Cancelled</option>
-              </select>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </ValidatedSelect>
               <p className="text-xs text-gray-500 mt-1">Status cannot be changed from this form</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Priority
-              </label>
-              <select
-                name="priority"
-                value={formData.priority}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option key="low" value="Low">Low</option>
-                <option key="medium" value="Medium">Medium</option>
-                <option key="high" value="High">High</option>
-                <option key="critical" value="Critical">Critical</option>
-              </select>
-            </div>
+            <ValidatedSelect
+              label="Priority"
+              name="priority"
+              value={formData.priority}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.priority ? errors.priority : ''}
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </ValidatedSelect>
           </div>
 
           {/* Equipment and Technician */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Equipment ({Array.isArray(equipment) ? equipment.length : 0} available)
-              </label>
-              <select
-                name="equipment_id"
-                value={formData.equipment_id}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option key="equipment-placeholder" value="">Select equipment</option>
-                {Array.isArray(equipment) && equipment.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} - {item.equipment_id}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <ValidatedSelect
+              label={`Equipment (${Array.isArray(equipment) ? equipment.length : 0} available)`}
+              name="equipment_id"
+              value={formData.equipment_id}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.equipment_id ? errors.equipment_id : ''}
+              required
+            >
+              <option value="">Select equipment</option>
+              {Array.isArray(equipment) && equipment.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} - {item.equipment_id}
+                </option>
+              ))}
+            </ValidatedSelect>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Technician ({Array.isArray(technicians) ? technicians.length : 0} available)
-              </label>
-              <select
-                name="assigned_technician"
-                value={formData.assigned_technician}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option key="technician-placeholder" value="">Select technician</option>
-                {Array.isArray(technicians) && technicians.map((tech) => (
-                  <option key={tech._id} value={tech._id}>
-                    {tech.firstName} {tech.lastName} - {tech.employeeId}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <ValidatedSelect
+              label={`Technician (${Array.isArray(technicians) ? technicians.length : 0} available)`}
+              name="assigned_technician"
+              value={formData.assigned_technician}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.assigned_technician ? errors.assigned_technician : ''}
+            >
+              <option value="">Select technician</option>
+              {Array.isArray(technicians) && technicians.map((tech) => (
+                <option key={tech._id} value={tech._id}>
+                  {tech.firstName} {tech.lastName} - {tech.employeeId}
+                </option>
+              ))}
+            </ValidatedSelect>
           </div>
 
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scheduled Date *
-              </label>
-              <input
-                type="date"
-                name="scheduled_date"
-                required
-                value={formData.scheduled_date}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            <ValidatedInput
+              label="Scheduled Date"
+              type="date"
+              name="scheduled_date"
+              value={formData.scheduled_date}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.scheduled_date ? errors.scheduled_date : ''}
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scheduled Time
-              </label>
-              <input
-                type="time"
-                name="scheduled_time"
-                value={formData.scheduled_time}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            <ValidatedInput
+              label="Scheduled Time"
+              type="time"
+              name="scheduled_time"
+              value={formData.scheduled_time}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.scheduled_time ? errors.scheduled_time : ''}
+              required
+            />
           </div>
 
           {/* Maintenance Type and Duration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Maintenance Type
-              </label>
-              <select
-                name="maintenance_type"
-                value={formData.maintenance_type}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option key="preventive" value="Preventive">Preventive</option>
-                <option key="repair" value="Repair">Repair</option>
-                <option key="inspection" value="Inspection">Inspection</option>
-                <option key="calibration" value="Calibration">Calibration</option>
-                <option key="cleaning" value="Cleaning">Cleaning</option>
-              </select>
-            </div>
+            <ValidatedSelect
+              label="Maintenance Type"
+              name="maintenance_type"
+              value={formData.maintenance_type}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.maintenance_type ? errors.maintenance_type : ''}
+            >
+              <option value="Preventive">Preventive</option>
+              <option value="Repair">Repair</option>
+              <option value="Inspection">Inspection</option>
+              <option value="Calibration">Calibration</option>
+              <option value="Cleaning">Cleaning</option>
+            </ValidatedSelect>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Estimated Duration (hours)
-              </label>
-              <input
-                type="number"
-                name="estimated_duration"
-                min="0.5"
-                max="8"
-                step="0.5"
-                value={formData.estimated_duration}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="2.0"
-              />
-            </div>
+            <ValidatedInput
+              label="Estimated Duration (hours)"
+              type="number"
+              name="estimated_duration"
+              value={formData.estimated_duration}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.estimated_duration ? errors.estimated_duration : ''}
+              required
+              min="0.5"
+              max="8"
+              step="0.5"
+              placeholder="2.0"
+            />
           </div>
 
           {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Additional notes or special instructions"
-            />
-          </div>
+          <ValidatedTextarea
+            label="Notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleInputChange}
+            onBlur={handleFieldBlur}
+            error={touched.notes ? errors.notes : ''}
+            placeholder="Additional notes or special instructions"
+            rows={3}
+          />
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3">

@@ -2,11 +2,13 @@ const mongoose = require('mongoose');
 const MaintenanceRequest = require('../models/MaintenanceRequests');
 const Technician = require('../models/Technician');
 const User = require('../models/User');
+const Equipment = require('../models/equipments');
 const { 
   handleMaintenanceRequestCreated, 
   handleMaintenanceRequestCompleted 
 } = require('./EquipmentController');
 const notificationService = require('../../../services/notificationService');
+const equipmentStatusService = require('../../../services/equipmentStatusService');
 
 /**
  * Get all maintenance requests 📋
@@ -457,7 +459,27 @@ exports.updateRequest = async (req, res) => {
 
     console.log('✅ Database updated successfully. Cost field:', updated.cost, 'Costs array:', updated.costs);
 
-    // 🔔 Create notifications based on what changed
+    // � Auto-update equipment status based on maintenance request status
+    if (update.status && updated.equipment && updated.equipment.length > 0) {
+      for (const equipmentItem of updated.equipment) {
+        const equipment = await Equipment.findById(equipmentItem._id);
+        if (equipment) {
+          if (update.status === 'In Progress') {
+            // Set equipment to "Under Maintenance" when work starts
+            await Equipment.findByIdAndUpdate(
+              equipment._id,
+              { status: 'Under Maintenance' },
+              { new: true }
+            );
+          } else if (update.status === 'Completed') {
+            // Set equipment back to "Operational" when request is completed
+            await equipmentStatusService.updateEquipmentStatusOnMaintenanceCompletion(equipment._id);
+          }
+        }
+      }
+    }
+
+    // �🔔 Create notifications based on what changed
     if (existingRequest) {
       // Notification for technician assignment
       if (update.assignedTo && (!existingRequest.assignedTo || existingRequest.assignedTo._id.toString() !== update.assignedTo.toString())) {

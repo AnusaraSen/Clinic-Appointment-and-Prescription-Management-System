@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Calendar, AlertCircle, Wrench } from 'lucide-react';
 import { useAuth } from '../../authentication/context/AuthContext';
+import { ValidatedInput, ValidatedTextarea, ValidatedSelect } from '../../../shared/components/ValidatedInput';
+import { validators } from '../../../shared/utils/formValidation';
 
 export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
   // 🔐 Get current logged-in user
@@ -20,6 +22,8 @@ export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
   const [equipmentList, setEquipmentList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   // 🔄 Fetch equipment data when form opens
   useEffect(() => {
@@ -62,26 +66,82 @@ export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Re-validate field if it was touched and had error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (fieldName, value) => {
+    let error = '';
+
+    switch (fieldName) {
+      case 'title':
+        error = validators.required(value, 'Title');
+        if (!error && value.length > 200) {
+          error = 'Title must be less than 200 characters';
+        }
+        break;
+      case 'description':
+        error = validators.required(value, 'Description');
+        if (!error) {
+          error = validators.textLength(value, 10, 2000, 'Description');
+        }
+        break;
+      case 'priority':
+        error = validators.required(value, 'Priority');
+        break;
+      case 'equipment':
+        error = validators.required(value, 'Equipment');
+        break;
+      case 'date':
+        if (value) {
+          error = validators.futureDate(value);
+        }
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    return error;
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const allTouched = {};
+
+    const fieldsToValidate = ['title', 'description', 'priority', 'equipment', 'date'];
+    
+    fieldsToValidate.forEach(field => {
+      allTouched[field] = true;
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    setTouched(allTouched);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   //  Submit the form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      setError('Please fix all validation errors before submitting');
+      return;
+    }
+
     setLoading(true);
     setError('');
-
-    //  Client-side validation
-    if (!formData.title.trim()) {
-      setError('Title is required');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      setError('Description is required');
-      setLoading(false);
-      return;
-    }
 
     try {
       // 🚨 Check if user is logged in
@@ -204,88 +264,72 @@ export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
             </h3>
             
             {/*  Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g., X-ray machine not working"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                required
-              />
-            </div>
+            <ValidatedInput
+              label="Title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.title ? errors.title : ''}
+              required
+              placeholder="e.g., X-ray machine not working"
+            />
 
             {/*  Description */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe the issue in detail..."
-                rows="4"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                required
-              />
-            </div>
+            <ValidatedTextarea
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={touched.description ? errors.description : ''}
+              required
+              placeholder="Describe the issue in detail..."
+              rows={4}
+            />
 
             {/*  Priority, Status and Date row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  <option key="priority-low" value="Low">🟢 Low Priority</option>
-                  <option key="priority-medium" value="Medium">🟡 Medium Priority</option>
-                  <option key="priority-high" value="High">🔴 High Priority</option>
-                </select>
-              </div>
+              <ValidatedSelect
+                label="Priority"
+                name="priority"
+                value={formData.priority}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.priority ? errors.priority : ''}
+                required
+              >
+                <option value="Low">🟢 Low Priority</option>
+                <option value="Medium">🟡 Medium Priority</option>
+                <option value="High">🔴 High Priority</option>
+              </ValidatedSelect>
 
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  <option key="status-open" value="Open">Open</option>
-                  <option key="status-inprogress" value="In Progress">In Progress</option>
-                  <option key="status-completed" value="Completed">Completed</option>
-                  <option key="status-cancelled" value="Cancelled">Cancelled</option>
-                </select>
-              </div>
+              <ValidatedSelect
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.status ? errors.status : ''}
+              >
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </ValidatedSelect>
 
               <div>
                 <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="inline h-4 w-4 mr-1" />
                   Preferred Date
                 </label>
-                <input
+                <ValidatedInput
                   type="date"
-                  id="date"
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  onBlur={handleFieldBlur}
+                  error={touched.date ? errors.date : ''}
                 />
               </div>
             </div>
@@ -296,23 +340,21 @@ export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
             <h3 className="text-lg font-medium text-gray-900">Equipment (Optional)</h3>
             
             <div>
-              <label htmlFor="equipment" className="block text-sm font-medium text-gray-700 mb-2">
-                Related Equipment
-              </label>
-              <select
-                id="equipment"
+              <ValidatedSelect
+                label="Related Equipment"
                 name="equipment"
                 value={formData.equipment}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                onBlur={handleFieldBlur}
+                error={touched.equipment ? errors.equipment : ''}
               >
-                <option key="select-equipment" value="">Select equipment...</option>
+                <option value="">Select equipment...</option>
                 {equipmentList.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.name} - {item.location}
                   </option>
                 ))}
-              </select>
+              </ValidatedSelect>
               <p className="text-xs text-gray-500 mt-1">
                 Select the equipment this request is related to (optional)
               </p>

@@ -4,6 +4,7 @@ const Technician = require('../models/Technician');
 const TechnicianController = require('./TechnicianController');
 const mongoose = require('mongoose');
 const notificationService = require('../../../services/notificationService');
+const equipmentStatusService = require('../../../services/equipmentStatusService');
 
 /**
  * Scheduled Maintenance Controller - Clean and focused! 📅
@@ -501,9 +502,32 @@ const updateMaintenanceStatus = async (req, res) => {
     
     await scheduledMaintenance.save();
     
-    // 🔔 Create notification for status update
+    // Auto-update equipment status based on maintenance status
+    const equipment = await Equipment.findById(scheduledMaintenance.equipment_id);
+    if (equipment) {
+      if (status === 'In Progress') {
+        // Set equipment to "Under Maintenance" when work starts
+        await Equipment.findByIdAndUpdate(
+          equipment._id,
+          { status: 'Under Maintenance' },
+          { new: true }
+        );
+      } else if (status === 'Completed') {
+        // Set equipment back to "Operational" when maintenance is done
+        await equipmentStatusService.updateEquipmentStatusOnMaintenanceCompletion(equipment._id);
+      }
+    }
+    
+    // Create notification for status update (with error handling to prevent 500 errors)
     if (status === 'Completed') {
-      await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
+      try {
+        // Populate assignedTechnician before sending to notification service
+        await scheduledMaintenance.populate('assignedTechnician');
+        await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
+      } catch (notifError) {
+        // Log the error but don't fail the request - status update already succeeded
+        console.error('Error sending completion notification:', notifError);
+      }
     }
     
     res.json({
@@ -563,13 +587,19 @@ const completeScheduledMaintenance = async (req, res) => {
     
     await scheduledMaintenance.save();
     
-    // Update equipment status if provided
-    if (equipment_status_after) {
-      await Equipment.findOneAndUpdate(
-        { equipment_id: scheduledMaintenance.equipment_id },
+    // Automatically update equipment status back to Operational after maintenance completion
+    const equipment = await Equipment.findById(scheduledMaintenance.equipment_id);
+    if (equipment) {
+      await equipmentStatusService.updateEquipmentStatusOnMaintenanceCompletion(equipment._id);
+    }
+    
+    // Update equipment status if provided (override automatic behavior if specified)
+    if (equipment_status_after && equipment) {
+      await Equipment.findByIdAndUpdate(
+        equipment._id,
         { 
           status: equipment_status_after,
-          last_maintenance_date: new Date()
+          lastMaintenance: new Date()
         }
       );
     }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, User, Mail, Lock, AlertCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
+import { ValidatedInput, ValidatedSelect, PasswordStrengthMeter } from '../../../shared/components/ValidatedInput';
+import { validators, calculatePasswordStrength, debounce } from '../../../shared/utils/formValidation';
 
 /**
  * AddUserModal - Create new user accounts
@@ -21,10 +23,12 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState({ strength: 'none', score: 0, feedback: '' });
 
   // Available roles for selection (matching backend User model)
   const roles = [
@@ -42,7 +46,7 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   /**
-   * Handle input changes with validation
+   * Handle input changes with real-time validation (after field is touched)
    */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -51,60 +55,112 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       [name]: value
     }));
 
-    // Clear specific field error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+    // Calculate password strength on change
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
     }
+
+    // Real-time validation ONLY if field has been touched and has error
+    if (touched[name] && errors[name]) {
+      validateField(name, value);
+    }
+
     setApiError('');
   };
 
   /**
-   * Validate form data
+   * Handle field blur - validate when user leaves field
+   */
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+    
+    // Mark field as touched
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
+    // Validate the field
+    validateField(name, value);
+  };
+
+  /**
+   * Validate individual field
+   */
+  const validateField = (fieldName, value) => {
+    let error = null;
+
+    switch (fieldName) {
+      case 'name':
+        error = validators.name(value, 'Full name');
+        break;
+      case 'email':
+        error = validators.email(value);
+        break;
+      case 'password':
+        error = validators.password(value);
+        break;
+      case 'confirmPassword':
+        error = validators.passwordConfirm(value, formData.password);
+        break;
+      case 'phone':
+        error = validators.phoneOptional(value);
+        break;
+      case 'department':
+        if (formData.role !== 'Patient' && !value.trim()) {
+          error = 'Department is required for staff members';
+        }
+        break;
+      default:
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }));
+  };
+
+  /**
+   * Validate entire form before submission
    */
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = 'Full name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
+    // Validate all fields
+    const nameError = validators.name(formData.name, 'Full name');
+    if (nameError) newErrors.name = nameError;
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email address is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
+    const emailError = validators.email(formData.email);
+    if (emailError) newErrors.email = emailError;
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    const passwordError = validators.password(formData.password);
+    if (passwordError) newErrors.password = passwordError;
 
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
+    const confirmPasswordError = validators.passwordConfirm(formData.confirmPassword, formData.password);
+    if (confirmPasswordError) newErrors.confirmPassword = confirmPasswordError;
 
-    // Role validation
     if (!formData.role) {
       newErrors.role = 'Please select a role';
     }
 
-    // Department validation for certain roles
-    if (['Doctor', 'LabStaff', 'LabSupervisor', 'Technician'].includes(formData.role) && !formData.department.trim()) {
-      newErrors.department = 'Department is required for this role';
+    // Department validation for staff roles
+    if (formData.role !== 'Patient' && !formData.department.trim()) {
+      newErrors.department = 'Department is required for staff members';
     }
+
+    // Phone validation (optional)
+    if (formData.phone) {
+      const phoneError = validators.phoneOptional(formData.phone);
+      if (phoneError) newErrors.phone = phoneError;
+    }
+
+    // Mark all fields as touched
+    const allTouched = {};
+    Object.keys(formData).forEach(key => {
+      allTouched[key] = true;
+    });
+    setTouched(allTouched);
 
     return newErrors;
   };
@@ -321,62 +377,49 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
             </h3>
 
             {/* Name Field */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="Enter full name"
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
+            <ValidatedInput
+              label="Full Name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.name}
+              touched={touched.name}
+              required
+              placeholder="Enter full name"
+              autoComplete="name"
+            />
 
             {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="Enter email address"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
+            <ValidatedInput
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.email}
+              touched={touched.email}
+              required
+              placeholder="user@example.com"
+              autoComplete="email"
+            />
 
             {/* Phone Field */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter phone number"
-              />
-            </div>
+            <ValidatedInput
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.phone}
+              touched={touched.phone}
+              placeholder="(555) 123-4567"
+              helpText="Optional - 10 digit phone number"
+              autoComplete="tel"
+            />
           </div>
 
           {/* Role and Access Section */}
@@ -387,72 +430,48 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
             </h3>
 
             {/* Role Selection */}
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                User Role <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.role ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-              >
-                {roles.map(role => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
-              {formData.role && (
-                <p className="mt-1 text-sm text-gray-600">
-                  {getRoleDescription(formData.role)}
-                </p>
-              )}
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role}</p>
-              )}
-            </div>
+            <ValidatedSelect
+              label="User Role"
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.role}
+              touched={touched.role}
+              required
+              options={roles}
+              helpText={formData.role ? getRoleDescription(formData.role) : ''}
+            />
 
             {/* Department Field */}
-            <div>
-              <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                Department {['Doctor', 'Nurse', 'Technician'].includes(formData.role) && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="text"
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.department ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="e.g., Cardiology, Emergency, IT"
-              />
-              {errors.department && (
-                <p className="mt-1 text-sm text-red-600">{errors.department}</p>
-              )}
-            </div>
+            <ValidatedInput
+              label="Department"
+              name="department"
+              type="text"
+              value={formData.department}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.department}
+              touched={touched.department}
+              required={formData.role !== 'Patient'}
+              placeholder="e.g., Cardiology, Emergency, IT"
+              helpText={formData.role === 'Patient' ? 'Optional for patients' : 'Required for staff members'}
+            />
 
             {/* Specialization Field */}
             {formData.role === 'Technician' && (
-              <div>
-                <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 mb-2">
-                  Specialization
-                </label>
-                <input
-                  type="text"
-                  id="specialization"
-                  name="specialization"
-                  value={formData.specialization}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Electrical, Mechanical, IT Systems"
-                />
-              </div>
+              <ValidatedInput
+                label="Specialization"
+                name="specialization"
+                type="text"
+                value={formData.specialization}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.specialization}
+                touched={touched.specialization}
+                placeholder="e.g., Electrical, Mechanical, IT Systems"
+                helpText="Technical specialty area"
+              />
             )}
           </div>
 
@@ -463,73 +482,44 @@ export const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               Security
             </h3>
 
-            {/* Password Field */}
+            {/* Password Field with Strength Meter */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter password (min 6 characters)"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
+              <ValidatedInput
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={errors.password}
+                touched={touched.password}
+                required
+                placeholder="Enter password (min 8 characters)"
+                showPasswordToggle
+                showPassword={showPassword}
+                onTogglePassword={() => setShowPassword(!showPassword)}
+                autoComplete="new-password"
+              />
+              <PasswordStrengthMeter password={formData.password} strength={passwordStrength} />
             </div>
 
             {/* Confirm Password Field */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Confirm password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-              )}
-            </div>
+            <ValidatedInput
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              onBlur={handleFieldBlur}
+              error={errors.confirmPassword}
+              touched={touched.confirmPassword}
+              required
+              placeholder="Re-enter password"
+              showPasswordToggle
+              showPassword={showConfirmPassword}
+              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+              autoComplete="new-password"
+            />
           </div>
         </form>
 
