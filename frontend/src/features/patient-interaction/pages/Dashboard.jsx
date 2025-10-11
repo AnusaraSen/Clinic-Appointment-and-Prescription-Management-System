@@ -287,7 +287,7 @@ const Dashboard = () => {
               <CalendarClock size={32} color="#3b82f6" />
               <div style={{ fontWeight: 600, fontSize: '1.08rem', color: '#222', marginTop: 8 }}>Upcoming Appointments</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#222', margin: '8px 0' }}>{upcomingAppointments.length}</div>
-              <Link to="/appointments" style={{ color: '#008080', fontWeight: 500, fontSize: '1rem', marginTop: 8, textDecoration: 'none' }}>View all</Link>
+              <Link to="/patient/appointments" style={{ color: '#008080', fontWeight: 500, fontSize: '1rem', marginTop: 8, textDecoration: 'none' }}>View all</Link>
             </div>
 
             <div className="stat-card" style={{ 

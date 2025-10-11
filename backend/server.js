@@ -69,7 +69,8 @@ const labTaskRoutes = require("./modules/lab-workflow/Route/labTaskRoutes");
 const labTestRoutes = require('./modules/lab-workflow/Route/LabTestRoutes');
 const dashboardRoutes = require('./modules/lab-workflow/Route/dashboardRoutes');
 const testRoutes = require('./modules/lab-workflow/Route/testRoutes');
-const testResultRoutes = require('./modules/lab-workflow/Route/testResultRoutes-simple');
+// Use full test result routes (supports filtering by patientId, labTestId, uploads, etc.)
+const testResultRoutes = require('./modules/lab-workflow/Route/testResultRoutes');
 const patientRoutes = require('./modules/lab-workflow/Route/patientRoutes');
 
 

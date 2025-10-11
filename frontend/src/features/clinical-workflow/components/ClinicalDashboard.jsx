@@ -3,6 +3,7 @@ import { RefreshCw, AlertTriangle, Stethoscope, Heart } from 'lucide-react';
 import { ClinicalKPICards } from './ClinicalKPICards';
 import { ClinicalAppointmentsSection } from './ClinicalAppointmentsSection';
 import { ClinicalActivitySection } from './ClinicalActivitySection';
+import { ClinicalTasksSection } from './ClinicalTasksSection';
 import ClinicalPastAppointmentsSection from './ClinicalPastAppointmentsSection.jsx';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
 import CalmLoader from '../../../components/CalmLoader';
@@ -21,6 +22,7 @@ export const ClinicalDashboard = ({ onNavigate }) => {
   const [dashboardData, setDashboardData] = useState({});
   const [appointments, setAppointments] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
+  const [urgentTasks, setUrgentTasks] = useState([]);
   const [apiError, setApiError] = useState(null);
   const [systemStatus, setSystemStatus] = useState({ 
     server: 'online', 
@@ -159,12 +161,7 @@ export const ClinicalDashboard = ({ onNavigate }) => {
   };
 
   // Helper YYYY-MM-DD (local)
-  const toYMD = (d) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  };
+  // Note: toYMD is already defined above. Keep a single definition to avoid redeclaration errors.
 
   // Identity-aware: get only today's appointments for this doctor
   const fetchDoctorTodaysAppointments = async () => {
@@ -244,6 +241,15 @@ export const ClinicalDashboard = ({ onNavigate }) => {
     } catch (error) {
       console.error('Error updating appointment:', error);
       setApiError('Failed to update appointment');
+    }
+  };
+
+  // Minimal task completion handler to avoid runtime errors; can be wired to backend later
+  const handleCompleteTask = (taskId) => {
+    try {
+      setUrgentTasks(prev => Array.isArray(prev) ? prev.filter(t => t._id !== taskId) : []);
+    } catch (_) {
+      // no-op
     }
   };
 

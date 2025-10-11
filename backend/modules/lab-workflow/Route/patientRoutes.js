@@ -8,6 +8,9 @@ router.get('/', PatientController.getPatients);
 // Search patients for task assignment (quick search)
 router.get('/search', PatientController.searchPatientsForTask);
 
+// Get patient by linked user ID (maps authenticated user to their Patient record)
+router.get('/by-user/:userId', PatientController.getPatientByUser);
+
 // Get specific patient by ID
 router.get('/:id', PatientController.getPatientById);
 

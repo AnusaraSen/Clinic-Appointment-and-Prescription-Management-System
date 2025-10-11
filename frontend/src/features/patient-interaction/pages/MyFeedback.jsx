@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PatientLayout } from '../components/PatientLayout';
 
@@ -21,6 +21,7 @@ export default function MyFeedback() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const justAdded = params.get('justAdded') === '1';
   const focusAppointmentId = params.get('appointmentId');
@@ -204,6 +205,23 @@ export default function MyFeedback() {
                 </div>
                 <div className="text-gray-800 text-sm mb-2"><span className="text-teal-700 font-medium">Comments:</span> {f.comments || '—'}</div>
                 {created && <div className="text-xs text-gray-500">Created: {created.toLocaleString()}</div>}
+                {/* Actions */}
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    className="px-2.5 py-1.5 text-xs rounded border border-teal-200 text-teal-700 hover:bg-teal-50"
+                    onClick={() => navigate(`/feedback/update?id=${encodeURIComponent(f._id)}${f._appointmentId ? `&appointmentId=${encodeURIComponent(f._appointmentId)}` : ''}`)}
+                    title="Update this feedback"
+                  >
+                    Update
+                  </button>
+                  <button
+                    className="px-2.5 py-1.5 text-xs rounded border border-rose-200 text-rose-700 hover:bg-rose-50"
+                    onClick={() => navigate(`/feedback/delete?id=${encodeURIComponent(f._id)}${f._appointmentId ? `&appointmentId=${encodeURIComponent(f._appointmentId)}` : ''}`)}
+                    title="Delete this feedback"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             );
           })}

@@ -12,6 +12,63 @@
   box-sizing: border-box;
 }
 
+/* Page layout respecting sidebar and fixed navbar */
+.appointments-page .page-with-sidebar {
+  margin-left: 220px; /* default sidebar width */
+}
+.appointments-page .page-content {
+  padding: 84px 32px 32px 32px; /* top spacing for topbar */
+}
+
+/* On Add Appointment page, push patient sidebar below the fixed global navbar */
+.appointments-page .sidebar {
+  top: 80px; /* navbar height */
+  height: calc(100vh - 80px);
+}
+
+/* Two-column responsive layout */
+.appointments-layout-row {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+}
+
+.doctor-slots-panel {
+  min-width: 260px;
+  max-width: 360px;
+  background: #e6f7fa;
+  border-radius: 12px;
+  padding: 24px 16px;
+  box-shadow: 0 2px 8px rgba(0,128,128,0.08);
+}
+
+/* Make it mobile friendly */
+@media (max-width: 1024px) {
+  .appointments-layout-row {
+    grid-template-columns: 1fr;
+  }
+  .doctor-slots-panel {
+    max-width: none;
+  }
+}
+
+/* When sidebar collapses (approx), allow content to use full width */
+@media (max-width: 900px) {
+  .appointments-page .page-with-sidebar {
+    margin-left: 64px; /* collapsed sidebar */
+  }
+}
+
+/* Small screens - full bleed */
+@media (max-width: 640px) {
+  .appointments-page .page-with-sidebar {
+    margin-left: 0;
+  }
+  .appointments-page .page-content {
+    padding: 84px 16px 24px 16px;
+  }
+}
+
 /* Header */
 .add-appointments h2 {
   color:#008080;
@@ -92,7 +149,7 @@
 
 @media (max-width: 640px) {
   .add-appointments {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.25rem;
   }
   .add-appointments button {
     width: 100%;
