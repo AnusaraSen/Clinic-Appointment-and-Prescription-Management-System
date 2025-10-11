@@ -379,9 +379,7 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
     return 0;
   };
 
-  const calculatePercentage = (value, total) => {
-    return total > 0 ? Math.round((value / total) * 100) : 0;
-  };
+  // calculatePercentage defined once above; avoid duplicate declarations
 
   const clinicalKPICards = [
     {
@@ -405,8 +403,7 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       icon: <Calendar className="h-7 w-7" />,
       color: 'medical-green',
       bgGradient: 'from-emerald-500 to-teal-600',
-      trend: `${clinicalStats.appointments.total} scheduled today`,
-      trend: `${todaysAppointmentsCount} scheduled today`,
+  trend: `${todaysAppointmentsCount} scheduled today`,
       trendDirection: 'up',
       loading: todaysAppointmentsLoading,
       breakdown: [

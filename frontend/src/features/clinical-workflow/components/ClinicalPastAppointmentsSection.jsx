@@ -279,6 +279,7 @@ export const ClinicalPastAppointmentsSection = () => {
             </div>
           </div>
         </div>
+        )}
       {viewing && (
         <FeedbackViewerModal appointment={viewing} onClose={()=> setViewing(null)} />
       )}
