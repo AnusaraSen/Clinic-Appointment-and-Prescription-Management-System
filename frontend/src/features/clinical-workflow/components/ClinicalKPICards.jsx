@@ -117,6 +117,14 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
     }
     return [];
   };
+  // Separate state to drive the Today's Appointments KPI precisely for the logged-in doctor
+  const [todaysAppointmentsCount, setTodaysAppointmentsCount] = useState(0);
+  const [todaysAppointmentsLoading, setTodaysAppointmentsLoading] = useState(true);
+
+  useEffect(() => {
+    // Try to fetch real data, but we already have fallback data loaded
+    fetchClinicalData();
+  }, []);
 
   const fetchClinicalData = async () => {
     try {
@@ -217,6 +225,17 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
       }
 
       // If needed, we could fall back to a doctor-specific past count here
+      // Compute doctor's appointments count for TODAY (date equals today)
+      try {
+        setTodaysAppointmentsLoading(true);
+        const todayCount = await fetchDoctorTodaysCount(base);
+        setTodaysAppointmentsCount(todayCount);
+      } catch (_e) {
+        // leave default 0
+      } finally {
+        setTodaysAppointmentsLoading(false);
+      }
+
     } catch (error) {
       console.error('Error fetching clinical data:', error);
     }
@@ -281,6 +300,88 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
   };
 
   const calculatePercentage = (value, total) => (total > 0 ? Math.round((value / total) * 100) : 0);
+  // Fetch count of TODAY's appointments for the current doctor (appointment_date == today)
+  const fetchDoctorTodaysCount = async (base) => {
+    // Pull identity from localStorage (align with other helpers)
+    let user = null;
+    try { const s = localStorage.getItem('user'); if (s) user = JSON.parse(s); } catch {}
+    const docIds = [];
+    let docNames = [];
+    if (user) {
+      if (user._id) docIds.push(String(user._id));
+      if (user.doctorId) docIds.push(String(user.doctorId));
+      if (user.id) docIds.push(String(user.id));
+      if (user.name) docNames.push(String(user.name));
+      if (user.fullName) docNames.push(String(user.fullName));
+      if (user.username) docNames.push(String(user.username));
+    }
+
+    const nameVariants = new Set();
+    for (const n of docNames) {
+      const trimmed = n.replace(/^Dr\.?\s+/i, '').trim();
+      nameVariants.add(trimmed);
+      nameVariants.add(`Dr. ${trimmed}`);
+      nameVariants.add(`Dr ${trimmed}`);
+      nameVariants.add(n.trim());
+    }
+    docNames = Array.from(nameVariants);
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const ymd = toYMD(today);
+
+    // Try by doctorId
+    for (const id of docIds) {
+      const url = `${base}/appointments/by-doctor/${encodeURIComponent(id)}?start=${ymd}&end=${ymd}`;
+      try {
+        const r = await fetch(url);
+        if (r.ok) { const arr = await r.json(); if (Array.isArray(arr)) return arr.length; }
+      } catch (_) {}
+    }
+    // Try by doctorName (loose)
+    for (const name of docNames) {
+      const url = `${base}/appointments/by-doctor-name/${encodeURIComponent(name)}?start=${ymd}&end=${ymd}&loose=true`;
+      try {
+        const r = await fetch(url);
+        if (r.ok) { const arr = await r.json(); if (Array.isArray(arr)) return arr.length; }
+      } catch (_) {}
+    }
+    // Fallback: fetch all and filter by today and identity
+    try {
+      const allUrls = [`${base}/appointment/`, `${base}/appointments/`];
+      for (const url of allUrls) {
+        try {
+          const r = await fetch(url);
+          if (r.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              const matchesIdentity = (a) => {
+                if (docIds.length === 0 && docNames.length === 0) return false;
+                const did = a.doctor_id ? String(a.doctor_id) : '';
+                const dname = (a.doctor_name || (a.doctor && a.doctor.name) || '').toLowerCase();
+                const idMatch = docIds.includes(did);
+                const nameMatch = docNames.some(n => {
+                  const nn = String(n).toLowerCase();
+                  return dname === nn || dname.includes(nn) || nn.includes(dname);
+                });
+                return idMatch || nameMatch;
+              };
+              const cnt = data.filter(a => {
+                const d = new Date(a.appointment_date || a.date);
+                d.setHours(0,0,0,0);
+                return toYMD(d) === ymd && matchesIdentity(a);
+              }).length;
+              return cnt;
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+    return 0;
+  };
+
+  const calculatePercentage = (value, total) => {
+    return total > 0 ? Math.round((value / total) * 100) : 0;
+  };
 
   const clinicalKPICards = [
     {
@@ -300,13 +401,14 @@ export const ClinicalKPICards = ({ dashboardData, isLoading, error }) => {
     },
     {
       title: "Today's Appointments",
-      total: clinicalStats.appointments.total,
+      total: todaysAppointmentsCount,
       icon: <Calendar className="h-7 w-7" />,
       color: 'medical-green',
       bgGradient: 'from-emerald-500 to-teal-600',
       trend: `${clinicalStats.appointments.total} scheduled today`,
+      trend: `${todaysAppointmentsCount} scheduled today`,
       trendDirection: 'up',
-      loading: clinicalStats.appointments.loading,
+      loading: todaysAppointmentsLoading,
       breakdown: [
         { label: 'Upcoming', value: clinicalStats.appointments.breakdown.upcoming, percentage: calculatePercentage(clinicalStats.appointments.breakdown.upcoming, clinicalStats.appointments.total), color: 'bg-blue-500' },
         { label: 'Completed', value: clinicalStats.appointments.breakdown.completed, percentage: calculatePercentage(clinicalStats.appointments.breakdown.completed, clinicalStats.appointments.total), color: 'bg-emerald-500' },

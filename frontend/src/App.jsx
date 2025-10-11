@@ -14,8 +14,6 @@ import ContactPage from './pages/ContactPage';
 import ServicesPage from './pages/ServicesPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
-import DoctorsDirectory from './pages/DoctorsDirectory';
-import DoctorPublicProfile from './pages/DoctorPublicProfile';
 
 
 // Role-based Dashboard imports
@@ -120,6 +118,8 @@ import SimpleFeedback from "./features/patient-interaction/pages/SimpleFeedback"
 import UpdateFeedback from "./features/patient-interaction/pages/UpdateFeedback";
 import DeleteFeedback from "./features/patient-interaction/pages/DeleteFeedback";
 import PatientDashboard from "./features/patient-interaction/pages/Dashboard";
+import FindDoctors from "./pages/FindDoctors";
+import DoctorPublicProfile from "./pages/DoctorPublicProfile";
 import DoctorsPage from "./features/patient-interaction/pages/DoctorsPage";
 import CompletedVisits from "./features/patient-interaction/pages/CompletedVisits";
 import Prescriptions from "./features/patient-interaction/pages/Prescriptions";
@@ -738,9 +738,9 @@ function App() {
           <Route path="/dashboard/medical-records" element={<MedicalRecords />} />
           <Route path="/dashboard/lab-reports" element={<LabReports />} />
           <Route path="/dashboard/support" element={<Support />} />
-          <Route path="/doctors" element={<DoctorsPage />} />
-          <Route path="/doctors-directory" element={<DoctorsDirectory />} />
-          <Route path="/doctors-directory/:id" element={<DoctorPublicProfile />} />
+          <Route path="/doctors" element={<FindDoctors />} />
+          <Route path="/doctors/:id" element={<DoctorPublicProfile />} />
+          <Route path="/patient/doctors" element={<DoctorsPage />} />
 
           {/* Catch all route - moved to end */}
           <Route path="*" element={<Navigate to="/" replace />} />

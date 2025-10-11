@@ -222,7 +222,7 @@ function NavBar({ search, onSearchChange }) {
               <div className="nav-icon">
                 👨‍⚕️
               </div>
-              <span className="nav-text" style={{color:'black', fontSize: '16px'}}>Doctors</span>
+              <span className="nav-text" style={{color:'black', fontSize: '16px'}}>Find Doctors</span>
               <div className="nav-indicator"></div>
             </Link>
 

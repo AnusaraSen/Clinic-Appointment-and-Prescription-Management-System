@@ -376,12 +376,12 @@ function AddAppointments() {
 
   if (!doctor) {
     return (
-      <PatientLayout currentPage="doctors">
-        <div className="appointments-page" style={{ maxWidth: 700, margin: '0 auto' }}>
-          <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 10, padding: 32, textAlign: 'center', boxShadow: '0 2px 8px rgba(255,215,0,0.08)' }}>
-            <h2 style={{ color: '#d48806', marginBottom: 16 }}>No Doctor Selected</h2>
-            <p style={{ color: '#555', marginBottom: 24 }}>Please select a doctor from the Doctors page to book an appointment.</p>
-            <button style={{ background: '#008080', color: 'white', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer' }} onClick={() => navigate('/doctors')}>Go to Doctors Page</button>
+      <PatientLayout currentPage="appointments">
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+          <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 12, padding: 32, textAlign: 'center', boxShadow: '0 4px 16px rgba(255,215,0,0.12)' }}>
+            <h2 style={{ color: '#d48806', marginBottom: 12 }}>No Doctor Selected</h2>
+            <p style={{ color: '#555', marginBottom: 20 }}>Please select a doctor from the Doctors page to book an appointment.</p>
+            <button style={{ background: '#008080', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 600, cursor: 'pointer' }} onClick={() => navigate('/patient/doctors')}>Go to Doctors Page</button>
           </div>
         </div>
       </PatientLayout>
@@ -389,11 +389,21 @@ function AddAppointments() {
   }
 
   return (
-    <PatientLayout currentPage="doctors">
-      <div className="appointments-page">
-        <div className="appointments-layout-row" style={{ alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+    <PatientLayout currentPage="appointments">
+      <div style={{ padding: '0px', maxWidth: 1000, margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 40, alignItems: 'flex-start', justifyContent: 'flex-start' }}>
             {/* Doctor profile & slots */}
-            <div className="doctor-slots-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{
+              minWidth: 260,
+              maxWidth: 300,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              background: '#e6f7fa',
+              borderRadius: 12,
+              padding: '32px 18px',
+              boxShadow: '0 2px 8px rgba(0,128,128,0.08)'
+            }}>
               <img src={doctor.avatar} alt={doctor.name} style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 18 }} />
               <div style={{ fontWeight: 700, fontSize: '1.15rem', color: '#008080', marginBottom: 6 }}>{doctor.name}</div>
               <div style={{ color: '#555', fontSize: '1.05rem', marginBottom: 6 }}>{doctor.specialty}</div>
@@ -525,9 +535,9 @@ function AddAppointments() {
                 <button type="submit">Submit</button>
               </form>
             </div>
-        </div>
-      </div>
-    </PatientLayout>
+            </div>
+          </div>
+      </PatientLayout>
   );
 }
 

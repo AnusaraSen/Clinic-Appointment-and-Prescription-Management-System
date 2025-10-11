@@ -155,7 +155,14 @@ export default function MyFeedback() {
       <div className="max-w-5xl mx-auto p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">My Feedback</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold text-gray-900">My Feedback</h1>
+              {!loading && (
+                <span title="Total feedback count" className="inline-flex items-center justify-center px-2 py-0.5 text-sm font-semibold rounded-full border border-gray-200 bg-gray-50 text-gray-800 shadow-sm">
+                  {items.length}
+                </span>
+              )}
+            </div>
             <p className="text-gray-500">Your submitted feedback and ratings</p>
           </div>
           <div className="space-x-2">

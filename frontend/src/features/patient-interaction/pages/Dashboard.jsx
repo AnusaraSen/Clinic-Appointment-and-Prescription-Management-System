@@ -158,24 +158,93 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchFeedbackCount = async () => {
       setFeedbackLoading(true);
-      const endpoints = [
+
+      // Build current patient identity hints (same strategy as MyFeedback)
+      const currentPatientIds = (() => {
+        const ids = new Set();
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const u = JSON.parse(userStr);
+            if (u?._id) ids.add(String(u._id));
+            if (u?.patientId) ids.add(String(u.patientId));
+            if (u?.patient_id) ids.add(String(u.patient_id));
+            if (u?.patientCode) ids.add(String(u.patientCode));
+            if (u?.code) ids.add(String(u.code));
+          } catch {}
+        }
+        const knownKeys = ['patientId','patient_id','patientCode','code'];
+        for (const k of knownKeys) {
+          const v = localStorage.getItem(k);
+          if (v) ids.add(String(v));
+        }
+        return ids;
+      })();
+
+      const feedbackEndpoints = [
         "/feedback/",
         "http://localhost:5000/feedback/",
         "http://127.0.0.1:5000/feedback/",
       ];
-      
-      for (const url of endpoints) {
+
+      let all = [];
+      for (const url of feedbackEndpoints) {
         try {
           const res = await axios.get(url, { timeout: 5000 });
-          if (Array.isArray(res.data)) {
-            setFeedbackCount(res.data.length);
-            setFeedbackLoading(false);
-            return;
-          }
+          if (Array.isArray(res.data)) { all = res.data; break; }
         } catch (err) {
           console.warn(`Failed to fetch feedback from ${url}:`, err?.message);
         }
       }
+
+      if (!Array.isArray(all) || all.length === 0) { setFeedbackCount(0); setFeedbackLoading(false); return; }
+
+      // If we don't know the patient's ids, just show total
+      if (currentPatientIds.size === 0) {
+        setFeedbackCount(all.length);
+        setFeedbackLoading(false);
+        return;
+      }
+
+      // Map feedbacks to appointment IDs to resolve patient ownership
+      const apptIds = Array.from(new Set(all.map(f => {
+        const a = f.appointment_id || f.appointment;
+        if (!a) return null;
+        if (typeof a === 'string') return a;
+        if (typeof a === 'object' && a._id) return String(a._id);
+        return null;
+      }).filter(Boolean)));
+
+      const fetchAppointment = async (id) => {
+        const urls = [
+          `/appointment/get/${id}`,
+          `http://localhost:5000/appointment/get/${id}`,
+          `http://127.0.0.1:5000/appointment/get/${id}`,
+        ];
+        for (const u of urls) {
+          try { const r = await axios.get(u, { timeout: 5000 }); if (r?.data?.appointment) return r.data.appointment; } catch(_) {}
+        }
+        return null;
+      };
+
+      const pairs = await Promise.all(apptIds.map(async id => [id, await fetchAppointment(id)]));
+      const apptById = new Map(pairs);
+
+      const visible = all.filter(f => {
+        // Prefer appointment-derived patient id
+        const a = f.appointment || f.appointment_id;
+        let id = null;
+        if (typeof a === 'string') id = a; else if (typeof a === 'object' && a?._id) id = String(a._id);
+        const appt = id ? (typeof a === 'object' ? a : apptById.get(id)) : null;
+        const pid = appt?.patient_id;
+        if (pid && currentPatientIds.has(String(pid))) return true;
+        // Fallback if feedback contains patient hints directly
+        if (f.patient_id && currentPatientIds.has(String(f.patient_id))) return true;
+        if (f.patient_code && currentPatientIds.has(String(f.patient_code))) return true;
+        return false;
+      });
+
+      setFeedbackCount(visible.length);
       setFeedbackLoading(false);
     };
     fetchFeedbackCount();

@@ -1,21 +1,19 @@
 import React from 'react';
 import { 
   LayoutDashboard, 
-  User, 
+  Calendar, 
   Activity, 
   ClipboardList, 
+  User,
   Menu, 
-  X,
-  UserCircle
+  X 
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../authentication/context/AuthContext';
 
 // Reusable Patient Clinical Sidebar Component
 export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPageChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
 
   // Patient-specific menu items using clinical sidebar design
   const menuItems = [
@@ -23,31 +21,25 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
       name: 'Dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
       page: 'dashboard',
-      path: '/dashboard/patient'
+      path: '/patient/dashboard'
     },
     {
-      name: 'Find Doctors',
-      icon: <User className="h-5 w-5" />,
-      page: 'doctors',
-      path: '/doctors'
+      name: 'Appointments', // Redirects to Find Doctors
+      icon: <Calendar className="h-5 w-5" />,
+      page: 'appointments',
+      path: '/patient/doctors'
+    },
+    {
+      name: 'Feedbacks', // Redirects to new feedbacks page
+      icon: <ClipboardList className="h-5 w-5" />,
+      page: 'feedback',
+      path: '/feedback'
     },
     {
       name: 'Lab Reports',
       icon: <Activity className="h-5 w-5" />,
       page: 'lab-reports',
       path: '/dashboard/lab-reports'
-    },
-    {
-      name: 'My Feedback',
-      icon: <ClipboardList className="h-5 w-5" />,
-      page: 'feedback',
-      path: '/feedback'
-    },
-    {
-      name: 'Profile',
-      icon: <UserCircle className="h-5 w-5" />,
-      page: 'profile',
-      path: null // computed on click
     }
   ];
 
@@ -55,12 +47,9 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
     if (onPageChange) {
       onPageChange(page);
     }
-    if (page === 'profile') {
-      const pid = user?.patientId || user?.user_id || user?._id || user?.id;
-      if (pid) return navigate(`/patient/${pid}`);
-      return navigate('/dashboard/patient');
+    if (path) {
+      navigate(path);
     }
-    if (path) return navigate(path);
   };
 
   // Determine current page based on location pathname if not explicitly set
@@ -68,11 +57,10 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
     if (currentPage) return currentPage;
     
     const pathname = location.pathname;
-    if (pathname === '/dashboard/patient' || pathname === '/patient-dashboard' || pathname === '/patient/dashboard') return 'dashboard';
-    if (pathname === '/doctors') return 'doctors';
-    if (pathname.includes('/lab-reports')) return 'lab-reports';
+    if (pathname === '/patient/dashboard' || pathname === '/dashboard') return 'dashboard';
+  if (pathname === '/patient/doctors' || pathname === '/doctors' || pathname === '/appointments') return 'appointments'; // treat doctors as appointments
     if (pathname.includes('/feedback')) return 'feedback';
-    if (/^\/patient\/[^/]+$/.test(pathname)) return 'profile';
+    if (pathname.includes('/lab-reports')) return 'lab-reports';
     
     return 'dashboard'; // default
   };
@@ -93,51 +81,65 @@ export const PatientClinicalSidebar = ({ isExpanded, onToggle, currentPage, onPa
 
       {/* Main sidebar container with clinical design */}
       <aside className={`
-        bg-white border-r border-gray-200 flex-shrink-0 
+        bg-white/95 backdrop-blur-sm border-r border-gray-100 flex-shrink-0 
         fixed inset-y-0 left-0 transition-all duration-300 ease-in-out z-10
-        ${isExpanded ? 'w-64' : 'w-16'}
+        ${isExpanded ? 'w-64' : 'w-16'} rounded-r-2xl shadow-xl
       `}>
         
         {/* Header section with patient portal branding */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-200 px-2">
-          {isExpanded && (
+        <div className="h-16 flex items-center justify-center border-b border-gray-100 px-2">
+          {isExpanded ? (
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-gradient-to-br from-teal-600 to-teal-500 rounded-xl flex items-center justify-center shadow-sm">
                 <User className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-semibold text-gray-800">Patient Portal</span>
+              <span className="text-lg font-semibold text-gray-800 tracking-tight">Patient Portal</span>
+            </div>
+          ) : (
+            <div className="w-9 h-9 bg-gradient-to-br from-teal-600 to-teal-500 rounded-xl flex items-center justify-center shadow-sm">
+              <User className="h-5 w-5 text-white" />
             </div>
           )}
         </div>
 
         {/* Navigation menu with patient theme */}
-        <nav className="mt-5 px-2 space-y-1">
-          {menuItems.map(item => (
-            <button 
-              key={item.name} 
-              onClick={() => handleNavigation(item.page, item.path)}
-              className={`
-                group flex items-center py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left
-                ${isExpanded ? 'px-2' : 'px-2 justify-center'}
-                ${activePage === item.page
-                  ? 'bg-teal-50 text-teal-600' // Active item styling with patient theme
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' // Normal item styling
-                }
-              `}
-              title={!isExpanded ? item.name : ''} // Show tooltip when collapsed
-            >
-              {/* Icon with dynamic coloring */}
-              <span className={`${activePage === item.page ? 'text-teal-600' : 'text-gray-500'} ${isExpanded ? 'mr-3' : ''}`}>
-                {item.icon}
-              </span>
-              {/* Text label - only show when expanded */}
-              {isExpanded && (
-                <span className="truncate">
-                  {item.name}
+        <nav className="mt-4 px-2 space-y-1">
+          {menuItems.map(item => {
+            const isActive = activePage === item.page;
+            return (
+              <button 
+                key={item.name} 
+                onClick={() => handleNavigation(item.page, item.path)}
+                className={`
+                  group relative flex items-center py-2 text-sm font-medium rounded-lg transition-all duration-200 w-full text-left
+                  ${isExpanded ? 'px-3' : 'px-2 justify-center'}
+                  ${isActive
+                    ? 'bg-gradient-to-r from-teal-50 to-white text-teal-700 ring-1 ring-teal-100 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}
+                `}
+                title={!isExpanded ? item.name : ''}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {isActive && isExpanded && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 rounded-r bg-teal-500" aria-hidden="true" />
+                )}
+                <span
+                  className={`
+                    ${isExpanded ? 'mr-3' : ''}
+                    w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                    ${isActive ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700'}
+                  `}
+                >
+                  {item.icon}
                 </span>
-              )}
-            </button>
-          ))}
+                {isExpanded && (
+                  <span className="truncate tracking-tight">
+                    {item.name}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
       </aside>
     </>
