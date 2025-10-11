@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import prescriptionsApi from '../../../api/prescriptionsApi';
+import logoUrl from '../../../assets/family-health-logo.svg';
 
 // Lightweight page to list prescriptions tied to a specific appointment
 // URL: /appointment/:appointmentId/prescriptions (or via query param ?appointmentId=...)
@@ -51,7 +52,119 @@ export default function AppointmentPrescriptions() {
     if (!appointmentId) return;
     window.open(`http://localhost:5000/prescription/by-appointment/${encodeURIComponent(appointmentId)}/export/pdf`, '_blank');
   };
-  const printPage = () => window.print();
+  const printPage = () => {
+    const escape = (s) => String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    const toDate = (d) => {
+      try { const dt = new Date(d); return isNaN(dt) ? '' : dt.toLocaleDateString(); } catch { return ''; }
+    };
+
+    const now = new Date();
+    const printDate = now.toLocaleString();
+    const sysNameTop = 'Family Health Care';
+    const sysNameSub = 'Clinic Management System';
+    const appt = escape(appointmentId || '—');
+    const pid = escape(patientId || '—');
+    const ready = (!loading && !error && items.length > 0);
+
+    const headerLogo = `<img src="${logoUrl}" alt="Logo" style="height:28px;vertical-align:middle;"/>`;
+
+    const sections = items.map((p, idx) => {
+      const meds = Array.isArray(p.Medicines) ? p.Medicines : [];
+      const medsRows = meds.map(m => `
+        <tr>
+          <td>${escape(m.Medicine_Name)}</td>
+          <td>${escape(m.Dosage)}</td>
+          <td>${escape(m.Frequency)}</td>
+          <td>${escape(m.Duration)}</td>
+        </tr>`).join('');
+
+      const infoLine = [
+        `Date: <strong>${escape(toDate(p.Date) || '—')}</strong>`,
+        `Doctor: <strong>${escape(p.doctor_Name || '—')}</strong>`
+      ].join('<span class="sep">•</span>');
+
+      return `
+        <section class="card ${idx>0 ? 'page-break' : ''}">
+          <div class="pill">Prescription</div>
+          <h3 class="card-title">${escape(p.Diagnosis || 'No Diagnosis')}</h3>
+          <div class="meta">${infoLine}</div>
+          <div class="meta-sub">Patient: ${escape(p.patient_name || '—')} (${escape(p.patient_ID || '—')})</div>
+          ${meds.length ? `
+            <div class="subheader">Medicines</div>
+            <table class="table">
+              <thead><tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead>
+              <tbody>${medsRows}</tbody>
+            </table>
+          ` : ''}
+          ${p.Instructions ? `
+            <div class="subheader">Instructions</div>
+            <div class="note">${escape(p.Instructions)}</div>
+          ` : ''}
+        </section>`;
+    }).join('');
+
+    const w = window.open('', '', 'width=900,height=700');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <title>Appointment Prescriptions ${appt}</title>
+        <style>
+          @media print { @page { margin: 14mm; } }
+          body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:0;padding:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+          .header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:8px;margin-bottom:14px}
+          .system{display:inline-flex;align-items:center;gap:8px;justify-self:center}
+          .sys-top{font-weight:800;font-size:16px;letter-spacing:.2px}
+          .sys-sub{font-size:10px;color:#64748b;letter-spacing:.18em;text-transform:uppercase}
+          .meta-gen{font-size:11px;color:#475569;justify-self:end}
+          .badges{display:flex;flex-wrap:wrap;gap:10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;margin:10px 0 14px}
+          .badge{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;min-width:120px}
+          .badge .l{font-size:9px;color:#475569;font-weight:800;letter-spacing:.15em}
+          .badge .v{font-size:13px;font-weight:700}
+          .ready{font-size:10px;font-weight:800;letter-spacing:.16em;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:10px;padding:6px 10px}
+          .note-warn{font-size:10px;font-weight:700;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;display:inline-block;margin-top:6px}
+          .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px 18px;margin:14px 0;box-shadow:0 4px 18px rgba(15,23,42,0.06)}
+          .card-title{margin:4px 0 8px;font-size:18px;letter-spacing:-.3px}
+          .pill{display:inline-block;font-size:9px;letter-spacing:.15em;font-weight:800;color:#0f766e;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:4px 8px}
+          .meta{font-size:12px;color:#475569;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+          .meta-sub{font-size:11px;color:#64748b;margin-top:3px}
+          .subheader{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#334155;margin:12px 0 8px}
+          .table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+          .table th,.table td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+          .table thead th{background:#f8fafc;color:#334155;font-weight:700}
+          .note{font-size:12px;line-height:1.4;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px;color:#9a3412}
+          .sep{color:#94a3b8;margin:0 6px}
+          .page-break{page-break-before:always}
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div></div>
+          <div class="system">${headerLogo}<div><div class="sys-top">${sysNameTop}</div><div class="sys-sub">${sysNameSub}</div></div></div>
+          <div class="meta-gen">Generated: ${escape(printDate)}</div>
+        </div>
+        <h2 style="margin:0 0 4px;font-size:20px;letter-spacing:-.4px">Appointment Prescriptions</h2>
+        <div style="font-size:12px;color:#64748b">All prescriptions linked to this appointment.</div>
+        ${inferred ? '<div class="note-warn">Legacy fallback: showing prescriptions inferred by patient ID & date (not originally linked)</div>' : ''}
+        <div class="badges">
+          <div class="badge"><div class="l">APPOINTMENT</div><div class="v">${appt}</div></div>
+          ${patientId ? `<div class="badge"><div class="l">PATIENT</div><div class="v">${pid}</div></div>` : ''}
+          <div class="badge"><div class="l">COUNT</div><div class="v">${String(items.length)}</div></div>
+          ${ready ? '<div class="ready">READY</div>' : ''}
+        </div>
+        ${sections || '<div style="margin-top:10mm;font-size:12px;color:#64748b">No prescriptions to print.</div>'}
+      </body>
+    </html>`);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 150);
+  };
 
   // If the NavBar is fixed at top, add a consistent offset (adjust if navbar height changes)
   return (

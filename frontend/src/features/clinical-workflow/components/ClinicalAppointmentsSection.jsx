@@ -130,6 +130,20 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                 <div className="text-left md:text-center order-1 md:order-none">
                   <div className="text-lg font-bold text-gray-900 leading-tight">
                     {formatTime(appointment.appointment_time)}
+            <div
+              key={appointment._id}
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 cd-fade-in overflow-hidden"
+            >
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  {/* Time */}
+                  <div className="text-center min-w-[80px]">
+                    <div className="text-lg font-bold text-gray-900">
+                      {formatTime(appointment.appointment_time)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {appointment.appointment_type}
+                    </div>
                   </div>
                   <div className="text-xs text-gray-500 truncate">
                     {appointment.appointment_type}
@@ -154,12 +168,33 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                           <span className="truncate">{appointment.phone}</span>
                         </div>
                       )}
+                  {/* Patient Info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 font-semibold text-sm">
+                        {getInitials(appointment.patient_name)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 truncate max-w-[160px] sm:max-w-[220px]">
+                        {appointment.patient_name}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        {appointment.phone && (
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            <span>{appointment.phone}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Status */}
                 <div className="order-4 md:order-none">
+                {/* Status and Actions */}
+                <div className="ml-auto flex flex-wrap items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-2 ${getStatusColor(appointment.status)}`}>
                     <span className={`w-2 h-2 rounded-full ${statusMeta[appointment.status]?.dot || 'bg-gray-400'}`}></span>
                     {statusMeta[appointment.status]?.label || appointment.status}
@@ -170,6 +205,7 @@ export const ClinicalAppointmentsSection = ({ appointments = [], isLoading, erro
                 <div className="order-3 md:order-none flex flex-wrap items-center gap-2 justify-start md:justify-end">
                   {appointment.status === 'upcoming' && (
                     <>
+                    <div className="flex flex-wrap items-center gap-2 max-w-full">
                       <button
                         onClick={() => handleActionClick(appointment._id, 'start')}
                         className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 border border-blue-200 rounded-md hover:bg-blue-50"
