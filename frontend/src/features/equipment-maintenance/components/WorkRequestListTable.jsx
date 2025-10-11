@@ -37,6 +37,22 @@ export const WorkRequestListTable = ({
     let aValue = a[sortBy];
     let bValue = b[sortBy];
     
+    // Handle reportedBy sorting (nested object)
+    if (sortBy === 'reportedBy') {
+      aValue = a.reportedBy?.name || a.reportedBy || '';
+      bValue = b.reportedBy?.name || b.reportedBy || '';
+      if (typeof aValue === 'object') aValue = '';
+      if (typeof bValue === 'object') bValue = '';
+    }
+    
+    // Handle assignedTo sorting (nested object)
+    if (sortBy === 'assignedTo') {
+      aValue = a.assignedTo?.name || a.assignedTo || '';
+      bValue = b.assignedTo?.name || b.assignedTo || '';
+      if (typeof aValue === 'object') aValue = '';
+      if (typeof bValue === 'object') bValue = '';
+    }
+    
     // Handle dates
     if (sortBy === 'createdAt' || sortBy === 'dueDate' || sortBy === 'date') {
       aValue = new Date(aValue);
@@ -234,6 +250,15 @@ export const WorkRequestListTable = ({
               </th>
               <th 
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('reportedBy')}
+              >
+                Requested By
+                {sortBy === 'reportedBy' && (
+                  <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                )}
+              </th>
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('date')}
               >
                 Due Date
@@ -282,6 +307,20 @@ export const WorkRequestListTable = ({
                     />
                   ) : (
                     <span className="text-gray-400 italic">Unassigned</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {request.reportedBy ? (
+                    typeof request.reportedBy === 'object' && request.reportedBy.name ? (
+                      <span className="text-gray-900">{request.reportedBy.name}</span>
+                    ) : (
+                      <SafeRender 
+                        value={request.reportedBy} 
+                        fallback="Unknown User"
+                      />
+                    )
+                  ) : (
+                    <span className="text-gray-400 italic">Not specified</span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

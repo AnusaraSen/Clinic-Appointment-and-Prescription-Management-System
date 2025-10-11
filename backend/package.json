@@ -7,7 +7,8 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate:users": "node scripts/migrateUsers.js",
-    "migrate:users:dry-run": "node scripts/migrateUsers.js --dry-run"
+    "migrate:users:dry-run": "node scripts/migrateUsers.js --dry-run",
+    "resync:counters": "node scripts/resyncCounters.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",

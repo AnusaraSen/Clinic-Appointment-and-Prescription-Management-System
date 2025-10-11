@@ -1,9 +1,9 @@
 import React from 'react';
-import { Wrench, CheckCircle, Clock, Users, DollarSign } from 'lucide-react';
+import { Wrench, CheckCircle, Clock, Users } from 'lucide-react';
 
 /**
  * MetricsCards Component
- * Displays 5 key performance indicators at the top of the reports page
+ * Displays 4 key performance indicators at the top of the reports page
  */
 const MetricsCards = ({ metrics, loading }) => {
   const cards = [
@@ -38,21 +38,13 @@ const MetricsCards = ({ metrics, loading }) => {
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600',
       trend: metrics?.techniciansTrend || null
-    },
-    {
-      title: 'Total Cost',
-      value: `$${(metrics?.totalCost || 0).toLocaleString()}`,
-      icon: <DollarSign className="h-5 w-5 text-red-600" />,
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-600',
-      trend: metrics?.costTrend || null
     }
   ];
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {[1, 2, 3, 4, 5].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-white rounded-lg shadow p-4 animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
             <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
@@ -64,7 +56,7 @@ const MetricsCards = ({ metrics, loading }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => (
         <div key={index} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-4 flex flex-col">
           <div className="flex justify-between items-start mb-2">

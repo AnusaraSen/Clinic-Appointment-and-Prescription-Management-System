@@ -62,6 +62,7 @@ const technicianRoutes = require('./modules/workforce-facility/routes/technician
 const equipmentRoutes = require('./modules/workforce-facility/routes/equipmentRoutes');
 const scheduledMaintenanceRoutes = require('./modules/workforce-facility/routes/scheduledMaintenanceRoutes');
 const dashboardStatisticsRoutes = require('./modules/workforce-facility/routes/dashboardStatisticsRoutes');
+const notificationRoutes = require('./modules/workforce-facility/routes/notificationRoutes');
 
 //Lab Assistant Routes
 const labTaskRoutes = require("./modules/lab-workflow/Route/labTaskRoutes");
@@ -81,6 +82,7 @@ app.use('/api/equipment', equipmentRoutes);
 app.use('/api/calendar', scheduledMaintenanceRoutes);
 app.use('/api/scheduled-maintenance', scheduledMaintenanceRoutes); // Alternative endpoint for frontend compatibility
 app.use('/api/dashboard', dashboardStatisticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 //Doctor
 // Route imports - clinical workflow

@@ -314,9 +314,17 @@ const MaintenanceReportsPage = () => {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Filters Section */}
-        <div className="bg-white rounded-lg shadow p-4">
+      {/* ===== USER REPORTS SECTION ===== */}
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <UsersIcon className="h-6 w-6 text-purple-600 mr-2" />
+          <h2 className="text-2xl font-bold text-gray-800">User Reports</h2>
+        </div>
+
+        {/* User Filters Section */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center">
               <Filter className="h-5 w-5 mr-2" />
@@ -432,14 +440,6 @@ const MaintenanceReportsPage = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* ===== USER REPORTS SECTION ===== */}
-      <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <UsersIcon className="h-6 w-6 text-purple-600 mr-2" />
-          <h2 className="text-2xl font-bold text-gray-800">User Reports</h2>
         </div>
 
         {/* User Metrics Cards */}

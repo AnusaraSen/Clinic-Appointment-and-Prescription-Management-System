@@ -96,42 +96,28 @@ const UsersDataTable = ({ data, loading }) => {
   const handleExportUser = async (userId, userName) => {
     try {
       setExportingUserId(userId);
-      const response = await exportUserData(userId);
       
-      if (response.success) {
-        const userData = response.data;
-        
-        // Create CSV content
-        const csvContent = [
-          ['Field', 'Value'],
-          ['User ID', userData.userId],
-          ['Name', userData.name],
-          ['Email', userData.email],
-          ['Role', userData.role],
-          ['Phone', userData.phone],
-          ['Age', userData.age],
-          ['Gender', userData.gender],
-          ['Address', userData.address],
-          ['Status', userData.status],
-          ['Locked', userData.isLocked],
-          ['Registration Date', userData.registrationDate],
-          ['Last Login', userData.lastLogin],
-          ['Login Attempts', userData.loginAttempts],
-          ['Account Age', userData.accountAge]
-        ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-        // Download CSV
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `user-${userId}-${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+      // Fetch PDF from backend
+      const response = await fetch(`/api/users/${userId}/export`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to export user data');
       }
+
+      // Download PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `user-${userId}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
     } catch (error) {
       console.error('Error exporting user data:', error);
-      alert('Failed to export user data');
+      alert('Failed to export user data. Please try again.');
     } finally {
       setExportingUserId(null);
     }

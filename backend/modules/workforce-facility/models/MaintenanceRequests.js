@@ -52,6 +52,19 @@ const maintenanceRequestSchema = new mongoose.Schema({
     min: [0, 'Cost can\'t be negative'], 
     default: 0  // Start at zero, update when we know the actual cost
   },
+  // Detailed cost breakdown - array of cost items
+  costs: [{
+    description: {
+      type: String,
+      trim: true,
+      required: [true, 'Cost item description is required']
+    },
+    cost: {
+      type: Number,
+      min: [0, 'Cost must be non-negative'],
+      required: [true, 'Cost amount is required']
+    }
+  }],
   // Category for the work request (maintenance, repair, inspection, etc.)
   category: {
     type: String,
@@ -89,6 +102,10 @@ const maintenanceRequestSchema = new mongoose.Schema({
     ref: 'Equipment' 
     // What equipment is involved? Could be multiple items
   }],
+  startedAt: {
+    type: Date,
+    default: null  // Set this when status changes to 'In Progress'
+  },
   completedAt: {
     type: Date,
     default: null  // Set this when status changes to 'Completed'

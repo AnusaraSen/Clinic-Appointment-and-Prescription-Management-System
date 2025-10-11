@@ -305,17 +305,17 @@ const TechnicianDashboard = ({ onNavigate }) => {
             {activeTab === 'tasks' && (
               <div className="space-y-6">
                 {/* KPI Cards */}
-                <TechnicianKPICards 
+                <TechnicianKPICards
                   dashboardData={dashboardData}
                   loading={isInitialLoading}
                 />
 
-                {/* Tasks List */}
+                {/* Assigned Tasks List */}
                 <AssignedTasksList
                   tasks={assignedTasks}
-                  onTaskUpdate={handleRefreshDashboard}
-                  onNavigate={handleNavigate}
-                  loading={isInitialLoading}
+                  isLoading={isInitialLoading}
+                  onRefresh={handleRefreshDashboard}
+                  onTaskAction={handleRefreshDashboard}
                 />
               </div>
             )}
@@ -326,6 +326,7 @@ const TechnicianDashboard = ({ onNavigate }) => {
                 tasks={assignedTasks}
                 loading={isInitialLoading}
                 onNavigate={handleNavigate}
+                onRefresh={handleRefreshDashboard}
               />
             )}
 

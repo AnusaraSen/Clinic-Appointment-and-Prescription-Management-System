@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Wrench, AlertTriangle, Eye, Edit3 } from 'lucide-react';
+import { Calendar, Clock, Wrench, AlertTriangle, Eye, Edit3 } from 'lucide-react';
 import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 // Helper functions for styling
@@ -58,10 +58,12 @@ export const TechnicianScheduleView = ({ schedule, loading, onRefresh }) => {
 
   const updateTaskStatus = async (taskId, newStatus, notes = '') => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/scheduled-maintenance/${taskId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ 
           status: newStatus,
@@ -71,9 +73,16 @@ export const TechnicianScheduleView = ({ schedule, loading, onRefresh }) => {
 
       if (response.ok) {
         console.log('✅ Status updated successfully');
+        // Refresh the data after a short delay to show the updated status
+        setTimeout(() => {
+          if (onRefresh) {
+            onRefresh(); // Refresh the schedule list without page reload
+          }
+        }, 1000);
       } else {
-        console.error('❌ Failed to update status');
-        alert('Failed to update status. Please try again.');
+        const errorData = await response.json();
+        console.error('❌ Failed to update status:', errorData);
+        alert(`Failed to update status: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('❌ Error updating status:', error);
@@ -207,90 +216,51 @@ export const TechnicianScheduleView = ({ schedule, loading, onRefresh }) => {
             {/* Tasks for this date */}
             <div className="divide-y divide-gray-200">
               {tasks.map((task, index) => (
-                <div key={task.id || task._id || index} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {/* Task Title and Info */}
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Wrench className="h-5 w-5 text-gray-500" />
-                        <h5 className="text-lg font-medium text-gray-900">
-                          {task.title || 'Maintenance Task'}
-                        </h5>
-                      </div>
-
-                      {/* Equipment and Location */}
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                        <span className="font-medium">
-                          Equipment: {task.equipment?.map(eq => eq.name || eq.id).join(', ') || 'N/A'}
-                        </span>
-                        
-                        {task.equipment?.[0]?.location && (
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{task.equipment[0].location}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Time and Duration */}
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatTime(task.time)}</span>
-                        </div>
-                        
-                        {task.estimatedHours && (
-                          <span>Duration: {task.estimatedHours}h</span>
-                        )}
-                      </div>
-
-                      {/* Description */}
-                      {task.description && (
-                        <p className="text-sm text-gray-600 mb-3 bg-gray-50 rounded-lg p-3">
-                          {task.description}
-                        </p>
-                      )}
+                <div key={task.id || task._id || index} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    {/* Left: Task Name */}
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Wrench className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                      <h5 className="text-base font-semibold text-gray-900">
+                        {task.title || 'Maintenance Task'}
+                      </h5>
                     </div>
 
-                    {/* Status and Priority Badges */}
-                    <div className="flex flex-col items-end space-y-2 ml-4">
+                    {/* Center: Badges */}
+                    <div className="flex items-center space-x-2 mx-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(task.status)}`}>
                         {task.status}
                       </span>
                       
-                      {task.priority && (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                          {task.priority}
-                        </span>
-                      )}
-
                       {task.maintenance_type && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {task.maintenance_type}
                         </span>
                       )}
 
-                      <span className="text-xs text-gray-500 font-mono">
-                        #{task.id || task._id || task.equipment_id}
-                      </span>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex space-x-2 mt-3">
-                        <button
-                          onClick={() => handleViewDetails(task)}
-                          className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleUpdateStatus(task)}
-                          className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" />
-                          Update Status
-                        </button>
-                      </div>
+                      {task.priority && (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Right: Action Buttons */}
+                    <div className="flex space-x-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleViewDetails(task)}
+                        className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(task)}
+                        className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Update Status
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -491,12 +461,9 @@ const UpdateStatusModal = ({ task, isOpen, onClose, onStatusUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const statusOptions = [
-    { value: 'Scheduled', label: 'Scheduled', description: 'Task is scheduled and waiting to start' },
-    { value: 'Assigned', label: 'Assigned', description: 'Task has been assigned to technician' },
     { value: 'In Progress', label: 'In Progress', description: 'Currently working on this task' },
     { value: 'Completed', label: 'Completed', description: 'Task has been finished successfully' },
-    { value: 'Cancelled', label: 'Cancelled', description: 'Task has been cancelled' },
-    { value: 'Rescheduled', label: 'Rescheduled', description: 'Task has been rescheduled' }
+    { value: 'Cancelled', label: 'Cancelled', description: 'Task has been cancelled' }
   ];
 
   const handleSubmit = async () => {
@@ -508,6 +475,10 @@ const UpdateStatusModal = ({ task, isOpen, onClose, onStatusUpdate }) => {
     setIsUpdating(true);
     try {
       await onStatusUpdate(task._id || task.id, selectedStatus, notes);
+      // Close modal after successful update
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {

@@ -245,25 +245,57 @@ exports.getRequestsTrend = async (req, res) => {
       if (endDate) dateFilter.createdAt.$lte = new Date(endDate);
     }
 
-    // Aggregate by month
-    const trend = await MaintenanceRequest.aggregate([
-      { $match: dateFilter },
-      {
-        $group: {
-          _id: {
-            month: { $month: '$createdAt' },
-            year: { $year: '$createdAt' }
-          },
-          created: { $sum: 1 },
-          completed: {
-            $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] }
-          }
-        }
-      },
-      {
-        $sort: { '_id.year': 1, '_id.month': 1 }
+    // Get all requests for proper counting
+    const allRequests = await MaintenanceRequest.find(dateFilter);
+
+    // Group by creation month
+    const createdByMonth = {};
+    const completedByMonth = {};
+
+    allRequests.forEach(request => {
+      const createdDate = new Date(request.createdAt);
+      const createdKey = `${createdDate.getFullYear()}-${createdDate.getMonth() + 1}`;
+      
+      // Count created
+      if (!createdByMonth[createdKey]) {
+        createdByMonth[createdKey] = {
+          month: createdDate.getMonth() + 1,
+          year: createdDate.getFullYear(),
+          count: 0
+        };
       }
-    ]);
+      createdByMonth[createdKey].count++;
+
+      // Count completed by completedAt date, or use updatedAt as fallback for older records
+      if (request.status === 'Completed') {
+        // Use completedAt if available, otherwise fall back to updatedAt for old records
+        const completedDate = new Date(request.completedAt || request.updatedAt);
+        const completedKey = `${completedDate.getFullYear()}-${completedDate.getMonth() + 1}`;
+        
+        if (!completedByMonth[completedKey]) {
+          completedByMonth[completedKey] = {
+            month: completedDate.getMonth() + 1,
+            year: completedDate.getFullYear(),
+            count: 0
+          };
+        }
+        completedByMonth[completedKey].count++;
+      }
+    });
+
+    // Merge and create trend array
+    const allKeys = new Set([...Object.keys(createdByMonth), ...Object.keys(completedByMonth)]);
+    const trend = Array.from(allKeys).map(key => {
+      const [year, month] = key.split('-').map(Number);
+      return {
+        _id: { month, year },
+        created: createdByMonth[key]?.count || 0,
+        completed: completedByMonth[key]?.count || 0
+      };
+    }).sort((a, b) => {
+      if (a._id.year !== b._id.year) return a._id.year - b._id.year;
+      return a._id.month - b._id.month;
+    });
 
     // Format month names
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 

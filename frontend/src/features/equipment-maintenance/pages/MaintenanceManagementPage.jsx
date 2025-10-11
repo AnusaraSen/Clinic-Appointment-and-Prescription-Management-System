@@ -15,6 +15,7 @@ import { TechnicianFilters } from '../components/TechnicianFilters';
 import { TechnicianDetailsModal } from '../components/TechnicianDetailsModal';
 import { EditTechnicianModal } from '../components/EditTechnicianModal';
 import { AssignTaskModal } from '../components/AssignTaskModal';
+import NotificationBell from '../../../components/notifications/NotificationBell';
 
 /**
  * Maintenance Management Page with 4-Tab Interface
@@ -573,6 +574,11 @@ const MaintenanceManagementPage = ({ onNavigate, defaultTab = 'requests' }) => {
                 <p className="text-gray-600 text-lg">
                   Comprehensive maintenance operations for clinic equipment and facilities
                 </p>
+              </div>
+              
+              {/* Notification Bell Icon */}
+              <div className="mt-4 md:mt-0">
+                <NotificationBell />
               </div>
             </div>
           </div>

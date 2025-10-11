@@ -172,7 +172,7 @@ router.put('/:id/assign',
  */
 router.put('/:id/status',
   validation.validateObjectId('id'),
-  validation.validateScheduledMaintenanceUpdate(),
+  validation.validateScheduledMaintenanceStatusUpdate(),
   updateMaintenanceStatus
 );
 
@@ -303,7 +303,7 @@ router.get('/stats/:year/:month', async (req, res) => {
 /**
  * DELETE /api/calendar/:id
  * Cancel/delete scheduled maintenance
- * Only allows deletion of non-completed maintenance
+ * Allows deletion of all maintenance schedules including completed ones
  */
 router.delete('/:id', 
   validation.validateObjectId('id'),
@@ -321,14 +321,7 @@ router.delete('/:id',
         });
       }
       
-      if (scheduledMaintenance.status === 'Completed') {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot delete completed maintenance',
-          data: null
-        });
-      }
-      
+      // Allow deletion of all statuses including completed maintenance
       await ScheduledMaintenance.findByIdAndDelete(req.params.id);
       
       res.json({

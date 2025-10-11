@@ -5,6 +5,7 @@
 const User = require('../../workforce-facility/models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { generateTokenPair } = require('../../../utils/tokenUtils');
 
 /**
  * Login function that actually works
@@ -80,22 +81,10 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT tokens
-    const accessToken = jwt.sign(
-      { 
-        userId: user._id, 
-        email: user.email, 
-        role: user.role 
-      },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '15m' }
-    );
-
-    const refreshToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key',
-      { expiresIn: '7d' }
-    );
+    // Generate JWT tokens with proper claims
+    const tokens = generateTokenPair(user);
+    const accessToken = tokens.accessToken;
+    const refreshToken = tokens.refreshToken;
 
     // Reset login attempts and update last login timestamp
     await user.resetLoginAttempts();

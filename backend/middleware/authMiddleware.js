@@ -15,10 +15,13 @@ const User = require('../modules/workforce-facility/models/User');
  */
 const verifyToken = async (req, res, next) => {
   try {
+    console.log('🔐 verifyToken middleware called for:', req.method, req.path);
+    
     // Extract token from Authorization header
     const token = extractTokenFromHeader(req);
 
     if (!token) {
+      console.log('❌ No token provided in request');
       return res.status(401).json({
         success: false,
         message: 'Access token required',
@@ -26,8 +29,10 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
+    console.log('🔑 Token received, verifying...');
     // Verify the token
     const decoded = verifyAccessToken(token);
+    console.log('✅ Token decoded successfully, userId:', decoded.userId);
 
     // Get fresh user data from database
     const user = await User.findById(decoded.userId)
