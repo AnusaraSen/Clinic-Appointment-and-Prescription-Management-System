@@ -453,4 +453,65 @@ exports.notifyScheduledMaintenanceCreated = async (scheduledMaintenance) => {
   }
 };
 
+/**
+ * Create notification for scheduled maintenance status update
+ */
+exports.notifyScheduledMaintenanceStatusUpdate = async (scheduledMaintenance, newStatus) => {
+  try {
+    const recipients = await getAdminUsers();
+    
+    // Add assigned technician if exists
+    if (scheduledMaintenance.assigned_technician) {
+      const techRecipients = await getTechnicianRecipient(scheduledMaintenance.assigned_technician._id || scheduledMaintenance.assigned_technician);
+      recipients.push(...techRecipients);
+    }
+    
+    if (recipients.length === 0) return;
+
+    // Determine notification priority and title based on status
+    let priority = 'medium';
+    let titlePrefix = '📋';
+    
+    if (newStatus === 'In Progress') {
+      priority = 'medium';
+      titlePrefix = '🔧';
+    } else if (newStatus === 'Cancelled') {
+      priority = 'low';
+      titlePrefix = '❌';
+    } else if (newStatus === 'Rescheduled') {
+      priority = 'medium';
+      titlePrefix = '📅';
+    }
+
+    // Get technician name safely
+    const technicianName = scheduledMaintenance.assigned_technician 
+      ? (scheduledMaintenance.assigned_technician.firstName 
+          ? `${scheduledMaintenance.assigned_technician.firstName} ${scheduledMaintenance.assigned_technician.lastName}`
+          : scheduledMaintenance.assigned_technician.name || scheduledMaintenance.assigned_technician_name || 'Assigned Technician')
+      : 'Unassigned';
+
+    await Notification.createNotification({
+      type: 'SCHEDULED_MAINTENANCE_STATUS_UPDATED',
+      category: 'SCHEDULED_MAINTENANCE',
+      title: `${titlePrefix} Maintenance Status: ${newStatus}`,
+      message: `Scheduled maintenance "${scheduledMaintenance.title || 'Unnamed'}" status changed to "${newStatus}" by ${technicianName}`,
+      relatedEntity: {
+        entityType: 'ScheduledMaintenance',
+        entityId: scheduledMaintenance._id
+      },
+      recipients,
+      priority: priority,
+      metadata: {
+        maintenanceTitle: scheduledMaintenance.title || 'Unnamed',
+        newStatus: newStatus,
+        updatedBy: technicianName
+      }
+    });
+    
+    console.log(`✅ Scheduled maintenance status update notification created for status: ${newStatus}`);
+  } catch (error) {
+    console.error('Error creating scheduled maintenance status update notification:', error);
+  }
+};
+
 module.exports = exports;

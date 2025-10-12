@@ -13,10 +13,8 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
     title: '',
     description: '',
     priority: 'Medium',
-    status: 'Open',
     equipment: [],
-    date: '', // Due date field
-    category: 'maintenance' // Category field
+    date: '' // Due date field
   });
   
   // 🔧 Equipment dropdown state
@@ -34,31 +32,13 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
     if (isOpen && request) {
       // Pre-fill form with current request data
       console.log('🔧 Edit Modal - Request data:', request);
-      // Normalize category: backend may send either the key ('maintenance') or a human label ('Preventive Maintenance')
-      const categoryOptions = ['maintenance', 'repair', 'inspection', 'calibration', 'installation', 'upgrade', 'emergency'];
-      const normalizeCategory = (cat) => {
-        if (!cat) return 'maintenance';
-        const s = String(cat).toLowerCase().trim();
-        if (categoryOptions.includes(s)) return s;
-        // Map common human labels to keys
-        if (s.includes('prevent') || s.includes('preventive')) return 'maintenance';
-        if (s.includes('repair')) return 'repair';
-        if (s.includes('inspect')) return 'inspection';
-        if (s.includes('calibr')) return 'calibration';
-        if (s.includes('install')) return 'installation';
-        if (s.includes('upgrad')) return 'upgrade';
-        if (s.includes('emerg')) return 'emergency';
-        return 'maintenance';
-      };
 
       setFormData({
         title: request.title || '',
         description: request.description || '',
         priority: request.priority || 'Medium',
-        status: request.status || 'Open',
         equipment: request.equipment ? request.equipment.map(eq => eq.id || eq._id) : [],
-        date: request.date ? new Date(request.date).toISOString().split('T')[0] : '', // Format date for input
-        category: normalizeCategory(request.category)
+        date: request.date ? new Date(request.date).toISOString().split('T')[0] : '' // Format date for input
       });
       
       fetchEquipment();
@@ -132,12 +112,6 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
       case 'priority':
         error = validators.required(value, 'Priority');
         break;
-      case 'status':
-        error = validators.required(value, 'Status');
-        break;
-      case 'category':
-        error = validators.required(value, 'Category');
-        break;
       case 'equipment':
         if (Array.isArray(value) && value.length === 0) {
           error = 'At least one equipment must be selected';
@@ -176,7 +150,7 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
     const newErrors = {};
     const allTouched = {};
 
-    const fieldsToValidate = ['title', 'description', 'priority', 'status', 'category', 'equipment', 'date'];
+    const fieldsToValidate = ['title', 'description', 'priority', 'equipment', 'date'];
     
     fieldsToValidate.forEach(field => {
       allTouched[field] = true;
@@ -258,8 +232,7 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
         description: formData.description.trim(),
         priority: formData.priority,
         equipment: formData.equipment,
-        date: formData.date || null, // Include due date
-        category: formData.category // Include category
+        date: formData.date || null // Include due date
       };
       
       console.log('EditModal - Submitting update:', JSON.stringify(updateData, null, 2));
@@ -325,15 +298,6 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
 
         {/* 📝 Edit Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Debug Info - Remove this after fixing */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-xs">
-              <p><strong>Debug Info:</strong></p>
-              <p>Form date: {formData.date}</p>
-              <p>Form category: {formData.category}</p>
-            </div>
-          )}
-
           {/* API Error Display */}
           {apiError && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -374,7 +338,7 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
             rows={4}
           />
 
-          {/* Priority and Status Fields */}
+          {/* Priority and Due Date Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ValidatedSelect
               label="Priority"
@@ -390,24 +354,6 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
               <option value="High">High Priority</option>
             </ValidatedSelect>
 
-            <ValidatedSelect
-              label="Status"
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              onBlur={handleFieldBlur}
-              error={touched.status ? errors.status : ''}
-              required
-            >
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </ValidatedSelect>
-          </div>
-
-          {/* Assignment & Dates Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Due Date */}
             <ValidatedInput
               label="Due Date"
@@ -418,24 +364,6 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
               onBlur={handleFieldBlur}
               error={touched.date ? errors.date : ''}
             />
-
-            {/* Category */}
-            <ValidatedSelect
-              label="Category"
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              onBlur={handleFieldBlur}
-              error={touched.category ? errors.category : ''}
-            >
-              <option value="maintenance">Preventive Maintenance</option>
-              <option value="repair">Repair</option>
-              <option value="inspection">Inspection</option>
-              <option value="calibration">Calibration</option>
-              <option value="installation">Installation</option>
-              <option value="upgrade">Upgrade</option>
-              <option value="emergency">Emergency</option>
-            </ValidatedSelect>
           </div>
 
           {/* Equipment Selection */}
