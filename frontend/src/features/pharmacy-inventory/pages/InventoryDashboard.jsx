@@ -13,6 +13,7 @@ import {
   Search,
   Bell
 } from 'lucide-react';
+import InventoryMaintenanceRequestsSection from '../components/InventoryMaintenanceRequestsSection.jsx';
 
 const InventoryDashboard = () => {
   const navigate = useNavigate();
@@ -284,6 +285,9 @@ const InventoryDashboard = () => {
                   )}
                 </div>
               </div>
+
+              {/* Maintenance Requests (Inventory Manager) */}
+              <InventoryMaintenanceRequestsSection />
             </div>
 
             {/* Right side - Stock Alerts */}

@@ -4,6 +4,7 @@ import { ClinicalKPICards } from './ClinicalKPICards';
 import { ClinicalAppointmentsSection } from './ClinicalAppointmentsSection';
 import { ClinicalActivitySection } from './ClinicalActivitySection';
 import { ClinicalTasksSection } from './ClinicalTasksSection';
+import ClinicalMaintenanceRequestsSection from './ClinicalMaintenanceRequestsSection.jsx';
 import ClinicalPastAppointmentsSection from './ClinicalPastAppointmentsSection.jsx';
 import { ClinicalLayout } from '../layouts/ClinicalLayout';
 import CalmLoader from '../../../components/CalmLoader';
@@ -348,8 +349,8 @@ export const ClinicalDashboard = ({ onNavigate }) => {
                 isLoading={isInitialLoading || isRefreshing}
                 onUpdateAppointment={handleUpdateAppointment}
               />
-              {/* Moved: Past Appointments under Today's Appointments */}
-              <ClinicalPastAppointmentsSection />
+              {/* New: Doctor's Maintenance Requests */}
+              <ClinicalMaintenanceRequestsSection onNavigate={handleNavigate} />
             </div>
 
             {/* Right Column */}

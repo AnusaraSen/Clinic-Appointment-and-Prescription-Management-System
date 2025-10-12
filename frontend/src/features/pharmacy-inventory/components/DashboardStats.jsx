@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import '../../../styles/DashboardStats.css';
+import { useAuth } from '../../authentication/context/AuthContext.jsx';
+import PharmacistMaintenanceRequestsSection from './PharmacistMaintenanceRequestsSection.jsx';
 
 const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescriptionClick, onNavigateToPrescriptions, onNavigateToMedicineInventory, onNavigateToLowStockMedicines, onNavigateToPrescriptionSummary }) => {
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [showMedicineDetails, setShowMedicineDetails] = useState(false);
+  const { user } = useAuth?.() || {};
   if (!data) {
     return (
       <div className="dashboard-loading">
@@ -182,6 +185,13 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
               ))}
             </div>
           </div>
+
+          {/* Maintenance Requests (Pharmacist) */}
+          {user?.role === 'Pharmacist' && (
+            <div style={{ marginTop: '16px' }}>
+              <PharmacistMaintenanceRequestsSection />
+            </div>
+          )}
         </div>
 
         {/* Right Side - Stock Alerts */}
