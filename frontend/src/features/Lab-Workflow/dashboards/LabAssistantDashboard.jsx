@@ -17,6 +17,7 @@ import {
   ToggleRight
 } from 'lucide-react';
 import TaskDetailModal from '../components/TaskDetailModal';
+import LabStaffMaintenanceRequestsSection from '../components/LabStaffMaintenanceRequestsSection.jsx';
 import { useAuth } from '../../../features/authentication/context/AuthContext';
 
 const LabAssistantDashboard = () => {
@@ -727,6 +728,11 @@ const LabAssistantDashboard = () => {
               ))
             )}
           </div>
+        </div>
+
+        {/* Maintenance Requests Section (Lab Staff) */}
+        <div className="mt-6">
+          <LabStaffMaintenanceRequestsSection />
         </div>
       </div>
 

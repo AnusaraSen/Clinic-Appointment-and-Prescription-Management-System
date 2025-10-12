@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Activity, Users, Clock, TrendingUp, AlertCircle, CheckCircle, Plus, Filter, Calendar, UserCheck, BarChart3 } from 'lucide-react';
 import TaskListPage from '../components/TaskListPage';
+import LabSupervisorMaintenanceRequestsSection from '../components/LabSupervisorMaintenanceRequestsSection.jsx';
 
 const SupervisorDashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -429,6 +430,10 @@ const SupervisorDashboard = () => {
                   </table>
                 </div>
               )}
+            </div>
+            {/* Maintenance Requests Section (Lab Supervisor) */}
+            <div className="px-6 pb-6">
+              <LabSupervisorMaintenanceRequestsSection />
             </div>
           </div>
 
