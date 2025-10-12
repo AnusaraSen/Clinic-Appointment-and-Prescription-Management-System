@@ -348,8 +348,6 @@ export const ClinicalDashboard = ({ onNavigate }) => {
                 isLoading={isInitialLoading || isRefreshing}
                 onUpdateAppointment={handleUpdateAppointment}
               />
-              {/* Moved: Past Appointments under Today's Appointments */}
-              <ClinicalPastAppointmentsSection />
             </div>
 
             {/* Right Column */}
