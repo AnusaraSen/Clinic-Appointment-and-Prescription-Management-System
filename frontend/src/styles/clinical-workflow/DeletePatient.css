@@ -1,7 +1,7 @@
 /* DeletePatient Theme */
 :root { --pt-accent:#0d8c90; --pt-accent-alt:#12b9bf; --pt-soft:#e1f7f9; --pt-text:#034447; --pt-border:#b5e4e7; }
 
-.patient-delete-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(5px); border:1px solid var(--pt-border); border-radius:30px; padding:1.9rem 1.7rem 2.2rem; margin:2.2rem auto 2.8rem; max-width:830px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.15); overflow:hidden; font-size:1.15rem; }
+.patient-delete-wrapper { background:rgba(255,255,255,0.82); backdrop-filter:blur(5px); border:1px solid var(--pt-border); border-radius:30px; padding:1.9rem 1.7rem 2.2rem; margin:5.5rem auto 2.8rem; max-width:830px; position:relative; box-shadow:0 6px 22px -6px rgba(0,0,0,.15); overflow:hidden; font-size:1.15rem; }
 .patient-delete-wrapper::before, .patient-delete-wrapper::after { content:""; position:absolute; border:2px solid var(--pt-accent-alt); border-radius:50%; opacity:.18; pointer-events:none; animation: ptDelFloat 24s linear infinite; }
 .patient-delete-wrapper::before { width:720px; height:720px; top:-480px; right:-400px; }
 .patient-delete-wrapper::after { width:520px; height:520px; bottom:-340px; left:-360px; animation-direction:reverse; }

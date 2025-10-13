@@ -77,10 +77,11 @@ export const ClinicalPastAppointmentsSection = () => {
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const today = new Date(); today.setHours(0,0,0,0);
-      const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+      const now = new Date(); now.setSeconds(0,0);
+      const today = new Date(now); today.setHours(0,0,0,0);
       const wideStart = '1970-01-01';
-      const end = toYMD(yesterday);
+      // Include today in the API range (we'll filter by exact time locally)
+      const end = toYMD(today);
       let data = [];
       if (doctorId) {
         try { data = await getDoctorAppointments({ doctorId, start: wideStart, end }); } catch(_) {}
@@ -93,9 +94,36 @@ export const ClinicalPastAppointmentsSection = () => {
           const all = await getAllAppointments();
           const lowered = (doctorName||'').toLowerCase();
           const norm = (n)=> String(n||'').toLowerCase().replace(/^dr\.?\s+/,'');
+          // Helper to parse times like 08:30, 8:30 AM, 08.30
+          const parseTime = (t) => {
+            if (!t || typeof t !== 'string') return null;
+            const s = t.trim();
+            const ampmMatch = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+            if (ampmMatch) {
+              let hh = parseInt(ampmMatch[1], 10);
+              const mm = parseInt(ampmMatch[2], 10);
+              const ap = ampmMatch[3].toUpperCase();
+              if (ap === 'AM') { if (hh === 12) hh = 0; }
+              else { if (hh !== 12) hh += 12; }
+              return { h: hh, m: mm };
+            }
+            const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/);
+            if (colonMatch) {
+              return { h: parseInt(colonMatch[1],10), m: parseInt(colonMatch[2],10) };
+            }
+            const dotMatch = s.match(/^(\d{1,2})\.(\d{2})$/);
+            if (dotMatch) {
+              return { h: parseInt(dotMatch[1],10), m: parseInt(dotMatch[2],10) };
+            }
+            return null;
+          };
           data = (all||[]).filter(a => {
             const d = parseDateSafe(a.appointment_date||a.date);
-            const isPast = d.getTime() < today.getTime();
+            // Build a precise datetime for comparison
+            const tm = parseTime(a.appointment_time);
+            const dateTime = new Date(d);
+            if (tm) { dateTime.setHours(tm.h, tm.m, 0, 0); } else { dateTime.setHours(23,59,59,999); }
+            const isPast = dateTime.getTime() < now.getTime();
             const did = String(a.doctor_id || a.doctorId || a.doctor?._id || '').trim();
             const dname = norm(a.doctor_name || a.doctorName || (a.doctor && a.doctor.name));
             const idMatch = doctorId && String(did) === String(doctorId);
@@ -104,24 +132,54 @@ export const ClinicalPastAppointmentsSection = () => {
           });
         } catch(_){}
       }
-      const normalized = (data||[]).map(a => {
-        const d = parseDateSafe(a.appointment_date || a.date);
-        // derive display status for consistency
-        const baseStatus = a.status || 'upcoming';
-        const displayStatus = baseStatus === 'completed' ? 'completed' : baseStatus?.toLowerCase()?.startsWith('cancel') ? baseStatus : 'past';
-        return {
-          id: a._id,
-          dateObj: d,
-          date: toYMD(d),
-          time: a.appointment_time,
-          patient: a.patient_name || 'Unknown',
-          type: a.appointment_type || 'Consultation',
-          status: baseStatus,
-          displayStatus
-        };
-      })
+      // Local precise filtering by date-time for id/name scoped results
+      const parseTime = (t) => {
+        if (!t || typeof t !== 'string') return null;
+        const s = t.trim();
+        const ampmMatch = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (ampmMatch) {
+          let hh = parseInt(ampmMatch[1], 10);
+          const mm = parseInt(ampmMatch[2], 10);
+          const ap = ampmMatch[3].toUpperCase();
+          if (ap === 'AM') { if (hh === 12) hh = 0; }
+          else { if (hh !== 12) hh += 12; }
+          return { h: hh, m: mm };
+        }
+        const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/);
+        if (colonMatch) {
+          return { h: parseInt(colonMatch[1],10), m: parseInt(colonMatch[2],10) };
+        }
+        const dotMatch = s.match(/^(\d{1,2})\.(\d{2})$/);
+        if (dotMatch) {
+          return { h: parseInt(dotMatch[1],10), m: parseInt(dotMatch[2],10) };
+        }
+        return null;
+      };
+
+      const nowMs = now.getTime();
+      const normalized = (data||[])
+        .map(a => {
+          const d = parseDateSafe(a.appointment_date || a.date);
+          const tm = parseTime(a.appointment_time);
+          const dateTime = new Date(d);
+          if (tm) { dateTime.setHours(tm.h, tm.m, 0, 0); } else { dateTime.setHours(23,59,59,999); }
+          const baseStatus = a.status || 'upcoming';
+          const displayStatus = baseStatus === 'completed' ? 'completed' : baseStatus?.toLowerCase()?.startsWith('cancel') ? baseStatus : 'past';
+          return {
+            id: a._id,
+            dateObj: d,
+            dateTimeMs: dateTime.getTime(),
+            date: toYMD(d),
+            time: a.appointment_time,
+            patient: a.patient_name || 'Unknown',
+            type: a.appointment_type || 'Consultation',
+            status: baseStatus,
+            displayStatus
+          };
+        })
+        .filter(a => a.dateTimeMs < nowMs)
       // Newest dates first, then latest times first within date
-      .sort((a,b)=> (b.dateObj - a.dateObj) || b.time.localeCompare(a.time));
+      .sort((a,b)=> (b.dateObj - a.dateObj) || (b.dateTimeMs - a.dateTimeMs));
       setItems(normalized);
     } catch (e) {
       setError(e?.message || 'Failed to load past appointments');
@@ -181,7 +239,7 @@ export const ClinicalPastAppointmentsSection = () => {
           <div className="p-2 rounded-lg bg-gray-100"><Calendar className="h-5 w-5 text-gray-600"/></div>
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Past Appointments</h2>
-            <p className="text-xs text-gray-500">Before today • {items.length} total</p>
+            <p className="text-xs text-gray-500">Before now • {items.length} total</p>
           </div>
         </div>
         <button onClick={load} className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">Refresh</button>
@@ -218,7 +276,7 @@ export const ClinicalPastAppointmentsSection = () => {
               <tbody>
                 {grouped[date]
                   .slice()
-                  .sort((a,b)=> b.time.localeCompare(a.time))
+                  .sort((a,b)=> b.dateTimeMs - a.dateTimeMs)
                   .map(a => (
                   <tr key={a.id} className="odd:bg-white even:bg-gray-50">
                     <td className="px-4 py-2 font-mono text-xs flex items-center gap-1"><Clock className="h-3 w-3"/>{a.time}</td>
