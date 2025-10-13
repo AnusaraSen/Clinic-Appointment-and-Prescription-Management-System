@@ -518,16 +518,24 @@ const updateMaintenanceStatus = async (req, res) => {
       }
     }
     
-    // Create notification for status update (with error handling to prevent 500 errors)
-    if (status === 'Completed') {
-      try {
-        // Populate assignedTechnician before sending to notification service
-        await scheduledMaintenance.populate('assignedTechnician');
+    // 🔔 Create notifications for status updates (with error handling to prevent 500 errors)
+    try {
+      // Populate technician info if needed
+      await scheduledMaintenance.populate('assigned_technician', 'firstName lastName name');
+      
+      if (status === 'Completed') {
         await notificationService.notifyScheduledMaintenanceCompleted(scheduledMaintenance);
-      } catch (notifError) {
-        // Log the error but don't fail the request - status update already succeeded
-        console.error('Error sending completion notification:', notifError);
+        console.log('✅ Scheduled maintenance completion notification sent');
+      } else if (status === 'In Progress') {
+        await notificationService.notifyScheduledMaintenanceStatusUpdate(scheduledMaintenance, 'In Progress');
+        console.log('✅ Scheduled maintenance "In Progress" notification sent');
+      } else if (status === 'Cancelled' || status === 'Rescheduled') {
+        await notificationService.notifyScheduledMaintenanceStatusUpdate(scheduledMaintenance, status);
+        console.log(`✅ Scheduled maintenance "${status}" notification sent`);
       }
+    } catch (notifError) {
+      // Log the error but don't fail the request - status update already succeeded
+      console.error('⚠️ Error sending status update notification:', notifError);
     }
     
     res.json({

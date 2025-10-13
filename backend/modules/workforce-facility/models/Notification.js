@@ -25,6 +25,7 @@ const notificationSchema = new mongoose.Schema(
         'SCHEDULED_MAINTENANCE_OVERDUE',
         'SCHEDULED_MAINTENANCE_COMPLETED',
         'SCHEDULED_MAINTENANCE_CREATED',
+        'SCHEDULED_MAINTENANCE_STATUS_UPDATED',
         // System Events
         'LOW_INVENTORY_ALERT',
         'SYSTEM_MAINTENANCE_SCHEDULED'

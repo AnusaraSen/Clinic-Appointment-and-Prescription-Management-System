@@ -14,6 +14,7 @@ import {
   MapPin,
   BarChart3
 } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Work Request Details Modal Component
@@ -28,6 +29,8 @@ export const WorkRequestDetailsModal = ({
   loading = false,
   canEdit = true
 }) => {
+  useHideNavbar(isOpen);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
@@ -67,20 +70,6 @@ export const WorkRequestDetailsModal = ({
              workRequest.status === 'Completed' ? 'completed' :
              workRequest.status === 'Cancelled' ? 'cancelled' : workRequest.status.toLowerCase())
           : 'pending',
-  // These fields may exist in backend - provide defaults
-  // Normalize incoming category values to known option keys
-  category: (function(cat) {
-    if (!cat) return 'maintenance';
-    const normalized = String(cat).toLowerCase().trim();
-    const byValue = categoryOptions.find(c => c.value === normalized);
-    if (byValue) return byValue.value;
-    const byLabel = categoryOptions.find(c => c.label.toLowerCase() === normalized);
-    if (byLabel) return byLabel.value;
-    // Handle cases where backend stored a human label like 'Preventive Maintenance'
-    const matched = categoryOptions.find(c => c.label.toLowerCase().includes(normalized) || normalized.includes(c.value));
-    return matched ? matched.value : 'maintenance';
-  })(workRequest.category),
-  // notes removed from edit form per UX
         // Handle equipment information from array
         equipment: firstEquipment?.name || 'Not specified',
         location: firstEquipment?.location || 'Not specified',
@@ -115,23 +104,10 @@ export const WorkRequestDetailsModal = ({
                   editData.status === 'in-progress' ? 'In Progress' :
                   editData.status === 'completed' ? 'Completed' :
                   editData.status === 'cancelled' ? 'Cancelled' : editData.status
-  } : {}),
-    // Include category (normalize to option key)
-    ...(editData.category ? { category: (function(cat){
-      if (!cat) return 'maintenance';
-      const normalized = String(cat).toLowerCase().trim();
-      const byValue = categoryOptions.find(c => c.value === normalized);
-      if (byValue) return byValue.value;
-      const byLabel = categoryOptions.find(c => c.label.toLowerCase() === normalized);
-      if (byLabel) return byLabel.value;
-      const matched = categoryOptions.find(c => c.label.toLowerCase().includes(normalized) || normalized.includes(c.value));
-      return matched ? matched.value : cat;
-    })(editData.category) } : {}),
-  // Include notes (can be empty string)
-  ...(editData.notes !== undefined ? { notes: editData.notes } : {})
+        } : {})
       };
-        console.log('🔁 Sending update payload for request', workRequest.id || workRequest._id, backendData);
-        await onUpdate(workRequest.id || workRequest._id, backendData);
+      console.log('🔁 Sending update payload for request', workRequest.id || workRequest._id, backendData);
+      await onUpdate(workRequest.id || workRequest._id, backendData);
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating work request:', error);
@@ -527,31 +503,6 @@ export const WorkRequestDetailsModal = ({
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Category */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h5 className="font-medium text-gray-900 mb-4">Category</h5>
-              {isEditing ? (
-                <select
-                  name="category"
-                  value={editData.category}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option key="maintenance" value="maintenance">Preventive Maintenance</option>
-                  <option key="repair" value="repair">Repair</option>
-                  <option key="inspection" value="inspection">Inspection</option>
-                  <option key="calibration" value="calibration">Calibration</option>
-                  <option key="installation" value="installation">Installation</option>
-                  <option key="upgrade" value="upgrade">Upgrade</option>
-                  <option key="emergency" value="emergency">Emergency</option>
-                </select>
-              ) : (
-                <p className="text-sm text-gray-900">
-                  {getCategoryLabel(workRequest.category)}
-                </p>
-              )}
             </div>
 
           </div>

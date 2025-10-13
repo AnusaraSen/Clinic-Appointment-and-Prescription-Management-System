@@ -1,6 +1,7 @@
 const Technician = require('../models/Technician');
 const ScheduledMaintenance = require('../models/ScheduledMaintenance');
 const mongoose = require('mongoose');
+const notificationService = require('../../../services/notificationService');
 
 /**
  * Technician Controller - Dedicated technician management! 👨‍🔧
@@ -243,6 +244,24 @@ const assignTechnicianToMaintenance = async (req, res) => {
     if (!technician.scheduledMaintenance.includes(maintenanceId)) {
       technician.scheduledMaintenance.push(maintenanceId);
       await technician.save();
+    }
+    
+    // 🔔 Send notification to technician and admins about the assignment
+    try {
+      await scheduledMaintenance.populate('equipment_id', 'equipment_name name location');
+      await notificationService.notifyTechnicianAssignedToTask(
+        { _id: technician._id, name: technician.fullName },
+        {
+          _id: scheduledMaintenance._id,
+          description: scheduledMaintenance.description || scheduledMaintenance.title,
+          title: scheduledMaintenance.title
+        },
+        'scheduled'
+      );
+      console.log('✅ Technician assignment notification sent');
+    } catch (notifError) {
+      console.error('⚠️ Error sending technician assignment notification:', notifError);
+      // Don't fail the request if notification fails
     }
     
     res.json({
