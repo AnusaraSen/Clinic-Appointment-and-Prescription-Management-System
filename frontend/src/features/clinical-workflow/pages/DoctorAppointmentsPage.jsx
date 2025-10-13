@@ -192,19 +192,11 @@ export default function DoctorAppointmentsPage() {
 
   const sortedDates = useMemo(()=> {
     const keys = Object.keys(grouped);
-    const toMs = (ymd) => { const d = new Date(ymd + 'T00:00:00'); d.setHours(0,0,0,0); return d.getTime(); };
-    const todayMs = toMs(todayYmd);
-    return keys.sort((a,b)=> {
-      const da = toMs(a), db = toMs(b);
-      const diffA = Math.abs(da - todayMs);
-      const diffB = Math.abs(db - todayMs);
-      if (diffA !== diffB) return diffA - diffB; // nearest date first
-      // Tie-breaker: prefer future over past (actionable), keep today at very top naturally
-      const aIsFuture = da > todayMs, bIsFuture = db > todayMs;
-      if (aIsFuture !== bIsFuture) return aIsFuture ? -1 : 1;
-      // If still tied (same side and distance), sort by recency toward today
-      return a.localeCompare(b);
-    });
+    const today = todayYmd;
+    const future = keys.filter(k => k > today).sort((a,b)=> a.localeCompare(b)); // earliest upcoming first
+    const past = keys.filter(k => k < today).sort((a,b)=> b.localeCompare(a));   // most recent past first
+    const hasToday = keys.includes(today) ? [today] : [];
+    return [...hasToday, ...future, ...past];
   }, [grouped, todayYmd]);
 
   return (
