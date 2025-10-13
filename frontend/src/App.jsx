@@ -704,6 +704,7 @@ function App() {
           <Route path="/pharmacist/dashboard" element={<PharmacistDashboard />} />
           <Route path="/pharmacist/prescriptions" element={<PharmacistDashboard />} />
           <Route path="/pharmacist/dispensing" element={<PharmacistDashboard />} />
+          <Route path="/pharmacist/reports" element={<PrescriptionSummary />} />
           <Route path="/pharmacist/profile" element={<PharmacistDashboard />} />
 
           {/* Patient Interaction Routes */}

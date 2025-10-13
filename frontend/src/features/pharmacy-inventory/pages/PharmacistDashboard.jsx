@@ -133,14 +133,53 @@ const PharmacistDashboard = () => {
         })
         .sort((a, b) => a.quantity - b.quantity);
 
+      // Fetch prescription statistics
+      let prescriptionStats = {
+        totalPrescriptions: 0,
+        newPrescriptions: 0,
+        pendingPrescriptions: 0,
+        dispensedToday: 0,
+      };
+
+      try {
+        const presRes = await prescriptionsApi.list();
+        const raw = Array.isArray(presRes.data) ? presRes.data : (presRes.data?.items || presRes.data?.data || []);
+        
+        // Calculate statistics from actual prescription data
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        prescriptionStats.totalPrescriptions = raw.length;
+        
+        raw.forEach(p => {
+          const id = (p._id || p.id || '').toString();
+          const statusOverride = getStatusOverride(id);
+          const status = (statusOverride || p.status || p.Status || 'new').toString().toLowerCase().trim();
+          
+          // Count dispensed today
+          if (status === 'dispensed' || status === 'completed' || status === 'fulfilled') {
+            const prescriptionDate = p.Date ? new Date(p.Date) : null;
+            if (prescriptionDate && prescriptionDate >= today) {
+              prescriptionStats.dispensedToday++;
+            }
+          } else {
+            // If not dispensed, it's pending/new
+            prescriptionStats.newPrescriptions++;
+            prescriptionStats.pendingPrescriptions++;
+          }
+        });
+        
+        console.log('Prescription statistics calculated:', {
+          total: prescriptionStats.totalPrescriptions,
+          pending: prescriptionStats.pendingPrescriptions,
+          dispensed: prescriptionStats.dispensedToday
+        });
+      } catch (e) {
+        console.warn('Failed to calculate prescription stats:', e?.message || e);
+      }
+
       const dashboardData = {
-        // Keep existing non-inventory cards for now; can be wired later
-        statistics: {
-          totalPrescriptions: 156,
-          newPrescriptions: 12,
-          pendingPrescriptions: 8,
-          dispensedToday: 45,
-        },
+        statistics: prescriptionStats,
         recentPrescriptions: [],
         lowStockMedicines: meds,
         inventoryKPIs: payload.kpis || {
@@ -247,8 +286,8 @@ const PharmacistDashboard = () => {
   };
 
   const handleNavigateToPrescriptionSummary = () => {
-    // Navigate to prescription summary page
-    navigate('/prescription-summary');
+    // Navigate to reports page
+    navigate('/pharmacist/reports');
   };
 
   // Handle URL-based navigation
@@ -258,6 +297,8 @@ const PharmacistDashboard = () => {
       setActiveTab('prescriptions');
     } else if (path.includes('/dispensing')) {
       setActiveTab('dispensing');
+    } else if (path.includes('/reports')) {
+      setActiveTab('reports');
     } else if (path.includes('/profile')) {
       setActiveTab('profile');
     } else {
@@ -272,6 +313,7 @@ const PharmacistDashboard = () => {
       'dashboard': '/pharmacist/dashboard',
       'prescriptions': '/pharmacist/prescriptions',
       'dispensing': '/pharmacist/dispensing',
+      'reports': '/pharmacist/reports',
       'profile': '/pharmacist/profile'
     };
     navigate(routeMap[tabId] || '/pharmacist/dashboard');
@@ -319,7 +361,7 @@ const PharmacistDashboard = () => {
                   color: '#0c5460',
                   margin: '0 0 4px 0'
                 }}>
-                  Inventory Dashboard
+                  Pharmacy Dashboard
                 </h1>
                 <div style={{
                   fontSize: '14px',
@@ -354,7 +396,7 @@ const PharmacistDashboard = () => {
                     color: '#374151',
                     fontWeight: '500'
                   }}>
-                    Inventory Manager
+                    Pharmacist
                   </span>
                 </div>
               </div>

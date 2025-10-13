@@ -29,6 +29,12 @@ const PharmacistSidebar = ({ activeTab, onTabChange, onSidebarToggle }) => {
       path: '/pharmacist/dispensing'
     },
     {
+      id: 'reports',
+      label: 'Reports',
+      icon: 'fas fa-chart-bar',
+      path: '/pharmacist/reports'
+    },
+    {
       id: 'profile',
       label: 'Profile',
       icon: 'fas fa-user-md',
@@ -55,6 +61,7 @@ const PharmacistSidebar = ({ activeTab, onTabChange, onSidebarToggle }) => {
     const currentPath = location.pathname;
     if (currentPath.includes('/prescriptions')) return 'prescriptions';
     if (currentPath.includes('/dispensing')) return 'dispensing';
+    if (currentPath.includes('/reports')) return 'reports';
     if (currentPath.includes('/profile')) return 'profile';
     return 'dashboard';
   };

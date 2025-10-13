@@ -143,26 +143,6 @@ const MedicineList = () => {
     <div className="flex flex-col bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">Medicine Inventory</h2>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <User className="w-8 h-8 text-gray-600" />
-                <span className="text-gray-700">Inventory Manager</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* Content */}
         <div className="flex-1 p-6">
           <div className="bg-white rounded-lg shadow-sm h-full">
