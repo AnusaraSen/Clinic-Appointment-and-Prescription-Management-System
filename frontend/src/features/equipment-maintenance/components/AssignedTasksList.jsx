@@ -235,9 +235,13 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
             setSelectedTask(null);
           }}
           task={selectedTask}
-          onUpdate={() => {
+          onUpdate={(updatedTask) => {
+            console.log('📝 Task updated with data:', updatedTask);
+            // Update the selectedTask with fresh data including technicianNotes
+            if (updatedTask) {
+              setSelectedTask(updatedTask);
+            }
             setShowStatusModal(false);
-            setSelectedTask(null);
             if (onRefresh) {
               onRefresh();
             }
@@ -251,13 +255,34 @@ export const AssignedTasksList = ({ tasks = [], isLoading = false, onRefresh, on
           onClose={() => {
             setShowDetailsModal(false);
             setSelectedTask(null);
-          }}
-          workRequest={selectedTask}
-          onUpdate={() => {
-            setShowDetailsModal(false);
-            setSelectedTask(null);
+            // Refresh to get latest data including technician notes
             if (onRefresh) {
               onRefresh();
+            }
+          }}
+          workRequest={selectedTask}
+          onUpdate={async (id, updateData) => {
+            try {
+              // This is called when editing from the details modal
+              const token = localStorage.getItem('token');
+              const response = await fetch(`http://localhost:5000/api/maintenance-requests/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updateData)
+              });
+              
+              if (response.ok) {
+                setShowDetailsModal(false);
+                setSelectedTask(null);
+                if (onRefresh) {
+                  onRefresh();
+                }
+              }
+            } catch (error) {
+              console.error('Error updating work request:', error);
             }
           }}
           canEdit={false}

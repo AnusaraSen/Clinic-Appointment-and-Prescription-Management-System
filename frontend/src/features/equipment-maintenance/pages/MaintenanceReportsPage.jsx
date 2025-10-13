@@ -84,6 +84,32 @@ const MaintenanceReportsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showMaintenanceFilters, setShowMaintenanceFilters] = useState(false);
 
+  // State for technicians list
+  const [technicians, setTechnicians] = useState([]);
+
+  // Fetch technicians on component mount
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/technicians', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTechnicians(data.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching technicians:', error);
+      }
+    };
+
+    fetchTechnicians();
+  }, []);
+
   /**
    * Load all report data (both user and maintenance)
    */
@@ -240,13 +266,78 @@ const MaintenanceReportsPage = () => {
   };
 
   /**
-   * Handle maintenance filter changes
+   * Maintenance filter change handler
    */
   const handleMaintenanceFilterChange = (field, value) => {
     setMaintenanceFilters(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  /**
+   * Load maintenance data with current filters
+   */
+  const loadMaintenanceDataWithFilters = async () => {
+    setLoading(prev => ({
+      ...prev,
+      metrics: true,
+      status: true,
+      technician: true,
+      trend: true,
+      table: true
+    }));
+
+    try {
+      // Map technician to assignedTo for API compatibility
+      const apiFilters = {
+        ...maintenanceFilters,
+        assignedTo: maintenanceFilters.technician || undefined
+      };
+      
+      console.log('🔍 Loading maintenance data with filters:', apiFilters);
+
+      // Use maintenanceFilters for loading data
+      const [metricsRes, statusRes, technicianRes, trendRes, detailedRes] = await Promise.all([
+        getReportMetrics(apiFilters).catch(err => {
+          console.error('Metrics error:', err);
+          return { data: null };
+        }),
+        getStatusDistribution(apiFilters).catch(err => {
+          console.error('Status error:', err);
+          return { data: [] };
+        }),
+        getTechnicianWorkload(apiFilters).catch(err => {
+          console.error('Technician error:', err);
+          return { data: [] };
+        }),
+        getRequestsTrend(apiFilters).catch(err => {
+          console.error('Trend error:', err);
+          return { data: [] };
+        }),
+        getDetailedRequests(apiFilters).catch(err => {
+          console.error('Detailed error:', err);
+          return { data: [] };
+        })
+      ]);
+
+      setMetrics(metricsRes.data);
+      setStatusData(statusRes.data);
+      setTechnicianData(technicianRes.data);
+      setTrendData(trendRes.data);
+      setDetailedData(detailedRes.data);
+    } catch (error) {
+      console.error('Error loading maintenance data with filters:', error);
+    } finally {
+      setLoading(prev => ({
+        ...prev,
+        metrics: false,
+        status: false,
+        technician: false,
+        trend: false,
+        table: false
+      }));
+    }
   };
 
   /**
@@ -267,11 +358,25 @@ const MaintenanceReportsPage = () => {
    */
   const handleGenerateMaintenanceReport = async () => {
     try {
+      // Map technician to assignedTo for backend compatibility
+      const exportFilters = {
+        startDate: maintenanceFilters.startDate,
+        endDate: maintenanceFilters.endDate,
+        status: maintenanceFilters.status,
+        priority: maintenanceFilters.priority,
+        assignedTo: maintenanceFilters.technician // Map technician to assignedTo
+      };
+
+      console.log('📊 Generating report with filters:', exportFilters);
+
       // Call API to generate maintenance report with current filters
-      const response = await fetch('/api/maintenance-requests/reports/export-filtered', {
+      const response = await fetch('http://localhost:5000/api/maintenance-requests/reports/export-filtered', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(maintenanceFilters)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(exportFilters)
       });
 
       if (!response.ok) throw new Error('Failed to generate maintenance report');
@@ -545,13 +650,19 @@ const MaintenanceReportsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Technician (Optional)
                 </label>
-                <input
-                  type="text"
+                <select
                   value={maintenanceFilters.technician}
                   onChange={(e) => handleMaintenanceFilterChange('technician', e.target.value)}
-                  placeholder="Technician name or ID"
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                >
+                  <option value="">All Technicians</option>
+                  {technicians.map((tech) => (
+                    <option key={tech._id || tech.id} value={tech._id || tech.id}>
+                      {tech.name || tech.firstName + ' ' + tech.lastName} 
+                      {tech.technician_id ? ` (${tech.technician_id})` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="md:col-span-4 flex justify-end gap-3">

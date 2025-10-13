@@ -97,14 +97,8 @@ export const WorkRequestDetailsModal = ({
         // Convert priority back to backend case: 'high' -> 'High'
         priority: editData.priority.charAt(0).toUpperCase() + editData.priority.slice(1),
         // Convert dueDate back to 'date' field for backend
-        date: editData.dueDate ? new Date(editData.dueDate).toISOString() : null,
-        // Map status back to backend labels if provided in editData
-        ...(editData.status ? {
-          status: editData.status === 'pending' ? 'Open' :
-                  editData.status === 'in-progress' ? 'In Progress' :
-                  editData.status === 'completed' ? 'Completed' :
-                  editData.status === 'cancelled' ? 'Cancelled' : editData.status
-        } : {})
+        date: editData.dueDate ? new Date(editData.dueDate).toISOString() : null
+        // Status is not included here - status changes should use separate workflow
       };
       console.log('🔁 Sending update payload for request', workRequest.id || workRequest._id, backendData);
       await onUpdate(workRequest.id || workRequest._id, backendData);
@@ -402,6 +396,32 @@ export const WorkRequestDetailsModal = ({
 
             {/* Additional Notes removed per request */}
 
+            {/* Technician Notes */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Technician Notes
+              </h5>
+              {workRequest.notes ? (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {workRequest.notes}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 italic">
+                    Note: Technician notes can only be edited by the assigned technician
+                  </p>
+                </>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-sm text-gray-500 italic">
+                    No technician notes added yet
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Save/Cancel Buttons */}
             {isEditing && (
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -467,13 +487,15 @@ export const WorkRequestDetailsModal = ({
                       name="status"
                       value={editData.status}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      disabled
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
                     >
                       <option key="pending" value="pending">Pending</option>
                       <option key="in-progress" value="in-progress">In Progress</option>
                       <option key="completed" value="completed">Completed</option>
                       <option key="cancelled" value="cancelled">Cancelled</option>
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">Status cannot be changed from this form</p>
                   </div>
                 )}
               </div>

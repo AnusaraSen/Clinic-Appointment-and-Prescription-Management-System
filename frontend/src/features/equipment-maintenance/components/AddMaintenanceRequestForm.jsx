@@ -351,7 +351,7 @@ export const AddMaintenanceRequestForm = ({ isOpen, onClose, onSuccess }) => {
                 <option value="">Select equipment...</option>
                 {equipmentList.map(item => (
                   <option key={item.id} value={item.id}>
-                    {item.name} - {item.location}
+                    {item.name} {item.serialNumber ? `(S/N: ${item.serialNumber})` : ''} - {item.location}
                   </option>
                 ))}
               </ValidatedSelect>

@@ -216,7 +216,7 @@ export const EditEquipmentModal = ({ isOpen, onClose, onSuccess, equipment }) =>
         serialNumber: formData.serialNumber.trim() || undefined,
         purchaseDate: formData.purchaseDate || undefined,
         warrantyExpiry: formData.warrantyExpiry || undefined,
-        maintenanceInterval: parseInt(formData.maintenanceInterval),
+        maintenanceInterval: formData.maintenanceInterval ? parseInt(formData.maintenanceInterval) : undefined,
         notes: formData.notes.trim() || undefined
       };
 

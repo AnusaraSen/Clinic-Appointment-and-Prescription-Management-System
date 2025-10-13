@@ -108,10 +108,10 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
         error = validators.email(value);
         break;
       case 'phone':
-        error = validators.phone(value);
+        // No validation for phone number
         break;
       case 'employeeId':
-        error = validators.employeeId(value);
+        // No validation for employee ID
         break;
       case 'department':
         error = validators.required(value, 'Department');
@@ -122,8 +122,15 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
         }
         break;
       case 'experienceLevel':
-        if (value && !['Junior', 'Mid-Level', 'Senior', 'Expert'].includes(value)) {
-          error = 'Invalid experience level';
+        if (value) {
+          const num = Number(value);
+          if (isNaN(num)) {
+            error = 'Experience level must be a number';
+          } else if (num < 0) {
+            error = 'Experience level cannot be negative';
+          } else if (num > 50) {
+            error = 'Experience level cannot exceed 50 years';
+          }
         }
         break;
       case 'hireDate':
@@ -137,9 +144,7 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
         }
         break;
       case 'emergencyContact.phone':
-        if (value) {
-          error = validators.phone(value);
-        }
+        // No validation for emergency contact phone
         break;
       case 'notes':
         error = validators.textLength(value, 0, 1000, 'Notes');
@@ -325,9 +330,17 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onBlur={handleFieldBlur}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    touched.firstName && errors.firstName
+                      ? 'border-red-300 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 />
+                {touched.firstName && errors.firstName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                )}
               </div>
 
               <div>
@@ -339,9 +352,17 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onBlur={handleFieldBlur}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    touched.lastName && errors.lastName
+                      ? 'border-red-300 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 />
+                {touched.lastName && errors.lastName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                )}
               </div>
 
               <div>
@@ -354,11 +375,19 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onBlur={handleFieldBlur}
+                    className={`w-full px-3 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched.email && errors.email
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     required
                   />
                   <Mail className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
                 </div>
+                {touched.email && errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                )}
               </div>
 
               <div>
@@ -377,7 +406,7 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   />
                   <Phone className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Enter 10-15 digits (formatting will be removed automatically)</p>
+                <p className="text-sm text-gray-500 mt-1">Enter phone number (any format accepted)</p>
               </div>
             </div>
 
@@ -400,7 +429,7 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
-                <p className="text-sm text-gray-500 mt-1">Format: T followed by 3 digits (e.g., T123)</p>
+                <p className="text-sm text-gray-500 mt-1">Enter employee/technician ID (any format accepted)</p>
               </div>
 
               <div>
@@ -411,7 +440,12 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onBlur={handleFieldBlur}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    touched.department && errors.department
+                      ? 'border-red-300 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 >
                   <option key="dept-placeholder" value="">Select Department</option>
@@ -422,6 +456,9 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                   <option key="dept-plumbing" value="Plumbing">Plumbing</option>
                   <option key="dept-security" value="Security">Security</option>
                 </select>
+                {touched.department && errors.department && (
+                  <p className="mt-1 text-sm text-red-600">{errors.department}</p>
+                )}
               </div>
 
               <div>
@@ -434,11 +471,19 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     placeholder="e.g., Main Building, Floor 2"
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched.location && errors.location
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                   />
                   <MapPin className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
                 </div>
+                {touched.location && errors.location && (
+                  <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+                )}
               </div>
 
               <div>
@@ -553,10 +598,18 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="experienceLevel"
                     value={formData.experienceLevel}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     min="0"
                     max="50"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched.experienceLevel && errors.experienceLevel
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                   />
+                  {touched.experienceLevel && errors.experienceLevel && (
+                    <p className="mt-1 text-sm text-red-600">{errors.experienceLevel}</p>
+                  )}
                 </div>
 
                 <div>
@@ -568,8 +621,16 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="hireDate"
                     value={formData.hireDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onBlur={handleFieldBlur}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched.hireDate && errors.hireDate
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                   />
+                  {touched.hireDate && errors.hireDate && (
+                    <p className="mt-1 text-sm text-red-600">{errors.hireDate}</p>
+                  )}
                 </div>
 
                 <div>
@@ -580,10 +641,18 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="notes"
                     value={formData.notes}
                     onChange={handleInputChange}
+                    onBlur={handleFieldBlur}
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched.notes && errors.notes
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     placeholder="Additional notes about the technician..."
                   />
+                  {touched.notes && errors.notes && (
+                    <p className="mt-1 text-sm text-red-600">{errors.notes}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -601,8 +670,16 @@ export const EditTechnicianModal = ({ isOpen, onClose, onSuccess, technician }) 
                     name="emergencyContact.name"
                     value={formData.emergencyContact.name}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onBlur={handleFieldBlur}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      touched['emergencyContact.name'] && errors['emergencyContact.name']
+                        ? 'border-red-300 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                   />
+                  {touched['emergencyContact.name'] && errors['emergencyContact.name'] && (
+                    <p className="mt-1 text-sm text-red-600">{errors['emergencyContact.name']}</p>
+                  )}
                 </div>
 
                 <div>

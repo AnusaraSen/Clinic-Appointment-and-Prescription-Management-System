@@ -13,6 +13,7 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
     title: '',
     description: '',
     priority: 'Medium',
+    status: 'Open',
     equipment: [],
     date: '' // Due date field
   });
@@ -37,6 +38,7 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
         title: request.title || '',
         description: request.description || '',
         priority: request.priority || 'Medium',
+        status: request.status || 'Open',
         equipment: request.equipment ? request.equipment.map(eq => eq.id || eq._id) : [],
         date: request.date ? new Date(request.date).toISOString().split('T')[0] : '' // Format date for input
       });
@@ -338,8 +340,27 @@ export const EditMaintenanceRequestModal = ({ isOpen, request, onClose, onSucces
             rows={4}
           />
 
-          {/* Priority and Due Date Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Status, Priority and Due Date Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <ValidatedSelect
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                onBlur={handleFieldBlur}
+                error={touched.status ? errors.status : ''}
+                touched={touched.status}
+                disabled
+              >
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </ValidatedSelect>
+              <p className="text-xs text-gray-500 mt-1">Status cannot be changed from this form</p>
+            </div>
+
             <ValidatedSelect
               label="Priority"
               name="priority"

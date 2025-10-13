@@ -13,8 +13,9 @@ const NotificationBell = () => {
   useEffect(() => {
     fetchUnreadCount();
     
-    // Poll for new notifications every 5 seconds for real-time updates
-    const interval = setInterval(fetchUnreadCount, 5000);
+    // Poll for new notifications every 30 seconds to reduce server load
+    // Reduced from 5 seconds to prevent excessive 401 errors when token expires
+    const interval = setInterval(fetchUnreadCount, 30000);
     
     return () => clearInterval(interval);
   }, []);
@@ -39,8 +40,9 @@ const NotificationBell = () => {
   // Auto-refresh notifications when dropdown is open
   useEffect(() => {
     if (showDropdown) {
-      // Refresh notifications every 5 seconds while dropdown is open
-      const interval = setInterval(fetchNotifications, 5000);
+      // Refresh notifications every 15 seconds while dropdown is open
+      // Reduced from 5 seconds to prevent excessive requests
+      const interval = setInterval(fetchNotifications, 15000);
       
       return () => clearInterval(interval);
     }
@@ -49,11 +51,26 @@ const NotificationBell = () => {
   const fetchUnreadCount = async () => {
     try {
       const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // No token, user not logged in
+        return;
+      }
+
       const response = await fetch('http://localhost:5000/api/notifications/unread-count', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid - redirect to login
+        console.warn('Authentication token expired. Redirecting to login...');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -68,11 +85,27 @@ const NotificationBell = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // No token, user not logged in
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('http://localhost:5000/api/notifications?limit=20', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid - redirect to login
+        console.warn('Authentication token expired. Redirecting to login...');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -98,6 +131,8 @@ const NotificationBell = () => {
   const handleMarkAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
       const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
@@ -105,6 +140,15 @@ const NotificationBell = () => {
           'Content-Type': 'application/json'
         }
       });
+
+      if (response.status === 401) {
+        console.warn('Authentication token expired. Redirecting to login...');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
 
       if (response.ok) {
         // Update local state
@@ -125,6 +169,8 @@ const NotificationBell = () => {
   const handleMarkAllAsRead = async () => {
     try {
       const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
       const response = await fetch('http://localhost:5000/api/notifications/mark-all-read', {
         method: 'PATCH',
         headers: {
@@ -132,6 +178,15 @@ const NotificationBell = () => {
           'Content-Type': 'application/json'
         }
       });
+
+      if (response.status === 401) {
+        console.warn('Authentication token expired. Redirecting to login...');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
 
       if (response.ok) {
         // Update local state

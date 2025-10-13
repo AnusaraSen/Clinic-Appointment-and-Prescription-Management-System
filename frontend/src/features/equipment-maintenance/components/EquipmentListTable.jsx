@@ -1,7 +1,8 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Activity, AlertTriangle, CheckCircle, Clock, Wrench, Shield, Search, Filter, Plus, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Clock, Wrench, Shield, Search, Filter, Plus, Edit, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { EditEquipmentModal } from './EditEquipmentModal';
 import { DeleteEquipmentModal } from './DeleteEquipmentModal';
+import { ViewEquipmentModal } from './ViewEquipmentModal';
 
 /**
  * Equipment List Table Component
@@ -23,6 +24,7 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
   // Modal states
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
 
   // Fetch equipment data - refetch when refreshTrigger changes
@@ -57,6 +59,11 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
   };
 
   // Modal handlers
+  const handleViewEquipment = (equipmentItem) => {
+    setSelectedEquipment(equipmentItem);
+    setViewModalOpen(true);
+  };
+
   const handleEditEquipment = (equipmentItem) => {
     setSelectedEquipment(equipmentItem);
     setEditModalOpen(true);
@@ -128,6 +135,7 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
   const closeModals = () => {
     setEditModalOpen(false);
     setDeleteModalOpen(false);
+    setViewModalOpen(false);
     setSelectedEquipment(null);
   };
 
@@ -394,6 +402,13 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
                     <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <button 
+                          onClick={() => handleViewEquipment(item)}
+                          className="text-green-600 hover:text-green-900" 
+                          title="View Equipment Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button 
                           onClick={() => handleEditEquipment(item)}
                           className="text-blue-600 hover:text-blue-900" 
                           title="Edit Equipment"
@@ -406,9 +421,6 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
                           title="Delete Equipment"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-900" title="More Options">
-                          <MoreVertical className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -449,6 +461,13 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
           </div>
         </div>
       )}
+
+      {/* View Equipment Modal */}
+      <ViewEquipmentModal
+        isOpen={viewModalOpen}
+        onClose={closeModals}
+        equipment={selectedEquipment}
+      />
 
       {/* Edit Equipment Modal */}
       <EditEquipmentModal

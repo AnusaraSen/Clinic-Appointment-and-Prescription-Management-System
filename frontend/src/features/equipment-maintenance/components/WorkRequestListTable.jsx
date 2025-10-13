@@ -289,7 +289,25 @@ export const WorkRequestListTable = ({
                       {request.title}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {request.equipmentName || 'No equipment specified'}
+                      {(() => {
+                        // Handle different equipment data structures
+                        if (request.equipment && Array.isArray(request.equipment)) {
+                          if (request.equipment.length === 0) return 'No equipment specified';
+                          // If equipment is populated with objects
+                          if (typeof request.equipment[0] === 'object' && request.equipment[0] !== null) {
+                            return request.equipment.map(eq => eq.name || 'Unknown equipment').join(', ');
+                          }
+                          // If equipment is just IDs, try to get names from equipmentName field
+                          if (request.equipmentName) return request.equipmentName;
+                          return `Equipment ID: ${request.equipment.join(', ')}`;
+                        }
+                        // Single equipment object
+                        if (request.equipment && typeof request.equipment === 'object') {
+                          return request.equipment.name || 'Unknown equipment';
+                        }
+                        // Fallback to equipmentName or default message
+                        return request.equipmentName || 'No equipment specified';
+                      })()}
                     </div>
                   </div>
                 </td>

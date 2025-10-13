@@ -114,27 +114,22 @@ const TechnicianDashboard = ({ onNavigate }) => {
         const technician = technicianData.data;
         
         if (technician && technician.scheduledMaintenance && technician.scheduledMaintenance.length > 0) {
-          // Fetch details for each scheduled maintenance ID in the technician's array
-          const scheduledMaintenancePromises = technician.scheduledMaintenance.map(async (scheduleId) => {
-            try {
-              const response = await fetch(`/api/scheduled-maintenance/${scheduleId}`);
-              if (response.ok) {
-                const data = await response.json();
-                return data.data;
+          // Fetch all scheduled maintenance and filter by IDs
+          try {
+            const response = await fetch(`http://localhost:5000/api/scheduled-maintenance?technician=${technicianId}`);
+            if (response.ok) {
+              const data = await response.json();
+              // Filter to only include the IDs in the technician's scheduledMaintenance array
+              if (data.data && Array.isArray(data.data)) {
+                scheduledMaintenance = data.data.filter(sm => 
+                  technician.scheduledMaintenance.includes(sm._id || sm.id)
+                );
+                console.log('📅 Found scheduled maintenance for technician:', scheduledMaintenance.length);
               }
-              return null;
-            } catch (error) {
-              console.warn(`⚠️ Failed to fetch scheduled maintenance ${scheduleId}:`, error);
-              return null;
             }
-          });
-          
-          const scheduledResults = await Promise.allSettled(scheduledMaintenancePromises);
-          scheduledMaintenance = scheduledResults
-            .filter(result => result.status === 'fulfilled' && result.value)
-            .map(result => result.value);
-          
-          console.log('📅 Found scheduled maintenance for technician:', scheduledMaintenance.length);
+          } catch (error) {
+            console.warn(`⚠️ Failed to fetch scheduled maintenance:`, error);
+          }
         } else {
           console.log('📅 No scheduled maintenance in technician array');
         }
@@ -146,10 +141,18 @@ const TechnicianDashboard = ({ onNavigate }) => {
       }
 
       // Build basic stats from tasks data
+      console.log('📊 Calculating dashboard stats from tasks:', assignedTasks.map(t => ({ id: t._id, status: t.status })));
+      
       const total = assignedTasks.length;
-      const pending = assignedTasks.filter(t => t.status === 'Pending' || t.status === 'Assigned').length;
+      const pending = assignedTasks.filter(t => 
+        t.status === 'Pending' || 
+        t.status === 'Assigned' || 
+        t.status === 'Open'
+      ).length;
       const inProgress = assignedTasks.filter(t => t.status === 'In Progress').length;
       const completed = assignedTasks.filter(t => t.status === 'Completed').length;
+      
+      console.log('📊 Dashboard KPIs:', { total, pending, inProgress, completed });
       
       setDashboardData({
         totalTasks: total,
@@ -306,7 +309,7 @@ const TechnicianDashboard = ({ onNavigate }) => {
               <div className="space-y-6">
                 {/* KPI Cards */}
                 <TechnicianKPICards
-                  dashboardData={dashboardData}
+                  data={dashboardData}
                   loading={isInitialLoading}
                 />
 

@@ -378,6 +378,7 @@ exports.updateRequest = async (req, res) => {
       'category',
       'estimatedHours',
       'notes',
+      'technicianNotes',  // Added for technician-only notes
       'assignedTo',
       'costs'
     ];
@@ -389,6 +390,14 @@ exports.updateRequest = async (req, res) => {
       if (req.body[key] !== undefined) {
         update[key] = req.body[key];
       }
+    }
+    
+    // Log notes specifically for debugging
+    if (update.notes !== undefined) {
+      console.log('📝 Technician notes being updated:', update.notes);
+    }
+    if (update.technicianNotes !== undefined) {
+      console.log('📝 TechnicianNotes field being updated:', update.technicianNotes);
     }
 
     // If costs array is provided, calculate total cost automatically
@@ -457,7 +466,13 @@ exports.updateRequest = async (req, res) => {
       });
     }
 
-    console.log('✅ Database updated successfully. Cost field:', updated.cost, 'Costs array:', updated.costs);
+    console.log('✅ Database updated successfully.');
+    console.log('💾 Updated document fields:', {
+      cost: updated.cost,
+      notes: updated.notes,
+      technicianNotes: updated.technicianNotes,
+      status: updated.status
+    });
 
     // � Auto-update equipment status based on maintenance request status
     if (update.status && updated.equipment && updated.equipment.length > 0) {
@@ -703,7 +718,9 @@ exports.getStats = async (req, res) => {
  */
 exports.exportFilteredMaintenanceRequests = async (req, res) => {
   try {
-    const { startDate, endDate, status, priority, technician } = req.body;
+    const { startDate, endDate, status, priority, technician, assignedTo } = req.body;
+
+    console.log('📊 Export filters received:', { startDate, endDate, status, priority, technician, assignedTo });
 
     // Build query filters
     const query = {};
@@ -729,28 +746,25 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
       query.priority = priority;
     }
 
-    // Technician filter (search by name or ID - will handle via populate)
-    // Note: We'll filter after population since we need to search populated fields
-    const technicianFilter = technician;
+    // Technician filter - use assignedTo field (ObjectId)
+    // Support both 'assignedTo' and 'technician' for backward compatibility
+    const technicianId = assignedTo || technician;
+    if (technicianId) {
+      query.assignedTo = technicianId;
+      console.log('🔍 Filtering by technician ID:', technicianId);
+    }
 
     // Fetch maintenance requests with filters
-    let requests = await MaintenanceRequest.find(query)
+    console.log('🔍 Query filters:', JSON.stringify(query, null, 2));
+    
+    const requests = await MaintenanceRequest.find(query)
       .populate('equipment', 'equipment_id name location')
       .populate('assignedTo', 'name user_id')
       .populate('reportedBy', 'name email role')
       .sort({ createdAt: -1 })
       .lean();
 
-    // Apply technician filter after population (if specified)
-    if (technicianFilter) {
-      requests = requests.filter(request => {
-        if (!request.assignedTo) return false;
-        const techName = request.assignedTo.name || '';
-        const techId = request.assignedTo.user_id || '';
-        const searchTerm = technicianFilter.toLowerCase();
-        return techName.toLowerCase().includes(searchTerm) || techId.toLowerCase().includes(searchTerm);
-      });
-    }
+    console.log(`✅ Found ${requests.length} maintenance requests matching filters`);
 
     // Import ExcelJS
     const ExcelJS = require('exceljs');

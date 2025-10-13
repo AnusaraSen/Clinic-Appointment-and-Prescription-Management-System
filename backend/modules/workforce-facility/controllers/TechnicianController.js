@@ -56,10 +56,22 @@ const getAllTechnicians = async (req, res) => {
     
     const totalCount = await Technician.countDocuments(searchCriteria);
     
+    // Transform technicians to include workload data explicitly
+    const techniciansWithWorkload = technicians.map(tech => {
+      const techObj = tech.toJSON();
+      // Explicitly add workload counts for frontend
+      techObj.workloadCount = {
+        assignedRequests: tech.assignedRequests?.length || 0,
+        scheduledMaintenance: tech.scheduledMaintenance?.length || 0,
+        total: (tech.assignedRequests?.length || 0) + (tech.scheduledMaintenance?.length || 0)
+      };
+      return techObj;
+    });
+    
     res.json({
       success: true,
       message: `Found ${technicians.length} technicians`,
-      data: technicians,
+      data: techniciansWithWorkload,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(totalCount / parseInt(limit)),

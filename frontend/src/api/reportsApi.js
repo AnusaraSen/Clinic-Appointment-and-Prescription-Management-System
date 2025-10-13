@@ -49,6 +49,7 @@ export const getReportMetrics = async (filters = {}) => {
     if (filters.endDate) params.append('endDate', filters.endDate);
     if (filters.status) params.append('status', filters.status);
     if (filters.priority) params.append('priority', filters.priority);
+    if (filters.assignedTo) params.append('assignedTo', filters.assignedTo);
 
     const response = await api.get(`/maintenance-requests/reports/metrics?${params.toString()}`);
     return response.data;
@@ -81,6 +82,7 @@ export const getStatusDistribution = async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.assignedTo) params.append('assignedTo', filters.assignedTo);
 
     const response = await api.get(`/maintenance-requests/reports/status-distribution?${params.toString()}`);
     return response.data;
@@ -152,6 +154,7 @@ export const getRequestsTrend = async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.assignedTo) params.append('assignedTo', filters.assignedTo);
     if (filters.groupBy) params.append('groupBy', filters.groupBy); // 'month' or 'week'
 
     const response = await api.get(`/maintenance-requests/reports/trend?${params.toString()}`);
@@ -279,7 +282,7 @@ export const getDetailedRequests = async (filters = {}) => {
     if (filters.endDate) params.append('endDate', filters.endDate);
     if (filters.status) params.append('status', filters.status);
     if (filters.priority) params.append('priority', filters.priority);
-    if (filters.technicianId) params.append('technicianId', filters.technicianId);
+    if (filters.assignedTo) params.append('assignedTo', filters.assignedTo);
 
     const response = await api.get(`/maintenance-requests?${params.toString()}`);
     return response.data;

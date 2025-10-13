@@ -83,6 +83,12 @@ const maintenanceRequestSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  // Technician notes - only editable by assigned technician
+  technicianNotes: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   assignedTo: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Technician', 

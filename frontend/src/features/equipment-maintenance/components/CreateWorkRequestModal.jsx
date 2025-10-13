@@ -159,6 +159,7 @@ export const CreateWorkRequestModal = ({ isOpen, onClose, onSubmit, equipment = 
               {(equipment || []).map((eq) => (
                 <option key={eq._id || eq.id} value={eq._id || eq.id}>
                   {eq.name || eq.label || `Equipment ${eq._id || eq.id}`}
+                  {eq.serialNumber ? ` (S/N: ${eq.serialNumber})` : ''}
                 </option>
               ))}
             </select>

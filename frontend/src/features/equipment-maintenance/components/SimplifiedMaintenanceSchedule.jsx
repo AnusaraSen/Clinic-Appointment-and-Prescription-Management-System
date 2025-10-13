@@ -1557,7 +1557,7 @@ const EditTaskModal = ({ task, onClose, onUpdate }) => {
         scheduled_date: scheduledDate,
         scheduled_time: formData.scheduled_time || '09:00',
         priority: formData.priority || 'Medium',
-        status: formData.status || 'Pending',
+        // Status is excluded - status changes should use separate workflow
         maintenance_type: formData.maintenance_type || 'Preventive',
         estimated_duration: duration,
         assigned_technician: assignedTechnician,
@@ -1624,6 +1624,7 @@ const EditTaskModal = ({ task, onClose, onUpdate }) => {
                 onChange={handleInputChange}
                 onBlur={handleFieldBlur}
                 error={touched.status ? errors.status : ''}
+                touched={touched.status}
                 disabled
               >
                 <option value="Pending">Pending</option>

@@ -161,7 +161,9 @@ const maintenanceRequestSchemas = {
         description: Joi.string().trim().max(200).required(),
         cost: Joi.number().min(0).required()
       })
-    ).optional()
+    ).optional(),
+    notes: Joi.string().trim().max(1000).allow('').optional(),
+    technicianNotes: Joi.string().trim().max(1000).allow('').optional()
   }).min(1),
 
   assign: Joi.object({
@@ -214,14 +216,17 @@ const equipmentSchemas = {
       .default('Operational'),
     isCritical: Joi.boolean().default(false),
     model: Joi.string().trim().optional(),
+    modelNumber: Joi.string().trim().optional(),
     serialNumber: Joi.string().trim().optional(),
     manufacturer: Joi.string().trim().optional(),
     purchaseDate: Joi.date().optional(),
     warrantyExpires: Joi.date().optional(),
+    warrantyExpiry: Joi.date().optional(),
     lastMaintenanceDate: Joi.date().optional(),
     nextScheduledMaintenance: Joi.date().optional(),
     downtimeHours: Joi.number().min(0).default(0),
-    maintenanceInterval: Joi.number().min(1).max(365).optional()
+    maintenanceInterval: Joi.number().min(1).max(365).optional(),
+    notes: Joi.string().trim().max(1000).optional()
   }),
 
   update: Joi.object({

@@ -10,7 +10,7 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
   useHideNavbar(isOpen);
   
   const [status, setStatus] = useState(task?.status || 'In Progress');
-  const [notes, setNotes] = useState(task?.notes || '');
+  const [notes, setNotes] = useState(task?.notes || '');  // Use notes field
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -27,14 +27,30 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
     setError('');
     setSuccess('');
 
+    // Detailed debugging
+    console.log('📝 Form state before submit:', {
+      notesState: notes,
+      notesLength: notes?.length || 0,
+      notesType: typeof notes,
+      statusState: status
+    });
+
     try {
       const updateData = {
         status: status,
-        notes: notes
+        notes: notes  // Use notes field (technician notes)
       };
       
+      console.log('🔍 Sending update to backend:', {
+        taskId: task.id || task._id,
+        updateData: updateData,
+        updateDataStringified: JSON.stringify(updateData),
+        currentNotes: notes,
+        currentStatus: status
+      });
+      
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/maintenance-requests/${task.id || task._id}`, {
+      const response = await fetch(`http://localhost:5000/api/maintenance-requests/${task.id || task._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -42,10 +58,13 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
         },
         body: JSON.stringify(updateData)
       });
+      
+      console.log('📡 Response status:', response.status);
 
       if (response.ok) {
         const updatedTask = await response.json();
         console.log('✅ Update response:', updatedTask);
+        console.log('✅ Updated task notes:', updatedTask.data?.notes);
         setSuccess(`Status updated to ${status} successfully!`);
         // Close modal and trigger refresh immediately
         setTimeout(() => {
@@ -56,6 +75,7 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
         }, 800); // Reduced delay for faster refresh
       } else {
         const errorData = await response.json();
+        console.error('❌ Update failed:', errorData);
         setError(errorData.message || 'Failed to update task status');
       }
     } catch (err) {
@@ -231,13 +251,17 @@ export const TaskStatusModal = ({ task, isOpen, onClose, onUpdate }) => {
             <textarea
               id="notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                console.log('✏️ Notes textarea changed:', e.target.value);
+                setNotes(e.target.value);
+              }}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Add any relevant notes about the task progress, issues encountered, or completion details..."
             />
             <p className="mt-1 text-xs text-gray-500">
               These notes will be saved with the task for future reference.
+              {notes && <span className="text-blue-600 font-medium ml-2">({notes.length} characters)</span>}
             </p>
           </div>
 

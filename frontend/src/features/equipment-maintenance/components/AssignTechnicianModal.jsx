@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Clock, CheckCircle, Calendar, AlertTriangle } from 'lucide-react';
+import { useHideNavbar } from '../../../shared/hooks/useHideNavbar';
 
 /**
  * Assign Technician Modal Component
@@ -13,6 +14,8 @@ export const AssignTechnicianModal = ({
   onAssign,
   loading = false 
 }) => {
+  useHideNavbar(isOpen);
+  
   const [selectedTechnician, setSelectedTechnician] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [errors, setErrors] = useState({});
@@ -22,8 +25,22 @@ export const AssignTechnicianModal = ({
     if (isOpen && workRequest) {
       setSelectedTechnician(workRequest.assignedTo || '');
       setErrors({});
+      
+      // Log all technicians data for debugging
+      console.log('=== ASSIGN TECHNICIAN MODAL OPENED ===');
+      console.log('Technicians received:', technicians);
+      console.log('Technicians count:', technicians.length);
+      technicians.forEach(tech => {
+        console.log(`${tech.name}:`, {
+          assignedRequests: tech.assignedRequests,
+          assignedRequestsLength: tech.assignedRequests?.length,
+          maxConcurrentRequests: tech.maxConcurrentRequests,
+          availability: tech.availability,
+          fullTech: tech
+        });
+      });
     }
-  }, [isOpen, workRequest]);
+  }, [isOpen, workRequest, technicians]);
 
   // Don't render if not open
   if (!isOpen || !workRequest) return null;
@@ -39,9 +56,42 @@ export const AssignTechnicianModal = ({
   // Get technician workload
   const getTechnicianWorkload = (technician) => {
     // Calculate real workload from technician's assigned requests
-    const current = technician.assignedRequests?.length || 0;
-    const max = technician.maxConcurrentRequests || 5; // Default max capacity
-    const percentage = max > 0 ? Math.round((current / max) * 100) : 0;
+    // Check multiple possible field names from the API
+    let current = 0;
+    
+    // Try different ways to get the current workload (in order of preference)
+    if (technician.workloadCount && typeof technician.workloadCount === 'object') {
+      // New explicit workloadCount from backend
+      current = technician.workloadCount.total || technician.workloadCount.assignedRequests || 0;
+    } else if (technician.currentWorkload && typeof technician.currentWorkload === 'object') {
+      // Backend virtual property (if virtuals are enabled)
+      current = technician.currentWorkload.total || technician.currentWorkload.maintenance_requests || 0;
+    } else if (Array.isArray(technician.assignedRequests)) {
+      // Fallback: Count assignedRequests array length
+      current = technician.assignedRequests.length;
+    } else if (typeof technician.currentWorkload === 'number') {
+      current = technician.currentWorkload;
+    } else if (typeof technician.workload === 'number') {
+      current = technician.workload;
+    }
+    
+    const max = technician.maxConcurrentRequests || 
+                technician.maxWorkload || 
+                5; // Default max capacity
+    
+    // Ensure percentage is between 0 and 100
+    const percentage = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+    
+    console.log('Workload calculation:', { 
+      name: technician.name || `${technician.firstName} ${technician.lastName}`,
+      current, 
+      max, 
+      percentage,
+      workloadCount: technician.workloadCount,
+      currentWorkloadObj: technician.currentWorkload,
+      assignedRequests: technician.assignedRequests,
+      assignedRequestsLength: technician.assignedRequests?.length
+    });
     
     return { 
       current, 
@@ -210,11 +260,6 @@ export const AssignTechnicianModal = ({
             ) : (
               <div className="space-y-3">
                 {availableTechnicians.map((technician) => {
-                  const workload = getTechnicianWorkload(technician);
-                  const workloadIndicator = getWorkloadIndicator(workload.percentage);
-                  const specializationMatch = getSpecializationMatch(technician);
-                  const specializationIndicator = getSpecializationIndicator(specializationMatch);
-                  
                   return (
                     <div
                       key={technician._id}
@@ -225,58 +270,24 @@ export const AssignTechnicianModal = ({
                       }`}
                       onClick={() => setSelectedTechnician(technician._id)}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center space-x-3">
                           <input
                             type="radio"
                             name="selectedTechnician"
                             checked={selectedTechnician === technician._id}
                             onChange={() => setSelectedTechnician(technician._id)}
-                            className="mt-1 text-blue-600 focus:ring-blue-500"
+                            className="text-blue-600 focus:ring-blue-500"
                           />
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h5 className="font-medium text-gray-900">{technician.name}</h5>
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                technician.availabilityStatus === 'Available' 
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {technician.availabilityStatus || 'Unknown'}
-                              </span>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-2">
-                              {technician.specialization} • {technician.department}
-                            </p>
-                            
-                            <div className="flex items-center space-x-4 text-sm">
-                              {/* Specialization Match */}
-                              <div className="flex items-center space-x-1">
-                                <span>{specializationIndicator.icon}</span>
-                                <span className={specializationIndicator.color}>
-                                  {specializationIndicator.text}
-                                </span>
-                              </div>
-                              
-                              {/* Workload */}
-                              <div className="flex items-center space-x-2">
-                                <span className="text-gray-500">Workload:</span>
-                                <div className="flex items-center space-x-1">
-                                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                                    <div 
-                                      className={`h-2 rounded-full ${workloadIndicator.color}`}
-                                      style={{ width: `${workload.percentage}%` }}
-                                    ></div>
-                                  </div>
-                                  <span className={`text-xs ${workloadIndicator.textColor}`}>
-                                    {workload.current}/{workload.max}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          <h5 className="font-medium text-gray-900">{technician.name}</h5>
                         </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          technician.availabilityStatus === 'Available' 
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {technician.availabilityStatus || 'Available'}
+                        </span>
                       </div>
                     </div>
                   );
