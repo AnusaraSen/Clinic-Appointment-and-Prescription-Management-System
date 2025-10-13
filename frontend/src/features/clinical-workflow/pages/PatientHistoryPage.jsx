@@ -40,7 +40,7 @@ export const PatientHistoryPage = () => {
     if(!p) return;
     try {
       setLoadingLabs(true);
-      const reports = await fetchLabReportsByPatient(p._id, p.patient_ID);
+      const reports = await fetchLabReportsByPatient(p._id, p.patient_ID, p.patient_name);
       setLabReports(reports);
     } catch(e){
       console.warn('Lab reports load failed', e);
@@ -82,6 +82,34 @@ export const PatientHistoryPage = () => {
         <td>${(meds||'').toString().replace(/</g,'&lt;')}</td>
         <td>${(p.instructions||'').toString().replace(/</g,'&lt;')}</td>
       </tr>`;
+    }).join('');
+
+    // Build lab reports rows and optional details
+    const labRows = (labReports||[]).map(r => `<tr>
+        <td>${(r.code||'').toString().replace(/</g,'&lt;')}</td>
+        <td>${(r.type||'-').toString().replace(/</g,'&lt;')}</td>
+        <td>${(r.status||'-').toString().replace(/</g,'&lt;')}</td>
+        <td>${(r.priority||'-').toString().replace(/</g,'&lt;')}</td>
+        <td>${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</td>
+        <td>${(r.source||'-').toString().replace(/</g,'&lt;')}</td>
+      </tr>`).join('');
+
+    const labDetails = (labReports||[]).map((r,idx)=> {
+      const safe = s => (s||'').toString().replace(/</g,'&lt;');
+      const lines = [];
+      if (r.results) lines.push(`<div><span style="color:#64748b">Results:</span> <span style="font-weight:600">${safe(r.results)}</span></div>`);
+      if (r.notes) lines.push(`<div><span style="color:#64748b">Notes:</span> <span style="font-weight:600">${safe(r.notes)}</span></div>`);
+      return `<div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;margin:8px 0;background:#fbfdff">
+        <div style="font-weight:700;color:#0f172a;margin-bottom:4px">${idx+1}. ${safe(r.type||r.code||'Lab Report')}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;color:#0f172a;font-size:12px">
+          <div><span style="color:#64748b">Code:</span> <span style="font-weight:600">${safe(r.code)}</span></div>
+          <div><span style="color:#64748b">Status:</span> <span style="font-weight:600">${safe(r.status||'-')}</span></div>
+          <div><span style="color:#64748b">Priority:</span> <span style="font-weight:600">${safe(r.priority||'-')}</span></div>
+          <div><span style="color:#64748b">Created:</span> <span style="font-weight:600">${r.createdAt? new Date(r.createdAt).toLocaleString(): '-'}</span></div>
+          <div><span style="color:#64748b">Source:</span> <span style="font-weight:600">${safe(r.source||'-')}</span></div>
+        </div>
+        ${lines.length ? `<div style="margin-top:6px;color:#0f172a;font-size:12px">${lines.join('')}</div>` : ''}
+      </div>`;
     }).join('');
 
     const patientPhoto = (patient && patient.photo) ? `<img src="${patient.photo}" alt="${(patient.patient_name||'Patient').toString().replace(/"/g,'&quot;')}" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:1px solid #e5e7eb;"/>` : '<div style="width:120px;height:120px;border-radius:50%;background:#f1f5f9;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;">No Photo</div>';
@@ -155,6 +183,16 @@ export const PatientHistoryPage = () => {
             <thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th>Instructions</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
+        </div>
+
+        <div class="section">
+          <div class="title">Lab Reports</div>
+          <div class="subtle">Total: ${(labReports||[]).length}</div>
+          <table>
+            <thead><tr><th>Code</th><th>Type</th><th>Status</th><th>Priority</th><th>Created</th><th>Source</th></tr></thead>
+            <tbody>${labRows}</tbody>
+          </table>
+          ${labDetails ? `<div style="margin-top:10px">${labDetails}</div>`: ''}
         </div>
       </body>
     </html>`);
@@ -265,7 +303,7 @@ export const PatientHistoryPage = () => {
         {!loading && !error && !patient && <div className="p-8 border rounded-md bg-white text-center text-sm text-slate-500">No patient found for ID {patientId}</div>}
         {patient && <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm"><div className="flex flex-col md:flex-row md:items-start gap-6"><div className="flex flex-col items-center md:items-start w-full md:w-1/3">{patient.photo ? <img src={patient.photo} alt={patient.patient_name} className="w-40 h-40 object-cover rounded-full border border-slate-200 shadow-sm"/>: <div className="w-40 h-40 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm border border-slate-200">No Photo</div>}<h2 className="mt-4 text-lg font-semibold text-slate-800">{patient.patient_name}</h2><p className="text-xs text-slate-500 font-medium">Patient Code: {patient.patient_ID}</p><div className="mt-3 grid grid-cols-2 gap-2 w-full text-xs"><InfoStat label="Age" value={patient.patient_age||'-'}/><InfoStat label="Gender" value={patient.Gender||'-'}/><InfoStat label="Blood" value={patient.Blood_group||'-'}/><InfoStat label="Smoke" value={patient.Smoking_status||'0'}/><InfoStat label="Alcohol" value={patient.Alcohol_consumption||'0'}/><InfoStat label="Emergency" value={patient.Emergency_Contact||'-'}/></div></div><div className="flex-1 space-y-4 text-sm"><Section label="Email" value={patient.Email}/><Section label="Allergies" value={patient.Allergies||'-'}/><Section label="Current Conditions" value={patient.Current_medical_conditions||'-'}/><Section label="Past Surgeries" value={patient.Past_surgeries||'-'}/></div></div></div>}
   {patient && <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><FileText className="h-5 w-5 text-slate-500"/> Prescription History</h3><div className="flex items-center gap-4"><span className="text-xs text-slate-500">{sortedPrescriptions.length} total</span>{sortedPrescriptions.length>pageSize && <div className="flex items-center gap-2 text-xs"><button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))} className="px-2 py-1 border rounded disabled:opacity-40">Prev</button><span>{page} / {totalPages}</span><button disabled={page===totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))} className="px-2 py-1 border rounded disabled:opacity-40">Next</button></div>}</div></div>{sortedPrescriptions.length===0 && <div className="text-xs text-slate-500 border border-dashed rounded p-4">No prescriptions found.</div>}{sortedPrescriptions.length>0 && <ul className="divide-y divide-slate-200">{paginated.map(p=> <li key={p.id} className="py-4"><div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><div className="flex items-center gap-3 mb-1"><span className="text-sm font-medium text-slate-800">{p.date? p.date.toLocaleDateString():'—'}</span>{p.doctor && <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{p.doctor}</span>}{p.diagnosis && <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Dx: {p.diagnosis}</span>}</div><div className="text-xs text-slate-600 line-clamp-2">{(p.instructions||p.symptoms||'').slice(0,220)||'No notes'}{(p.instructions||p.symptoms||'').length>220?'...':''}</div>{expanded[p.id] && <div className="mt-3 space-y-3">{p.symptoms && <DetailRow label="Symptoms" value={p.symptoms}/>} {p.diagnosis && <DetailRow label="Diagnosis" value={p.diagnosis}/>} {p.clinical_findings && <DetailRow label="Findings" value={p.clinical_findings}/>} {p.instructions && <DetailRow label="Instructions" value={p.instructions}/>} {p.medicines.length>0 && <div><p className="text-xs font-semibold text-slate-700 mb-1">Medicines</p><div className="border rounded overflow-hidden"><table className="w-full text-xs"><thead className="bg-slate-50 text-slate-600"><tr><th className="px-2 py-1 text-left font-medium">Name</th><th className="px-2 py-1 text-left font-medium">Dosage</th><th className="px-2 py-1 text-left font-medium">Frequency</th><th className="px-2 py-1 text-left font-medium">Duration</th></tr></thead><tbody>{p.medicines.map((m,i)=><tr key={i} className="odd:bg-white even:bg-slate-50"><td className="px-2 py-1">{m.Medicine_Name}</td><td className="px-2 py-1">{m.Dosage}</td><td className="px-2 py-1">{m.Frequency}</td><td className="px-2 py-1">{m.Duration}</td></tr>)}</tbody></table></div></div>}</div>}</div><div className="flex flex-col items-end gap-2"><div className="flex flex-col gap-1"><button onClick={()=>toggle(p.id)} className="text-xs px-3 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50">{expanded[p.id] ? 'Hide Details' : 'View Details'}</button><button onClick={()=>{ const w=window.open('', '', 'width=800,height=700'); if(!w) return; w.document.write('<html><head><title>Prescription</title><style>body{font-family:Arial;padding:24px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:4px;font-size:12px;text-align:left;}th{background:#eee;}</style></head><body>'); w.document.write(`<h2>Prescription - ${p.date? p.date.toLocaleDateString():''}</h2>`); if(p.doctor) w.document.write(`<p><strong>Doctor:</strong> ${p.doctor}</p>`); if(p.diagnosis) w.document.write(`<p><strong>Diagnosis:</strong> ${p.diagnosis}</p>`); if(p.symptoms) w.document.write(`<p><strong>Symptoms:</strong> ${p.symptoms}</p>`); if(p.instructions) w.document.write(`<p><strong>Instructions:</strong> ${(p.instructions||'').replace(/</g,'&lt;')}</p>`); if(p.medicines.length){ w.document.write('<h3>Medicines</h3><table><thead><tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead><tbody>'); p.medicines.forEach(m=>{ w.document.write(`<tr><td>${m.Medicine_Name}</td><td>${m.Dosage}</td><td>${m.Frequency}</td><td>${m.Duration}</td></tr>`); }); w.document.write('</tbody></table>'); } w.document.write('</body></html>'); w.document.close(); setTimeout(()=>w.print(),200); }} className="text-[10px] px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">Print</button><button onClick={()=>{ const shareData=window.location.origin + `/patient/history/${patientId}?p=${p.id}`; navigator.clipboard.writeText(shareData); }} className="text-[10px] px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">Share</button></div></div></div></li>)}</ul>}</div>}
-        {patient && <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><Layers className="h-5 w-5 text-slate-500"/> Lab Reports</h3><span className="text-xs text-slate-500">{loadingLabs? 'Loading...' : labReports.length + ' found'}</span></div>{loadingLabs && <div className="text-xs text-slate-500">Loading lab reports...</div>}{!loadingLabs && labReports.length===0 && <div className="text-xs text-slate-500 border border-dashed rounded p-4">No lab reports linked to this patient.</div>}{!loadingLabs && labReports.length>0 && <div className="overflow-x-auto"><table className="w-full text-xs border"><thead className="bg-slate-50"><tr className="text-slate-600"><th className="px-2 py-1 text-left font-medium">Code</th><th className="px-2 py-1 text-left font-medium">Type</th><th className="px-2 py-1 text-left font-medium">Doctor</th><th className="px-2 py-1 text-left font-medium">Status</th><th className="px-2 py-1 text-left font-medium">Priority</th><th className="px-2 py-1 text-left font-medium">Created</th><th className="px-2 py-1 text-left font-medium">Report</th></tr></thead><tbody>{labReports.map(r=> <tr key={r.id} className="odd:bg-white even:bg-slate-50"><td className="px-2 py-1 font-medium text-slate-700">{r.code}</td><td className="px-2 py-1">{r.type}</td><td className="px-2 py-1">{r.doctor||'-'}</td><td className="px-2 py-1">{r.status}</td><td className="px-2 py-1">{r.priority}</td><td className="px-2 py-1">{r.createdAt? new Date(r.createdAt).toLocaleDateString():''}</td><td className="px-2 py-1">{r.reportUrl? <a className="text-slate-700 underline" href={r.reportUrl} target="_blank" rel="noreferrer">View</a> : '-'}</td></tr>)}</tbody></table></div>}</div>}
+  {patient && <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm"><div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><Layers className="h-5 w-5 text-slate-500"/> Lab Reports</h3><span className="text-xs text-slate-500">{loadingLabs? 'Loading...' : `${labReports.length} found`}</span></div>{loadingLabs && <div className="text-xs text-slate-500">Loading lab reports...</div>}{!loadingLabs && labReports.length===0 && <div className="text-xs text-slate-500 border border-dashed rounded p-4">No lab reports linked to this patient.</div>}{!loadingLabs && labReports.length>0 && <div className="overflow-x-auto"><table className="w-full text-xs border"><thead className="bg-slate-50"><tr className="text-slate-600"><th className="px-2 py-1 text-left font-medium">Code</th><th className="px-2 py-1 text-left font-medium">Type</th><th className="px-2 py-1 text-left font-medium">Status</th><th className="px-2 py-1 text-left font-medium">Priority</th><th className="px-2 py-1 text-left font-medium">Created</th></tr></thead><tbody>{labReports.map(r=> <tr key={r.id} className="odd:bg-white even:bg-slate-50"><td className="px-2 py-1 font-medium text-slate-700">{r.code}</td><td className="px-2 py-1">{r.type}</td><td className="px-2 py-1">{r.status}</td><td className="px-2 py-1">{r.priority}</td><td className="px-2 py-1">{r.createdAt? new Date(r.createdAt).toLocaleDateString():''}</td></tr>)}</tbody></table></div>}</div>}
       </div>
     </ClinicalLayout>
   );

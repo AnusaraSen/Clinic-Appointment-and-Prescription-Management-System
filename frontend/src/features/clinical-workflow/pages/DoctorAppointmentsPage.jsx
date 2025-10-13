@@ -18,6 +18,7 @@ export default function DoctorAppointmentsPage() {
   const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastLoadedAt, setLastLoadedAt] = useState(null);
@@ -163,9 +164,25 @@ export default function DoctorAppointmentsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId, doctorName]);
 
+  const filteredAppointments = useMemo(()=>{
+    const q = query.trim().toLowerCase();
+    if (!q) return appointments;
+    return appointments.filter(a => {
+      const fields = [
+        a.patient,
+        a.type,
+        a.status,
+        a.displayStatus,
+        a.date,
+        a.time
+      ].map(v => (v||'').toString().toLowerCase());
+      return fields.some(f => f.includes(q));
+    });
+  }, [appointments, query]);
+
   const grouped = useMemo(()=> {
-    return appointments.reduce((acc,a)=> { (acc[a.date] ||= []).push(a); return acc; }, {});
-  }, [appointments]);
+    return filteredAppointments.reduce((acc,a)=> { (acc[a.date] ||= []).push(a); return acc; }, {});
+  }, [filteredAppointments]);
 
   // Determine group order: Today first, then future (ascending), then past (descending)
   const todayYmd = useMemo(()=> {
@@ -199,7 +216,19 @@ export default function DoctorAppointmentsPage() {
           <button onClick={load} className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">Refresh</button>
         </div>
       </div>
-      <div className="mb-4">
+      <div className="mb-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <input
+            value={query}
+            onChange={e=>setQuery(e.target.value)}
+            type="text"
+            placeholder="Search by patient, type, status, date or time"
+            className="w-full max-w-md px-3 py-2 border rounded text-sm"
+            aria-label="Search appointments"
+          />
+          {query && <button onClick={()=>setQuery('')} className="px-3 py-2 text-sm border rounded">Clear</button>}
+          <span className="text-xs text-gray-500">{filteredAppointments.length} shown</span>
+        </div>
         {fetchPath && (
           <div className="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-2 rounded flex flex-wrap gap-2 items-center">
             <span className="font-medium">Fetch path:</span>
