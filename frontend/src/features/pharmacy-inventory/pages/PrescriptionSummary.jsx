@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import html2pdf from 'html2pdf.js';
+import * as XLSX from 'xlsx';
 import { 
   ArrowLeft, 
-  Printer, 
   FileText, 
   CheckCircle,
   Clock,
@@ -14,6 +13,7 @@ import {
   Download
 } from 'lucide-react';
 import PharmacistSidebar from '../components/PharmacistSidebar';
+import { getStatusOverride, PRESCRIPTION_CHANGED_EVENT } from '../../../utils/prescriptionEvents';
 import '../pages/PharmacistDashboard.css';
 
 const PrescriptionSummary = () => {
@@ -26,7 +26,7 @@ const PrescriptionSummary = () => {
     total: 0
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingCSV, setIsGeneratingCSV] = useState(false);
   const reportContentRef = useRef();
 
   useEffect(() => {
@@ -41,6 +41,23 @@ const PrescriptionSummary = () => {
     };
   }, []);
 
+  // Listen for prescription updates from dispensing module
+  useEffect(() => {
+    const handlePrescriptionUpdate = () => {
+      console.log('Prescription update detected, refreshing summary data...');
+      fetchPrescriptionData();
+    };
+
+    // Listen for both prescription update and change events
+    window.addEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+    window.addEventListener(PRESCRIPTION_CHANGED_EVENT, handlePrescriptionUpdate);
+    
+    return () => {
+      window.removeEventListener('prescriptionUpdated', handlePrescriptionUpdate);
+      window.removeEventListener(PRESCRIPTION_CHANGED_EVENT, handlePrescriptionUpdate);
+    };
+  }, []);
+
   const handleSidebarToggle = (isCollapsed) => {
     setIsSidebarCollapsed(isCollapsed);
   };
@@ -48,12 +65,13 @@ const PrescriptionSummary = () => {
   const handleTabChange = (tabId) => {
     // Navigate based on tab selection
     const routeMap = {
-      'dashboard': '/pharmacist-dashboard',
+      'dashboard': '/pharmacist/dashboard',
       'prescriptions': '/pharmacist/prescriptions',
       'dispensing': '/pharmacist/dispensing',
+      'reports': '/pharmacist/reports',
       'profile': '/pharmacist/profile'
     };
-    navigate(routeMap[tabId] || '/pharmacist-dashboard');
+    navigate(routeMap[tabId] || '/pharmacist/dashboard');
   };
 
   const fetchPrescriptionData = async () => {
@@ -80,8 +98,32 @@ const PrescriptionSummary = () => {
         allPrescriptions = response.data.prescriptions;
       }
       
-      console.log('Processed prescriptions:', allPrescriptions);
+      // Apply status overrides from localStorage (dispensing module updates)
+      allPrescriptions = allPrescriptions.map(p => {
+        const id = (p._id || p.id || '').toString();
+        const statusOverride = getStatusOverride(id);
+        if (statusOverride) {
+          console.log(`Applying status override for ${id}: ${p.status} -> ${statusOverride}`);
+          return { ...p, status: statusOverride };
+        }
+        return p;
+      });
+      
+      console.log('Processed prescriptions with overrides:', allPrescriptions);
       console.log('Total count:', allPrescriptions.length);
+      
+      // Debug: Log available date fields
+      if (allPrescriptions.length > 0) {
+        console.log('Sample prescription data:', allPrescriptions[0]);
+        console.log('Available date fields:', {
+          dateIssued: allPrescriptions[0].dateIssued,
+          date_Issued: allPrescriptions[0].date_Issued,
+          createdAt: allPrescriptions[0].createdAt,
+          prescriptionDate: allPrescriptions[0].prescriptionDate,
+          date: allPrescriptions[0].date,
+          allKeys: Object.keys(allPrescriptions[0])
+        });
+      }
       
       // Calculate statistics - check for various status field names and values
       // Log all prescriptions with their statuses for debugging
@@ -123,95 +165,243 @@ const PrescriptionSummary = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!reportContentRef.current) return;
-    
-    setIsGeneratingPDF(true);
+  const handleDownloadCSV = () => {
+    setIsGeneratingCSV(true);
     
     try {
-      // Clone the content to avoid modifying the original DOM
-      const originalElement = reportContentRef.current;
-      const clonedElement = originalElement.cloneNode(true);
+      // Calculate summary statistics
+      const newCount = prescriptions.filter(p => {
+        const status = getCurrentStatus(p).toLowerCase();
+        return status === 'new' || status === 'pending';
+      }).length;
       
-      // Convert oklch colors to rgb in the cloned element
-      const convertOklchToRgb = (element) => {
-        const allElements = element.querySelectorAll('*');
-        allElements.forEach(el => {
-          const computedStyle = window.getComputedStyle(el);
-          
-          // Get all color-related properties
-          const colorProperties = [
-            'color', 
-            'backgroundColor', 
-            'borderColor', 
-            'borderTopColor', 
-            'borderBottomColor', 
-            'borderLeftColor', 
-            'borderRightColor'
-          ];
-          
-          colorProperties.forEach(prop => {
-            const value = computedStyle.getPropertyValue(prop);
-            if (value && value.includes('oklch')) {
-              // Apply the computed RGB value directly
-              const rgbValue = computedStyle[prop];
-              el.style[prop] = rgbValue;
+      const dispensedCount = prescriptions.filter(p => {
+        const status = getCurrentStatus(p).toLowerCase();
+        return status === 'dispensed' || status === 'completed' || status === 'fulfilled';
+      }).length;
+      
+      const totalCount = prescriptions.length;
+      const needToDispense = totalCount - dispensedCount;
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      
+      // Summary Section
+      const summaryData = [
+        ['PRESCRIPTION SUMMARY REPORT'],
+        ['Generated on:', new Date().toLocaleString()],
+        [''],
+        ['SUMMARY STATISTICS'],
+        ['Total Prescriptions:', totalCount],
+        ['Dispensed Prescriptions:', dispensedCount],
+        ['Prescriptions Need to be Dispensed:', needToDispense],
+        ['New/Pending Prescriptions:', newCount],
+        [''],
+        ['']
+      ];
+      
+      // Headers
+      const headers = [
+        'Prescription ID',
+        'Patient Name',
+        'Doctor Name',
+        'Medicines',
+        'Date Issued',
+        'Status'
+      ];
+      
+      // Data rows - keep dates as formatted strings for now
+      const dataRows = prescriptions.map((prescription, index) => {
+        // Check multiple possible date field names (Date is the primary field from backend model)
+        const dateString = prescription.Date || 
+                          prescription.date ||
+                          prescription.dateIssued || 
+                          prescription.date_Issued || 
+                          prescription.createdAt || 
+                          prescription.prescriptionDate ||
+                          prescription.created_at ||
+                          prescription.issuedDate;
+        let dateValue = 'N/A';
+        
+        // Format date for display
+        if (dateString) {
+          try {
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (!isNaN(date.getTime())) {
+              // Format as: Oct 13, 2025
+              dateValue = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              });
             }
-          });
+          } catch (e) {
+            dateValue = 'N/A';
+          }
+        }
+        
+        return [
+          extractPrescriptionId(prescription, index),
+          extractPatientName(prescription),
+          extractDoctorName(prescription),
+          extractMedicines(prescription),
+          dateValue,
+          getCurrentStatus(prescription)
+        ];
+      });
+      
+      // Combine all data
+      const wsData = [...summaryData, headers, ...dataRows];
+      
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Now manually update date cells with proper Excel serial dates
+      prescriptions.forEach((prescription, index) => {
+        // Check multiple possible date field names (Date is the primary field from backend model)
+        const dateString = prescription.Date || 
+                          prescription.date ||
+                          prescription.dateIssued || 
+                          prescription.date_Issued || 
+                          prescription.createdAt || 
+                          prescription.prescriptionDate ||
+                          prescription.created_at ||
+                          prescription.issuedDate;
+        
+        console.log(`Prescription ${index} date fields:`, {
+          dateIssued: prescription.dateIssued,
+          date_Issued: prescription.date_Issued,
+          createdAt: prescription.createdAt,
+          prescriptionDate: prescription.prescriptionDate,
+          date: prescription.date,
+          selectedDate: dateString
         });
+        
+        if (dateString) {
+          try {
+            const date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+              // Row index in worksheet: summaryData.length (summary rows) + 1 (header) + index (data row)
+              const rowIdx = summaryData.length + 1 + index;
+              const cellRef = XLSX.utils.encode_cell({ r: rowIdx, c: 4 }); // Column E (index 4) is Date Issued
+              
+              console.log(`✅ Setting date for row ${rowIdx}, cell ${cellRef}: ${date.toLocaleDateString()}`);
+              
+              // Convert JavaScript date to Excel serial number
+              // Excel dates are stored as days since 1/1/1900
+              const excelSerialDate = (date - new Date(1899, 11, 30)) / (24 * 60 * 60 * 1000);
+              
+              // Set cell as number with date format
+              ws[cellRef] = {
+                t: 'n', // number type
+                v: excelSerialDate, // Excel serial date number
+                z: 'mmm dd, yyyy', // Excel date format
+                w: date.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) // Display value
+              };
+            } else {
+              console.warn(`❌ Invalid date for prescription ${index}:`, dateString);
+            }
+          } catch (e) {
+            console.error(`❌ Date conversion error for prescription ${index}:`, e);
+          }
+        } else {
+          console.warn(`❌ No date found for prescription ${index}`);
+        }
+      });
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 18 }, // Prescription ID
+        { wch: 20 }, // Patient Name
+        { wch: 20 }, // Doctor Name
+        { wch: 40 }, // Medicines
+        { wch: 15 }, // Date Issued
+        { wch: 12 }  // Status
+      ];
+      
+      // Style the summary title (row 1)
+      if (!ws['A1']) ws['A1'] = { t: 's', v: '' };
+      ws['A1'].s = {
+        font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "0D9488" } },
+        alignment: { horizontal: 'center', vertical: 'center' }
       };
       
-      convertOklchToRgb(clonedElement);
+      // Merge title row
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } } // Merge A1:F1 for title
+      ];
+      
+      // Style summary statistics labels (rows 4-8)
+      const summaryRowIndices = [3, 4, 5, 6, 7]; // Rows 4-8 (0-indexed: 3-7)
+      summaryRowIndices.forEach(rowIdx => {
+        const cellRef = XLSX.utils.encode_cell({ r: rowIdx, c: 0 });
+        if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+        ws[cellRef].s = {
+          font: { bold: true, sz: 11 },
+          fill: { fgColor: { rgb: "E0F2F1" } }
+        };
+      });
+      
+      // Style the data headers (row 11, 0-indexed: 10)
+      const headerRowIdx = summaryData.length;
+      headers.forEach((header, colIdx) => {
+        const cellRef = XLSX.utils.encode_cell({ r: headerRowIdx, c: colIdx });
+        if (!ws[cellRef]) ws[cellRef] = { t: 's', v: header };
+        ws[cellRef].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+          fill: { fgColor: { rgb: "0D9488" } }, // Teal color
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+          }
+        };
+      });
+      
+      // Add borders to all data cells
+      dataRows.forEach((row, rowIdx) => {
+        row.forEach((cell, colIdx) => {
+          const cellRef = XLSX.utils.encode_cell({ r: headerRowIdx + 1 + rowIdx, c: colIdx });
+          
+          // Apply border styling (preserve existing cell data and type)
+          if (ws[cellRef]) {
+            if (!ws[cellRef].s) ws[cellRef].s = {};
+            ws[cellRef].s = {
+              ...ws[cellRef].s,
+              border: {
+                top: { style: 'thin', color: { rgb: "CCCCCC" } },
+                bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
+                left: { style: 'thin', color: { rgb: "CCCCCC" } },
+                right: { style: 'thin', color: { rgb: "CCCCCC" } }
+              }
+            };
+          }
+        });
+      });
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Prescription Summary');
       
       // Generate filename with current date
-      const filename = `Prescription_Summary_${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `Prescription_Summary_${new Date().toISOString().split('T')[0]}.xlsx`;
       
-      // PDF options
-      const options = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          letterRendering: true,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
+      // Write file
+      XLSX.writeFile(wb, filename);
       
-      // Temporarily add cloned element to DOM
-      clonedElement.style.position = 'absolute';
-      clonedElement.style.left = '-9999px';
-      clonedElement.style.top = '0';
-      document.body.appendChild(clonedElement);
-      
-      // Generate PDF from cloned element
-      await html2pdf()
-        .set(options)
-        .from(clonedElement)
-        .save();
-      
-      // Remove cloned element
-      document.body.removeChild(clonedElement);
-      
-      console.log('PDF generated successfully');
+      console.log('Excel file generated successfully');
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('Error generating Excel file:', error);
+      alert('Failed to generate Excel file. Please try again.');
     } finally {
-      setIsGeneratingPDF(false);
+      setIsGeneratingCSV(false);
     }
   };
 
@@ -226,6 +416,13 @@ const PrescriptionSummary = () => {
     } catch (e) {
       return 'N/A';
     }
+  };
+
+  // Helper function to get current status with override
+  const getCurrentStatus = (prescription) => {
+    const id = (prescription._id || prescription.id || '').toString();
+    const statusOverride = getStatusOverride(id);
+    return statusOverride || prescription.status || prescription.Status || 'N/A';
   };
 
   const getStatusBadgeClass = (status) => {
@@ -283,17 +480,23 @@ const PrescriptionSummary = () => {
   };
 
   const extractDate = (prescription) => {
-    return prescription.date || 
-           prescription.Date || 
+    return prescription.Date || 
+           prescription.date || 
            prescription.createdAt || 
-           prescription.created_at;
+           prescription.created_at ||
+           prescription.dateIssued ||
+           prescription.date_Issued;
   };
 
   const filterPrescriptionsByStatus = (statusFilter) => {
     const filtered = prescriptions.filter(p => {
-      const status = (p.status || p.Status || '').toString().toLowerCase().trim();
+      // Get the latest status from localStorage override if available
+      const id = (p._id || p.id || '').toString();
+      const statusOverride = getStatusOverride(id);
+      const currentStatus = statusOverride || p.status || p.Status || '';
+      const status = currentStatus.toString().toLowerCase().trim();
       const matches = statusFilter.includes(status);
-      if (matches) console.log('Matched prescription:', p.id || p._id, 'with status:', status, 'against filters:', statusFilter);
+      if (matches) console.log('Matched prescription:', id, 'with status:', status, 'against filters:', statusFilter);
       return matches;
     });
     console.log(`Filtered ${filtered.length} prescriptions for statuses:`, statusFilter);
@@ -318,7 +521,7 @@ const PrescriptionSummary = () => {
     <div className="dashboard-wrapper">
       <div className="pharmacist-dashboard">
         <PharmacistSidebar 
-          activeTab="prescriptions"
+          activeTab="reports"
           onTabChange={handleTabChange}
           onSidebarToggle={handleSidebarToggle}
         />
@@ -330,7 +533,7 @@ const PrescriptionSummary = () => {
             <div className="no-print bg-white shadow-sm border-b">
               <div className="flex items-center justify-between px-6 py-4">
                 <button
-                  onClick={() => navigate('/pharmacist-dashboard')}
+                  onClick={() => navigate('/pharmacist/dashboard')}
                   className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -339,29 +542,21 @@ const PrescriptionSummary = () => {
                 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={handleDownloadPDF}
-                    disabled={isGeneratingPDF}
+                    onClick={handleDownloadCSV}
+                    disabled={isGeneratingCSV}
                     className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {isGeneratingPDF ? (
+                    {isGeneratingCSV ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Generating PDF...</span>
+                        <span>Generating Excel...</span>
                       </>
                     ) : (
                       <>
                         <Download className="w-5 h-5" />
-                        <span>Download PDF</span>
+                        <span>Download Excel</span>
                       </>
                     )}
-                  </button>
-                  
-                  <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-                  >
-                    <Printer className="w-5 h-5" />
-                    Print
                   </button>
                 </div>
               </div>
@@ -495,8 +690,8 @@ const PrescriptionSummary = () => {
                         {extractMedicines(prescription)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(prescription.status || prescription.Status)}`}>
-                          {prescription.status || prescription.Status || 'N/A'}
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(getCurrentStatus(prescription))}`}>
+                          {getCurrentStatus(prescription)}
                         </span>
                       </td>
                     </tr>
@@ -551,8 +746,8 @@ const PrescriptionSummary = () => {
                         {extractMedicines(prescription)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(prescription.status || prescription.Status)}`}>
-                          {prescription.status || prescription.Status || 'N/A'}
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(getCurrentStatus(prescription))}`}>
+                          {getCurrentStatus(prescription)}
                         </span>
                       </td>
                     </tr>

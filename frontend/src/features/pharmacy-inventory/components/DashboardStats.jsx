@@ -51,7 +51,7 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
               </div>
               <div className="stat-info">
                 <div className="stat-label">Pending Prescriptions</div>
-                <div className="stat-value">12</div>
+                <div className="stat-value">{statistics?.pendingPrescriptions ?? statistics?.newPrescriptions ?? 0}</div>
                 <div className="stat-detail">Requires attention</div>
               </div>
             </div>
@@ -62,7 +62,7 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
               </div>
               <div className="stat-info">
                 <div className="stat-label">Dispensed Today</div>
-                <div className="stat-value">28</div>
+                <div className="stat-value">{statistics?.dispensedToday ?? 0}</div>
                 <div className="stat-detail">91% vs yesterday</div>
               </div>
             </div>
@@ -89,7 +89,7 @@ const DashboardStats = ({ data, recentPrescriptions = [], onRefresh, onPrescript
               </div>
               <div className="stat-info">
                 <div className="stat-label">New Patients</div>
-                <div className="stat-value">156</div>
+                <div className="stat-value">{statistics?.totalPrescriptions ?? 0}</div>
                 <div className="stat-detail"></div>
               </div>
             </div>
