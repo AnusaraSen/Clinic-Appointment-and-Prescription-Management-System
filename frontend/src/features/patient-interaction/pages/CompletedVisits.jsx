@@ -65,21 +65,43 @@ const CompletedVisits = () => {
           throw lastErr || new Error("No valid response");
         }
 
-        // Filter for completed appointments (past dates)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Filter for completed appointments (strictly before current date-time)
+        const now = new Date(); now.setSeconds(0,0);
+        const parseTime = (t) => {
+          if (!t || typeof t !== 'string') return null;
+          const s = t.trim();
+          const ampmMatch = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+          if (ampmMatch) {
+            let hh = parseInt(ampmMatch[1], 10);
+            const mm = parseInt(ampmMatch[2], 10);
+            const ap = ampmMatch[3].toUpperCase();
+            if (ap === 'AM') { if (hh === 12) hh = 0; }
+            else { if (hh !== 12) hh += 12; }
+            return { h: hh, m: mm };
+          }
+          const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/);
+          if (colonMatch) {
+            return { h: parseInt(colonMatch[1],10), m: parseInt(colonMatch[2],10) };
+          }
+          const dotMatch = s.match(/^(\d{1,2})\.(\d{2})$/);
+          if (dotMatch) {
+            return { h: parseInt(dotMatch[1],10), m: parseInt(dotMatch[2],10) };
+          }
+          return null;
+        };
+
         const completed = (res.data || [])
-          .filter(app => {
-            const appDate = new Date(app.appointment_date || app.date);
-            appDate.setHours(0, 0, 0, 0);
-            return appDate < today; // Past appointments
+          .map(app => {
+            const d = new Date(app.appointment_date || app.date);
+            d.setSeconds(0,0);
+            const tm = parseTime(app.appointment_time || app.time);
+            const dateTime = new Date(d);
+            if (tm) { dateTime.setHours(tm.h, tm.m, 0, 0); } else { dateTime.setHours(23,59,59,999); }
+            return { _dt: dateTime.getTime(), _d: d, app };
           })
-          .sort((a, b) => {
-            // Sort by date in descending order (most recent first)
-            const dateA = new Date(a.appointment_date || a.date);
-            const dateB = new Date(b.appointment_date || b.date);
-            return dateB - dateA;
-          });
+          .filter(x => x._dt < now.getTime())
+          .sort((a,b) => b._dt - a._dt)
+          .map(x => x.app);
 
         setCompletedAppointments(completed);
       } catch (err) {

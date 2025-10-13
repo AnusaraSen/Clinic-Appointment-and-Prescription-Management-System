@@ -519,7 +519,7 @@ body.modal-open .modern-navbar {
 
 /* Reset any inherited styles and ensure all content appears below the fixed navigation bar */
 body.has-fixed-navbar {
-  padding-top: 60px !important;
+  padding-top: 80px !important;
   margin: 0 !important;
 }
 
