@@ -200,7 +200,7 @@ exports.getEquipmentStats = async (req, res) => {
     const totalEquipment = await Equipment.countDocuments();
     const operationalCount = await Equipment.countDocuments({ status: 'Operational' });
     const maintenanceCount = await Equipment.countDocuments({ 
-      status: { $in: ['Under Maintenance', 'Scheduled for Maintenance'] }
+      status: 'Under Maintenance'
     });
     const outOfServiceCount = await Equipment.countDocuments({ 
       status: { $in: ['Out of Service', 'Needs Repair'] }
@@ -294,9 +294,13 @@ exports.createEquipment = async (req, res) => {
       type: req.body.type,
       location: req.body.location,
       status: req.body.status || 'Operational',
-      isCritical: req.body.isCritical || false,
-      maintenanceInterval: req.body.maintenanceInterval || 90
+      isCritical: req.body.isCritical || false
     };
+    
+    // Only add maintenanceInterval if provided
+    if (req.body.maintenanceInterval) {
+      basicData.maintenanceInterval = req.body.maintenanceInterval;
+    }
     
     const equipment = new Equipment(basicData);
     await equipment.save();
@@ -326,6 +330,7 @@ exports.createEquipment = async (req, res) => {
     console.log(`✅ Created new equipment: ${updatedEquipment.name} (${updatedEquipment.equipment_id})`);
     
     // Auto-schedule preventive maintenance for new equipment
+    // Equipment stays "Operational" - status will change automatically when maintenance date arrives
     try {
       const scheduledMaintenance = await autoScheduleForEquipment(updatedEquipment.equipment_id, 'Preventive');
       console.log(`✅ Auto-scheduled preventive maintenance for ${updatedEquipment.equipment_id} on ${scheduledMaintenance.scheduled_date.toDateString()}`);
@@ -577,7 +582,7 @@ exports.handleMaintenanceRequestCreated = async (equipmentIds, priority = 'Mediu
     if (!equipmentIds || equipmentIds.length === 0) return;
     
     // Determine new status based on priority
-    let newStatus = 'Scheduled for Maintenance';
+    let newStatus = 'Under Maintenance';
     if (priority === 'High') {
       newStatus = 'Needs Repair';
     }

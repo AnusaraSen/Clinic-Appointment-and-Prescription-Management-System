@@ -409,7 +409,6 @@ export const EditEquipmentModal = ({ isOpen, onClose, onSuccess, equipment }) =>
                 <option value="Under Maintenance">Under Maintenance</option>
                 <option value="Out of Service">Out of Service</option>
                 <option value="Needs Repair">Needs Repair</option>
-                <option value="Scheduled for Maintenance">Scheduled for Maintenance</option>
               </ValidatedSelect>
 
               {/* Critical Equipment */}

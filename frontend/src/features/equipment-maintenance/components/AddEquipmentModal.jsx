@@ -24,7 +24,7 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
     serialNumber: '',
     purchaseDate: '',
     warrantyExpiry: '',
-    maintenanceInterval: 90,
+    maintenanceInterval: '',
     notes: ''
   });
 
@@ -133,7 +133,10 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
         break;
       
       case 'maintenanceInterval':
-        error = validators.numberRange(value, 1, 365, 'Maintenance interval');
+        // Only validate if a value is provided (optional field)
+        if (value && value.trim() !== '') {
+          error = validators.numberRange(value, 1, 365, 'Maintenance interval');
+        }
         break;
       
       case 'notes':
@@ -192,7 +195,7 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
         serialNumber: formData.serialNumber.trim() || undefined,
         purchaseDate: formData.purchaseDate || undefined,
         warrantyExpiry: formData.warrantyExpiry || undefined,
-        maintenanceInterval: parseInt(formData.maintenanceInterval),
+        maintenanceInterval: formData.maintenanceInterval ? parseInt(formData.maintenanceInterval) : undefined,
         notes: formData.notes.trim() || undefined
       };
 
@@ -234,7 +237,7 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
         serialNumber: '',
         purchaseDate: '',
         warrantyExpiry: '',
-        maintenanceInterval: 90,
+        maintenanceInterval: '',
         notes: ''
       });
 
@@ -397,7 +400,6 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
                 <option value="Under Maintenance">Under Maintenance</option>
                 <option value="Out of Service">Out of Service</option>
                 <option value="Needs Repair">Needs Repair</option>
-                <option value="Scheduled for Maintenance">Scheduled for Maintenance</option>
               </ValidatedSelect>
 
               {/* Critical Equipment */}
@@ -517,7 +519,7 @@ export const AddEquipmentModal = ({ isOpen, onClose, onSuccess }) => {
                 onBlur={handleFieldBlur}
                 error={errors.maintenanceInterval}
                 touched={touched.maintenanceInterval}
-                helpText="1-365 days"
+                helpText="Optional (1-365 days). Leave empty if not applicable."
               />
             </div>
           </div>

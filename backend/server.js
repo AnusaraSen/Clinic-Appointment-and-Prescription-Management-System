@@ -31,6 +31,7 @@ const {
 
 const connectToDatabase = require('./config/db');
 const equipmentStatusService = require('./services/equipmentStatusService');
+const maintenanceSchedulerService = require('./services/maintenanceSchedulerService');
 
 // Let's create our Express app - this is where the magic begins! ✨
 const app = express();
@@ -226,6 +227,9 @@ const PORT = process.env.PORT || 5000;
 
     // Initialize equipment status checker for automatic updates
     equipmentStatusService.initializeEquipmentStatusChecker();
+    
+    // Initialize maintenance scheduler for automatic status updates
+    maintenanceSchedulerService.initializeMaintenanceScheduler();
 
     // Now we can start our server with confidence!
     const server = app.listen(PORT, () => {

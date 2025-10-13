@@ -158,12 +158,6 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
           badge: 'bg-red-100 text-red-800',
           text: 'Needs Repair'
         };
-      case 'Scheduled for Maintenance':
-        return {
-          icon: <Clock className="h-5 w-5 text-blue-500" />,
-          badge: 'bg-blue-100 text-blue-800',
-          text: 'Scheduled'
-        };
       default:
         return {
           icon: <Activity className="h-5 w-5 text-gray-500" />,
@@ -276,7 +270,6 @@ export const EquipmentListTable = forwardRef(({ refreshTrigger, onEquipmentUpdat
             <option key="status-under-maintenance" value="Under Maintenance">Under Maintenance</option>
             <option key="status-out-of-service" value="Out of Service">Out of Service</option>
             <option key="status-needs-repair" value="Needs Repair">Needs Repair</option>
-            <option key="status-scheduled" value="Scheduled for Maintenance">Scheduled</option>
           </select>
 
           {/* Type Filter */}

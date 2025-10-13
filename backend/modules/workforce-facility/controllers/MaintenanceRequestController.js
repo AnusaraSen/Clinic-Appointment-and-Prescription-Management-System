@@ -737,6 +737,7 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
     let requests = await MaintenanceRequest.find(query)
       .populate('equipment', 'equipment_id name location')
       .populate('assignedTo', 'name user_id')
+      .populate('reportedBy', 'name email role')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -765,6 +766,8 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
       { header: 'Issue Description', key: 'issueDescription', width: 35 },
       { header: 'Priority', key: 'priority', width: 12 },
       { header: 'Status', key: 'status', width: 15 },
+      { header: 'Requested By', key: 'requestedBy', width: 25 },
+      { header: 'Requester Role', key: 'requesterRole', width: 20 },
       { header: 'Assigned Technician', key: 'technician', width: 25 },
       { header: 'Request Date', key: 'requestDate', width: 20 },
       { header: 'Completed Date', key: 'completedDate', width: 20 },
@@ -814,6 +817,8 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
         issueDescription: request.description || 'No description',
         priority: request.priority || 'Medium',
         status: request.status || 'Open',
+        requestedBy: request.reportedBy?.name || request.reportedBy?.email || 'Unknown',
+        requesterRole: request.reportedBy?.role || 'N/A',
         technician: request.assignedTo?.name || 'Unassigned',
         requestDate: request.createdAt ? new Date(request.createdAt).toLocaleString() : 'N/A',
         completedDate: completedDate,
@@ -824,7 +829,7 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
     // Add summary section at the bottom
     worksheet.addRow([]);
     worksheet.addRow([]);
-    const summaryRow = worksheet.addRow(['SUMMARY', '', '', '', '', '', '', '', '', '', '']);
+    const summaryRow = worksheet.addRow(['SUMMARY', '', '', '', '', '', '', '', '', '', '', '', '']);
     summaryRow.font = { bold: true, size: 12 };
     summaryRow.fill = {
       type: 'pattern',
@@ -840,7 +845,7 @@ exports.exportFilteredMaintenanceRequests = async (req, res) => {
     
     // Add filter information
     worksheet.addRow([]);
-    worksheet.addRow(['FILTERS APPLIED', '', '', '', '', '', '', '', '', '', '']);
+    worksheet.addRow(['FILTERS APPLIED', '', '', '', '', '', '', '', '', '', '', '', '']);
     if (startDate) worksheet.addRow(['Start Date', new Date(startDate).toLocaleDateString()]);
     if (endDate) worksheet.addRow(['End Date', new Date(endDate).toLocaleDateString()]);
     if (status) worksheet.addRow(['Status', status]);

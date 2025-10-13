@@ -51,11 +51,20 @@ exports.notifyNewMaintenanceRequest = async (maintenanceRequest) => {
     }
 
     console.log(`📧 Creating notification for ${recipients.length} admins`);
+    
+    // Get reporter information for better notification message
+    const reporterName = maintenanceRequest.reportedBy?.name || 
+                        maintenanceRequest.reportedBy?.email || 
+                        'Staff member';
+    const reporterRole = maintenanceRequest.reportedBy?.role || 'Staff';
+    
+    console.log(`👤 Request created by: ${reporterName} (${reporterRole})`);
+    
     await Notification.createNotification({
       type: 'NEW_MAINTENANCE_REQUEST',
       category: 'MAINTENANCE_REQUESTS',
       title: 'New Maintenance Request',
-      message: `A new maintenance request has been created for ${maintenanceRequest.equipment?.name || 'equipment'}: ${maintenanceRequest.description.substring(0, 100)}`,
+      message: `${reporterName} (${reporterRole}) created a maintenance request for ${maintenanceRequest.equipment?.name || 'equipment'}: ${maintenanceRequest.description.substring(0, 100)}`,
       relatedEntity: {
         entityType: 'MaintenanceRequest',
         entityId: maintenanceRequest._id
@@ -63,12 +72,14 @@ exports.notifyNewMaintenanceRequest = async (maintenanceRequest) => {
       recipients,
       priority: maintenanceRequest.priority === 'High' ? 'high' : maintenanceRequest.priority === 'Critical' ? 'urgent' : 'medium',
       metadata: {
-        requestId: maintenanceRequest.requestId,
+        requestId: maintenanceRequest.requestId || maintenanceRequest.request_id,
         equipmentName: maintenanceRequest.equipment?.name,
-        priority: maintenanceRequest.priority
+        priority: maintenanceRequest.priority,
+        reportedBy: reporterName,
+        reportedByRole: reporterRole
       }
     });
-    console.log('✅ Notification created successfully');
+    console.log('✅ Notification created successfully for all admins');
   } catch (error) {
     console.error('❌ Error creating new maintenance request notification:', error);
     console.error('Error details:', error.message);
@@ -89,11 +100,20 @@ exports.notifyUrgentMaintenanceRequest = async (maintenanceRequest) => {
     }
 
     console.log(`📧 Creating urgent notification for ${recipients.length} admins`);
+    
+    // Get reporter information for better notification message
+    const reporterName = maintenanceRequest.reportedBy?.name || 
+                        maintenanceRequest.reportedBy?.email || 
+                        'Staff member';
+    const reporterRole = maintenanceRequest.reportedBy?.role || 'Staff';
+    
+    console.log(`👤 URGENT request created by: ${reporterName} (${reporterRole})`);
+    
     await Notification.createNotification({
       type: 'MAINTENANCE_REQUEST_URGENT',
       category: 'MAINTENANCE_REQUESTS',
       title: '⚠️ Urgent Maintenance Request',
-      message: `URGENT: ${maintenanceRequest.equipment?.name || 'Equipment'} requires immediate attention! ${maintenanceRequest.description.substring(0, 100)}`,
+      message: `URGENT: ${reporterName} (${reporterRole}) reports ${maintenanceRequest.equipment?.name || 'Equipment'} requires immediate attention! ${maintenanceRequest.description.substring(0, 100)}`,
       relatedEntity: {
         entityType: 'MaintenanceRequest',
         entityId: maintenanceRequest._id
@@ -101,12 +121,14 @@ exports.notifyUrgentMaintenanceRequest = async (maintenanceRequest) => {
       recipients,
       priority: 'urgent',
       metadata: {
-        requestId: maintenanceRequest.requestId,
+        requestId: maintenanceRequest.requestId || maintenanceRequest.request_id,
         equipmentName: maintenanceRequest.equipment?.name,
-        priority: maintenanceRequest.priority
+        priority: maintenanceRequest.priority,
+        reportedBy: reporterName,
+        reportedByRole: reporterRole
       }
     });
-    console.log('✅ Urgent notification created successfully');
+    console.log('✅ Urgent notification created successfully for all admins');
   } catch (error) {
     console.error('❌ Error creating urgent maintenance request notification:', error);
     console.error('Error details:', error.message);
@@ -511,6 +533,57 @@ exports.notifyScheduledMaintenanceStatusUpdate = async (scheduledMaintenance, ne
     console.log(`✅ Scheduled maintenance status update notification created for status: ${newStatus}`);
   } catch (error) {
     console.error('Error creating scheduled maintenance status update notification:', error);
+  }
+};
+
+/**
+ * Create notification when scheduled maintenance starts (equipment goes under maintenance)
+ * Notifies admins and assigned technician that maintenance has begun
+ */
+exports.notifyMaintenanceStarted = async (maintenanceId, equipmentNames, assignedTechnician) => {
+  try {
+    console.log('🔔 Creating notification for maintenance start:', equipmentNames);
+    
+    // Get admin recipients
+    const adminRecipients = await getAdminUsers();
+    
+    // Add assigned technician to recipients if exists
+    let recipients = [...adminRecipients];
+    if (assignedTechnician && assignedTechnician._id) {
+      const technicianRecipient = await getTechnicianRecipient(assignedTechnician._id);
+      recipients = [...recipients, ...technicianRecipient];
+    }
+    
+    if (recipients.length === 0) {
+      console.log('⚠️ No recipients found - skipping notification creation');
+      return;
+    }
+    
+    const message = assignedTechnician 
+      ? `Scheduled maintenance has started for ${equipmentNames}. Assigned to ${assignedTechnician.name}. Equipment status changed to "Under Maintenance".`
+      : `Scheduled maintenance has started for ${equipmentNames}. Equipment status changed to "Under Maintenance". Please assign a technician.`;
+    
+    await Notification.create({
+      type: 'SCHEDULED_MAINTENANCE_STATUS_UPDATED',
+      category: 'SCHEDULED_MAINTENANCE',
+      title: 'Maintenance Started',
+      message,
+      relatedEntity: {
+        entityType: 'ScheduledMaintenance',
+        entityId: maintenanceId
+      },
+      recipients,
+      priority: 'Medium',
+      metadata: {
+        equipmentNames,
+        technicianName: assignedTechnician?.name || 'Unassigned',
+        status: 'Started'
+      }
+    });
+    
+    console.log(`✅ Maintenance start notification created for: ${equipmentNames}`);
+  } catch (error) {
+    console.error('Error creating maintenance start notification:', error);
   }
 };
 

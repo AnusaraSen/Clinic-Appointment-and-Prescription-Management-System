@@ -210,7 +210,7 @@ const equipmentSchemas = {
         'any.required': 'Equipment type is required'
       }),
     status: Joi.string()
-      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair', 'Scheduled for Maintenance')
+      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair')
       .default('Operational'),
     isCritical: Joi.boolean().default(false),
     model: Joi.string().trim().optional(),
@@ -220,7 +220,8 @@ const equipmentSchemas = {
     warrantyExpires: Joi.date().optional(),
     lastMaintenanceDate: Joi.date().optional(),
     nextScheduledMaintenance: Joi.date().optional(),
-    downtimeHours: Joi.number().min(0).default(0)
+    downtimeHours: Joi.number().min(0).default(0),
+    maintenanceInterval: Joi.number().min(1).max(365).optional()
   }),
 
   update: Joi.object({
@@ -228,7 +229,7 @@ const equipmentSchemas = {
     location: Joi.string().trim().max(200),
     type: Joi.string().trim(),
     status: Joi.string()
-      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair', 'Scheduled for Maintenance'),
+      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair'),
     isCritical: Joi.boolean(),
     model: Joi.string().trim(),
     modelNumber: Joi.string().trim(),
@@ -241,12 +242,12 @@ const equipmentSchemas = {
     nextScheduledMaintenance: Joi.date(),
     downtimeHours: Joi.number().min(0),
     notes: Joi.string().trim().max(1000),
-    maintenanceInterval: Joi.number().min(1)
+    maintenanceInterval: Joi.number().min(1).max(365).optional()
   }).min(1), // At least one field must be provided
 
   statusUpdate: Joi.object({
     status: Joi.string()
-      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair', 'Scheduled for Maintenance')
+      .valid('Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair')
       .required(),
     downtimeStart: Joi.date().optional(),
     downtimeEnd: Joi.date().optional()

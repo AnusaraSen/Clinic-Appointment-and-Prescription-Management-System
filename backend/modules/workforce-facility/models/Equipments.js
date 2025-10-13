@@ -36,7 +36,7 @@ const equipmentSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ['Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair', 'Scheduled for Maintenance'],
+      values: ['Operational', 'Under Maintenance', 'Out of Service', 'Needs Repair'],
       message: 'Equipment status must be one of the predefined options'
     },
     default: 'Operational',  // Most equipment starts working fine
@@ -78,7 +78,12 @@ const equipmentSchema = new mongoose.Schema({
     }
   },
   warrantyExpiry: { type: Date },
-  maintenanceInterval: { type: Number, min: 1, max: 365, default: 90 },
+  maintenanceInterval: { 
+    type: Number, 
+    min: 1, 
+    max: 365,
+    required: false  // Made optional - not all equipment needs regular maintenance intervals
+  },
   activeMaintenanceRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MaintenanceRequest' }],
   notes: { type: String, trim: true, maxlength: [1000, 'Notes too long'] }
 }, {
@@ -121,7 +126,7 @@ equipmentSchema.pre('save', async function (next) {
 /* Instance methods */
 equipmentSchema.methods.scheduleNextMaintenance = function (date) {
   this.nextMaintenance = date;
-  if (this.status === 'Operational') this.status = 'Scheduled for Maintenance';
+  // Status remains unchanged when scheduling maintenance
   return this.save();
 };
 
