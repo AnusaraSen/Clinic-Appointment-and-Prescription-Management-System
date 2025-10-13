@@ -14,13 +14,17 @@ import {
   Download,
   MessageCircle,
   CheckCircle,
-  Play
+  Play,
+  Trash2
 } from 'lucide-react';
+import { useAuth } from '../../authentication/context/AuthContext';
 import ClinicalWorkflowManager from './ClinicalWorkflowManager';
 import ResultsUpload from './ResultsUpload';
 import ClinicalResultsDisplay from './ClinicalResultsDisplay';
 
 const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
+  const { user } = useAuth(); // Get current user from auth context
+  
   const [activeTab, setActiveTab] = useState('overview');
   const [taskData, setTaskData] = useState(task);
   const [notes, setNotes] = useState([]);
@@ -40,30 +44,19 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
 
   const fetchTaskNotes = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/labtasks/${task._id}/notes`);
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = new Date().getTime();
+      const response = await fetch(`http://localhost:5000/api/labtasks/${task._id}/notes?_t=${timestamp}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ FETCHED NOTES v2.0:', data.notes);
+        console.log('Note IDs:', data.notes.map(note => note._id));
         setNotes(data.notes || []);
       }
     } catch (error) {
       console.error('Error fetching notes:', error);
-      // Mock notes for demonstration
-      setNotes([
-        {
-          _id: 'note1',
-          content: 'Sample collection completed. Sample appears normal.',
-          author: 'John Doe',
-          createdAt: '2025-09-21T10:30:00.000Z',
-          type: 'general'
-        },
-        {
-          _id: 'note2',
-          content: 'Waiting for supervisor approval before proceeding with analysis.',
-          author: 'John Doe',
-          createdAt: '2025-09-21T11:00:00.000Z',
-          type: 'status'
-        }
-      ]);
+      // Don't create mock notes - let the user see there's an error
+      setNotes([]);
     }
   };
 
@@ -99,10 +92,27 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
     }
   };
 
+  // Helper function to get current user name
+  const getCurrentUserName = () => {
+    if (user?.name) {
+      return user.name;
+    } else if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user?.firstName) {
+      return user.firstName;
+    } else if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Unknown User';
+  };
+
   const addNote = async () => {
     if (!newNote.trim()) return;
 
     try {
+      const currentUserName = getCurrentUserName();
+      console.log('🚀 ADD NOTE FUNCTION v2.0 - Adding note with content:', newNote);
+      
       const response = await fetch(`http://localhost:5000/api/labtasks/${task._id}/notes`, {
         method: 'POST',
         headers: {
@@ -110,24 +120,62 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
         },
         body: JSON.stringify({
           content: newNote,
-          author: 'John Doe', // Should come from auth context
+          author: currentUserName,
           type: 'general'
         })
       });
 
+      console.log('Add note response status:', response.status);
+      
       if (response.ok) {
-        const newNoteObj = {
-          _id: Date.now().toString(),
-          content: newNote,
-          author: 'John Doe',
-          createdAt: new Date().toISOString(),
-          type: 'general'
-        };
-        setNotes([...notes, newNoteObj]);
+        const result = await response.json();
+        console.log('Add note response data:', result);
+        
+        // Instead of managing state, refresh from server to get real IDs
         setNewNote('');
+        fetchTaskNotes(); // This ensures we get the real MongoDB IDs
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to add note:', response.status, errorText);
       }
     } catch (error) {
       console.error('Error adding note:', error);
+    }
+  };
+
+  const deleteNote = async (noteId) => {
+    if (!window.confirm('Are you sure you want to delete this note?')) {
+      return;
+    }
+
+    console.log('🗑️ DELETE FUNCTION v2.0 - Deleting note:', noteId);
+    console.log('Task ID:', task._id);
+    console.log('Full URL:', `http://localhost:5000/api/labtasks/${task._id}/notes/${noteId}`);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/labtasks/${task._id}/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Delete response:', result);
+        // Use the updated notes from the backend response
+        setNotes(result.notes || []);
+        // Also refresh from server to ensure consistency
+        fetchTaskNotes();
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to delete note:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
     }
   };
 
@@ -419,9 +467,22 @@ const TaskDetailModal = ({ task, onClose, onTaskUpdate }) => {
                     <div key={note._id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-medium text-gray-900">{note.author}</span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(note.createdAt).toLocaleString()}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {new Date(note.createdAt).toLocaleString()}
+                          </span>
+                          <button
+                            onClick={() => {
+                              console.log('Attempting to delete note with ID:', note._id);
+                              console.log('Note object:', note);
+                              deleteNote(note._id);
+                            }}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors"
+                            title={`Delete note (ID: ${note._id})`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-gray-700">{note.content}</p>
                       {note.type && (

@@ -43,6 +43,9 @@ router.get("/:id/notes", labTaskController.getTaskNotes);
 // Add task note
 router.post("/:id/notes", labTaskController.addTaskNote);
 
+// Delete task note
+router.delete("/:id/notes/:noteId", labTaskController.deleteTaskNote);
+
 // Get test executions for a task (includes both legacy executions and clinical processing)
 router.get("/:id/executions", labTaskController.getTestExecutions);
 

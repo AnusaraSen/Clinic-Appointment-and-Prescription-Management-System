@@ -472,9 +472,60 @@ class LabTaskController {
       task.notes.push(newNote);
       
       await task.save();
-      res.status(201).json({ message: "Note added successfully", note: newNote });
+      
+      // Get the newly created note with its MongoDB _id
+      const savedNote = task.notes[task.notes.length - 1];
+      console.log('Created note with ID:', savedNote._id);
+      console.log('Full saved note:', JSON.stringify(savedNote, null, 2));
+      
+      // Convert to plain object to ensure _id is properly serialized
+      const noteResponse = {
+        _id: savedNote._id.toString(),
+        content: savedNote.content,
+        author: savedNote.author,
+        type: savedNote.type,
+        createdAt: savedNote.createdAt
+      };
+      
+      res.status(201).json({ message: "Note added successfully", note: noteResponse });
     } catch (error) {
       console.error("Error adding task note:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async deleteTaskNote(req, res) {
+    try {
+      const { id: taskId, noteId } = req.params;
+      const task = await LabTask.findById(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      if (!task.notes || task.notes.length === 0) {
+        return res.status(404).json({ message: "No notes found for this task" });
+      }
+
+      // Find and remove the note by its _id or by index if _id is not available
+      const noteIndex = task.notes.findIndex(note => 
+        (note._id && note._id.toString() === noteId) || 
+        (note.id && note.id.toString() === noteId)
+      );
+      
+      if (noteIndex === -1) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+
+      task.notes.splice(noteIndex, 1);
+      await task.save();
+      
+      res.status(200).json({ 
+        message: "Note deleted successfully", 
+        notes: task.notes 
+      });
+    } catch (error) {
+      console.error("Error deleting task note:", error);
       res.status(500).json({ error: error.message });
     }
   }
