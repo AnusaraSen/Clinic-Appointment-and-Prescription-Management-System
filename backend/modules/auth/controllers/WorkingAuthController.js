@@ -198,13 +198,13 @@ const refreshToken = async (req, res) => {
         role: user.role 
       },
       process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }  // Extended from 15m to 24h
     );
 
     const newRefreshToken = jwt.sign(
       { userId: user._id },
       process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key',
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }  // Extended from 7d to 30d
     );
 
     console.log('✅ Token refresh successful for user:', user.email);

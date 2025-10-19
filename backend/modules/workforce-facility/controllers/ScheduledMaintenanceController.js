@@ -503,7 +503,7 @@ const updateMaintenanceStatus = async (req, res) => {
     await scheduledMaintenance.save();
     
     // Auto-update equipment status based on maintenance status
-    const equipment = await Equipment.findById(scheduledMaintenance.equipment_id);
+    const equipment = await Equipment.findOne({ equipment_id: scheduledMaintenance.equipment_id });
     if (equipment) {
       if (status === 'In Progress') {
         // Set equipment to "Under Maintenance" when work starts
@@ -596,7 +596,7 @@ const completeScheduledMaintenance = async (req, res) => {
     await scheduledMaintenance.save();
     
     // Automatically update equipment status back to Operational after maintenance completion
-    const equipment = await Equipment.findById(scheduledMaintenance.equipment_id);
+    const equipment = await Equipment.findOne({ equipment_id: scheduledMaintenance.equipment_id });
     if (equipment) {
       await equipmentStatusService.updateEquipmentStatusOnMaintenanceCompletion(equipment._id);
     }
@@ -701,7 +701,7 @@ const autoScheduleForEquipment = async (equipmentId, maintenanceType = 'Preventi
       throw new Error(`Equipment ${equipmentId} not found`);
     }
     
-    // Define maintenance intervals by equipment type
+    // Define maintenance intervals by equipment type (fallback if maintenanceInterval not provided)
     const maintenanceIntervals = {
       'Blood Pressure Monitor': { months: 3, duration: 1 },
       'X-Ray Machine': { months: 6, duration: 4 },
@@ -712,11 +712,24 @@ const autoScheduleForEquipment = async (equipmentId, maintenanceType = 'Preventi
       'default': { months: 6, duration: 2 }
     };
     
-    const interval = maintenanceIntervals[equipment.type] || maintenanceIntervals.default;
+    // Use equipment's maintenance interval (in days) if provided, otherwise use type-based default
+    let nextDate = new Date();
+    let intervalMonths;
     
-    // Calculate next maintenance date
-    const nextDate = new Date();
-    nextDate.setMonth(nextDate.getMonth() + interval.months);
+    if (equipment.maintenanceInterval) {
+      // User specified interval in days - convert to date
+      nextDate.setDate(nextDate.getDate() + equipment.maintenanceInterval);
+      // Calculate approximate months for recurrence (30 days = 1 month)
+      intervalMonths = Math.ceil(equipment.maintenanceInterval / 30);
+    } else {
+      // Use type-based default interval
+      const interval = maintenanceIntervals[equipment.type] || maintenanceIntervals.default;
+      nextDate.setMonth(nextDate.getMonth() + interval.months);
+      intervalMonths = interval.months;
+    }
+    
+    // Get duration from type-based defaults (still use this for estimated duration)
+    const typeInterval = maintenanceIntervals[equipment.type] || maintenanceIntervals.default;
     
     // Create scheduled maintenance
     const scheduledMaintenance = new ScheduledMaintenance({
@@ -727,17 +740,25 @@ const autoScheduleForEquipment = async (equipmentId, maintenanceType = 'Preventi
       scheduled_time: '09:00',
       maintenance_type: maintenanceType,
       priority: equipment.criticality === 'Critical' ? 'High' : 'Medium',
-      estimated_duration: interval.duration,
+      estimated_duration: typeInterval.duration,
       equipment_name: equipment.name,
       equipment_location: equipment.location,
       recurrence: {
         type: 'monthly',
-        interval: interval.months,
+        interval: intervalMonths,
         next_due_date: null
       }
     });
     
     await scheduledMaintenance.save();
+    
+    // Update equipment's nextMaintenance field
+    await Equipment.updateOne(
+      { equipment_id: equipmentId },
+      { $set: { nextMaintenance: nextDate } }
+    );
+    
+    console.log(`✅ Updated equipment ${equipmentId} nextMaintenance to ${nextDate.toDateString()}`);
     
     return scheduledMaintenance;
     

@@ -301,6 +301,35 @@ exports.assignRequest = async (req, res) => {
     }
 
     console.log('🔍 Updating maintenance request...');
+    
+    // First, get the current maintenance request to check if it's already assigned
+    const currentRequest = await MaintenanceRequest.findById(id);
+    if (!currentRequest) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Maintenance request not found',
+        data: null 
+      });
+    }
+    
+    const previousTechnicianId = currentRequest.assignedTo;
+    console.log('🔄 Previous technician ID:', previousTechnicianId);
+    console.log('🔄 New technician ID:', technicianId);
+    
+    // If reassigning (previous technician exists and is different), remove from old technician's list
+    if (previousTechnicianId && previousTechnicianId.toString() !== technicianId.toString()) {
+      console.log('♻️ Reassignment detected - removing from previous technician');
+      const previousTechnician = await Technician.findById(previousTechnicianId);
+      if (previousTechnician) {
+        previousTechnician.assignedRequests = previousTechnician.assignedRequests.filter(
+          reqId => reqId.toString() !== id.toString()
+        );
+        await previousTechnician.save();
+        console.log('✅ Removed request from previous technician:', previousTechnician.name);
+        console.log('📊 Previous technician now has', previousTechnician.assignedRequests.length, 'assigned requests');
+      }
+    }
+    
     // Update the maintenance request
     const updated = await MaintenanceRequest.findByIdAndUpdate(
       id, 
@@ -323,10 +352,12 @@ exports.assignRequest = async (req, res) => {
       });
     }
 
-    // Update technician's assigned requests array
+    // Update new technician's assigned requests array
     if (!technician.assignedRequests.includes(id)) {
       technician.assignedRequests.push(id);
       await technician.save();
+      console.log('✅ Added request to new technician:', technician.name);
+      console.log('📊 New technician now has', technician.assignedRequests.length, 'assigned requests');
     }
 
     return res.json({ 
@@ -449,6 +480,56 @@ exports.updateRequest = async (req, res) => {
     // Get the existing request before update for comparison
     const existingRequest = await MaintenanceRequest.findById(id)
       .populate('assignedTo', 'name');
+
+    // If assignedTo is being changed, handle technician workload updates
+    if (update.assignedTo !== undefined) {
+      const previousTechnicianId = existingRequest.assignedTo?._id;
+      const newTechnicianId = update.assignedTo;
+      
+      console.log('🔄 Technician assignment change detected');
+      console.log('Previous technician:', previousTechnicianId);
+      console.log('New technician:', newTechnicianId);
+      
+      // Remove from previous technician's list (if exists and different)
+      if (previousTechnicianId && newTechnicianId && previousTechnicianId.toString() !== newTechnicianId.toString()) {
+        console.log('♻️ Reassignment - removing from previous technician');
+        const previousTechnician = await Technician.findById(previousTechnicianId);
+        if (previousTechnician) {
+          previousTechnician.assignedRequests = previousTechnician.assignedRequests.filter(
+            reqId => reqId.toString() !== id.toString()
+          );
+          await previousTechnician.save();
+          console.log('✅ Removed request from previous technician:', previousTechnician.name);
+          console.log('📊 Previous technician now has', previousTechnician.assignedRequests.length, 'assigned requests');
+        }
+      }
+      
+      // Add to new technician's list (if not already there)
+      if (newTechnicianId && newTechnicianId !== '' && newTechnicianId !== null) {
+        const newTechnician = await Technician.findById(newTechnicianId);
+        if (newTechnician) {
+          if (!newTechnician.assignedRequests.some(reqId => reqId.toString() === id.toString())) {
+            newTechnician.assignedRequests.push(id);
+            await newTechnician.save();
+            console.log('✅ Added request to new technician:', newTechnician.name);
+            console.log('📊 New technician now has', newTechnician.assignedRequests.length, 'assigned requests');
+          }
+        }
+      }
+      
+      // Handle unassignment (setting to null/empty)
+      if (previousTechnicianId && (!newTechnicianId || newTechnicianId === '' || newTechnicianId === null)) {
+        console.log('🚫 Unassignment - removing from technician');
+        const previousTechnician = await Technician.findById(previousTechnicianId);
+        if (previousTechnician) {
+          previousTechnician.assignedRequests = previousTechnician.assignedRequests.filter(
+            reqId => reqId.toString() !== id.toString()
+          );
+          await previousTechnician.save();
+          console.log('✅ Removed request from technician:', previousTechnician.name);
+        }
+      }
+    }
 
     const updated = await MaintenanceRequest.findByIdAndUpdate(id, update, { 
       new: true,

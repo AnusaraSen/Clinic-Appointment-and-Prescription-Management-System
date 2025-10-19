@@ -428,6 +428,28 @@ exports.updateEquipment = async (req, res) => {
         message: 'Equipment not found'
       });
     }
+    
+    // If maintenanceInterval was updated, recalculate nextMaintenance date
+    if (req.body.maintenanceInterval !== undefined && equipment.maintenanceInterval) {
+      const nextMaintenanceDate = new Date();
+      nextMaintenanceDate.setDate(nextMaintenanceDate.getDate() + equipment.maintenanceInterval);
+      
+      await Equipment.collection.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { nextMaintenance: nextMaintenanceDate } }
+      );
+      
+      // Refresh equipment data to include the updated nextMaintenance
+      const updatedEquipment = await Equipment.findById(req.params.id);
+      
+      console.log(`✅ Updated equipment: ${updatedEquipment.name} (nextMaintenance: ${nextMaintenanceDate.toDateString()})`);
+      
+      return res.json({
+        success: true,
+        message: 'Equipment updated successfully',
+        data: updatedEquipment
+      });
+    }
 
     console.log(`✅ Updated equipment: ${equipment.name}`);
     

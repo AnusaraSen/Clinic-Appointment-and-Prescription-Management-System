@@ -5,12 +5,12 @@ const crypto = require('crypto');
  * Token Utilities - JWT Authentication Magic! 🎯
  * 
  * Handles JWT token generation, validation, and refresh logic
- * Access Token: 15 minutes | Refresh Token: 7 days
+ * Access Token: 24 hours | Refresh Token: 30 days
  */
 
 // Token durations
-const ACCESS_TOKEN_DURATION = '15m';  // 15 minutes
-const REFRESH_TOKEN_DURATION = '7d';  // 7 days
+const ACCESS_TOKEN_DURATION = '24h';  // 24 hours (extended from 15m)
+const REFRESH_TOKEN_DURATION = '30d';  // 30 days (extended from 7d)
 
 // JWT Secrets (in production, these should be in environment variables)
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || 'clinic_access_secret_dev_2024';
