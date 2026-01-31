@@ -221,7 +221,14 @@ export default function DoctorAppointmentsPage() {
           {query && <button onClick={()=>setQuery('')} className="px-3 py-2 text-sm border rounded">Clear</button>}
           <span className="text-xs text-gray-500">{filteredAppointments.length} shown</span>
         </div>
-        {/* Removed debug fetch path banner per request */}
+        {fetchPath && (
+          <div className="text-xs bg-slate-50 border border-slate-200 text-slate-700 px-3 py-2 rounded flex flex-wrap gap-2 items-center">
+            <span className="font-medium">Fetch path:</span>
+            <code className="bg-white px-2 py-0.5 rounded border text-[10px]">{fetchPath}</code>
+            {fetchPath==='by-name' && <span className="text-amber-600">(doctor_id mismatch suspected)</span>}
+            {fetchPath==='all+filter' && <span className="text-red-600">(severe mismatch – recommend data cleanup)</span>}
+          </div>
+        )}
         {!doctorId && doctorName && !fetchPath && (
           <div className="text-xs bg-amber-50 border border-amber-200 text-amber-700 px-3 py-2 rounded">
             Using doctor name fallback. For more precise matching ensure the account has a doctor ID association.
